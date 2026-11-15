@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!--
+  © 2026 Asaf. All rights reserved.
+  "Monster Ball" is free to play. You may not copy, edit, re-upload, sell, or present this game,
+  or any part of it, as your own without Asaf's permission.
+-->
+<meta name="author" content="Asaf">
+<meta name="copyright" content="© 2026 Asaf. All rights reserved.">
+<script>
+/*! © 2026 Asaf. All rights reserved. Free to play; not to be copied or claimed as your own. */
+(function () {
+  'use strict';
+  var CFG = {"id": "monster-ball", "owner": "Asaf", "year": 2026, "mark": "tr", "dx": 0, "dy": 0, "mount": null, "hubCss": null};
+  var NOTICE = '© ' + CFG.year + ' ' + CFG.owner;
+
+  // Inside Asaf's Arcade the game runs in a frame of the arcade page: borrow its cloud saves, let it show the notice.
+  var hub = null;
+  try {
+    var P = window.parent;
+    if (P && P !== window && P.__ASAF_ARCADE__ && P.__ASAF_ARCADE__.v === 1) hub = P.__ASAF_ARCADE__;
+  } catch (e) { hub = null; }
+  window.__ASAF_HUB__ = !!hub;
+  if (hub) {
+    window.__asafClaude = makeClaude(hub, CFG.id);
+    if (CFG.hubCss) {
+      var hs = document.createElement('style');
+      hs.textContent = CFG.hubCss;
+      (document.head || document.documentElement).appendChild(hs);
+    }
+    return;
+  }
+
+  // ---- played on its own: a small permanent tag plus a short notice when the game opens
+  var css = '' +
+    '#asaf-cr{all:initial;position:fixed;z-index:2147483646;display:block;box-sizing:border-box;pointer-events:none;user-select:none;-webkit-user-select:none;' +
+    'font:600 10px/1 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;letter-spacing:.04em;color:rgba(255,255,255,.88);' +
+    'background:rgba(6,6,16,.52);padding:4px 8px;border-radius:999px;white-space:nowrap;opacity:.82;transition:opacity .7s ease}' +
+    '#asaf-cr.asaf-busy{opacity:.14}' +
+    '#asaf-cr-toast{all:initial;position:fixed;z-index:2147483647;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));display:block;box-sizing:border-box;' +
+    'transform:translateX(-50%);pointer-events:none;user-select:none;-webkit-user-select:none;width:max-content;max-width:min(90vw,430px);' +
+    'font:500 12.5px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#fff;text-align:center;' +
+    'background:rgba(8,8,20,.9);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:9px 15px;box-shadow:0 10px 30px rgba(0,0,0,.5);' +
+    'opacity:0;animation:asafCrIn .45s ease .6s forwards,asafCrOut .6s ease 5.2s forwards}' +
+    '#asaf-cr-toast b{all:unset;font-weight:800}' +
+    '#asaf-cr-toast i{all:unset;display:block;margin-top:2px;font-size:11.5px;opacity:.78}' +
+    '@keyframes asafCrIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}' +
+    '@keyframes asafCrOut{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,0)}}';
+  var st = document.createElement('style');
+  st.id = 'asaf-cr-style';
+  st.textContent = css;
+  (document.head || document.documentElement).appendChild(st);
+
+  var dx = 6 + (CFG.dx || 0), dy = 6 + (CFG.dy || 0);
+  var T = 'top:calc(' + dy + 'px + env(safe-area-inset-top,0px));';
+  var B = 'bottom:calc(' + dy + 'px + env(safe-area-inset-bottom,0px));';
+  var L = 'left:calc(' + dx + 'px + env(safe-area-inset-left,0px));';
+  var R = 'right:calc(' + dx + 'px + env(safe-area-inset-right,0px));';
+  var C = 'left:50%;transform:translateX(-50%);';
+  var POS = { tl: T + L, tr: T + R, bl: B + L, br: B + R, tc: T + C, bc: B + C };
+
+  var tag = document.createElement('div');
+  tag.id = 'asaf-cr';
+  tag.setAttribute('role', 'note');
+  tag.setAttribute('aria-label', NOTICE + '. All rights reserved.');
+  tag.textContent = NOTICE;
+  tag.style.cssText = POS[CFG.mark] || POS.br;
+
+  var toast = document.createElement('div');
+  toast.id = 'asaf-cr-toast';
+  toast.setAttribute('aria-hidden', 'true');
+  var b = document.createElement('b'); b.textContent = NOTICE + ' · All rights reserved';
+  var i = document.createElement('i'); i.textContent = 'Free to play. Please don’t copy it or claim it as your own.';
+  toast.appendChild(b); toast.appendChild(i);
+  setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 6200);
+
+  function home() {
+    if (CFG.mount) { var m = document.querySelector(CFG.mount); if (m) return m; }
+    return document.documentElement;
+  }
+  function mount() {
+    var h = home();
+    if (tag.parentNode !== h) h.appendChild(tag);
+  }
+  function start() {
+    mount();
+    home().appendChild(toast);
+    setInterval(mount, 2500);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+
+  // fade the tag while someone is actively playing, bring it back when they pause
+  var idle = 0;
+  function busy() {
+    tag.classList.add('asaf-busy');
+    clearTimeout(idle);
+    idle = setTimeout(function () { tag.classList.remove('asaf-busy'); }, 2600);
+  }
+  ['pointerdown', 'keydown', 'touchstart', 'wheel'].forEach(function (ev) {
+    window.addEventListener(ev, busy, { capture: true, passive: true });
+  });
+
+  // ---- cloud saves through the arcade page (strings only cross between the two pages)
+  function makeClaude(H, gid) {
+    var cache = {};
+    function fail(code) { var e = new Error(code || 'unavailable'); e.code = code || 'unavailable'; return e; }
+    function call(fn, args) {
+      return new Promise(function (res, rej) {
+        var p;
+        try { p = H[fn].apply(null, [gid].concat(args || [])); } catch (e) { rej(fail('unavailable')); return; }
+        Promise.resolve(p).then(function (s) {
+          var r;
+          try { r = JSON.parse(s); } catch (e) { rej(fail('internal')); return; }
+          if (r && r.ok) res(r.v); else rej(fail(r && r.code));
+        }, function () { rej(fail('unavailable')); });
+      });
+    }
+    function snap(path, v) {
+      var parts = path.split('/');
+      return { id: parts[parts.length - 1], exists: v !== null && v !== undefined,
+        data: function () { return v === null || v === undefined ? undefined : JSON.parse(JSON.stringify(v)); } };
+    }
+    function doc(path) {
+      return {
+        id: path.split('/').pop(), path: path,
+        get: function () { return call('get', [path]).then(function (v) { return snap(path, v); }); },
+        set: function (data) { return call('set', [path, JSON.stringify(data)]).then(function () {}); }
+      };
+    }
+    function query(path, lim) {
+      return {
+        path: path,
+        limit: function (n) { return query(path, n); },
+        doc: function (id) { return doc(path + '/' + id); },
+        onSnapshot: function (next, error) {
+          var dead = false, off = null;
+          function onErr(code) { if (!dead && typeof error === 'function') error(fail(code)); }
+          try {
+            off = H.watch(gid, path, lim || 0, function (s) {
+              if (dead) return;
+              var rows; try { rows = JSON.parse(s); } catch (e) { return; }
+              var docs = rows.map(function (d) { return snap(path + '/' + d.id, d.v); });
+              next({ docs: docs, size: docs.length, empty: !docs.length, forEach: function (f) { docs.forEach(f); } });
+            }, onErr);
+          } catch (e) { setTimeout(function () { onErr('unavailable'); }, 0); }
+          return function () { dead = true; try { if (off) off(); } catch (e) { /* page gone */ } };
+        }
+      };
+    }
+    var db = { doc: doc, collection: function (p) { return query(p, 0); } };
+    var user = {
+      id: function () { return call('uid', []); },
+      me: function () { return call('uid', []).then(function (id) { return { id: id }; }); },
+      can: function (n) { return call('can', [String(n)]); },
+      profiles: function (ids) { return call('profiles', [JSON.stringify(ids || [])]); },
+      isOwner: function () { return false; },
+      canEdit: function () { return false; }
+    };
+    return {
+      use: function (name) {
+        if (!cache[name]) {
+          cache[name] = call('ready', [String(name)]).then(function (ok) {
+            if (!ok) return null;
+            return name === 'db' ? db : name === 'user' ? user : null;
+          }, function () { return null; });
+        }
+        return cache[name];
+      }
+    };
+  }
+})();
+</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MONSTER BALL</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: #0f0f1a; color: #fff;
+    font-family: Arial, Helvetica, sans-serif; text-align: center;
+  }
+  .wrap { width: min(100%, 500px); margin: 0 auto; padding: 14px 12px 24px; }
+  h1 { margin: 5px 0 0; font-size: clamp(27px, 8vw, 36px); letter-spacing: 1px; }
+  h1 span { color: #ffcc00; }
+  .sub { opacity: .8; font-size: 13px; margin: 4px 0 12px; }
+  .stats { display: flex; gap: 7px; justify-content: center; flex-wrap: wrap; }
+  .pill {
+    background: #22223a; border: 1px solid #3b3b61; padding: 8px 11px;
+    border-radius: 999px; font-weight: 800; font-size: 13px;
+  }
+  .pill b { color: #ffcc00; }
+  #story {
+    background: #1c1c30; border: 1px solid #3b3b61; border-radius: 14px;
+    padding: 12px; min-height: 66px; margin: 10px 0; font-size: 14px;
+    line-height: 1.45; text-align: left;
+  }
+  #story strong { color: #7cff8a; }
+  canvas {
+    width: 100%; max-width: 440px; aspect-ratio: 440 / 520; height: auto;
+    background: linear-gradient(#36a94a, #176b2b); border: 4px solid #fff;
+    border-radius: 16px; display: block; margin: 0 auto; touch-action: manipulation;
+  }
+  .power-label { margin: 11px 0 6px; text-align: left; font-size: 13px; }
+  .bar { height: 18px; background: #22223a; border-radius: 999px; overflow: hidden; border: 1px solid #555; }
+  .bar > div { height: 100%; width: 0%; background: linear-gradient(90deg,#00e676,#ffcc00,#ff1744); transition: width .04s linear; }
+  .hint { font-size: 12px; opacity: .78; margin-top: 6px; min-height: 17px; }
+  .controls { display: flex; gap: 10px; margin: 12px 0; }
+  button {
+    border: 0; border-radius: 999px; padding: 15px 20px; font-size: 18px;
+    font-weight: 900; cursor: pointer; touch-action: manipulation;
+  }
+  button:active { transform: scale(.97); }
+  #shootBtn { background: #ffcc00; color: #111; flex: 1; }
+  #nextBtn { background: #33334d; color: #fff; display: none; flex: 1; }
+  #final { display: none; background: #ffcc00; color: #111; padding: 14px; border-radius: 14px; font-weight: 900; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🏀 <span>MONSTER</span> BALL</h1>
+  <div class="sub">You are Zoom. Too small, they said. Prove them wrong.</div>
+
+  <div class="stats">
+    <div class="pill">SCORE <b id="score">0</b></div>
+    <div class="pill">STREAK <b id="streak">0</b> 🔥</div>
+    <div class="pill">LEVEL <b id="level">1 / 3</b></div>
+  </div>
+
+  <div id="story">Coach Gor: <strong>"Zoom, you're too small for this league. Go home."</strong><br>Zoom: "Watch me."</div>
+
+  <canvas id="game" width="440" height="520" aria-label="Basketball shooting game"></canvas>
+
+  <div class="power-label">POWER — stop in the GREEN zone for a PERFECT shot</div>
+  <div class="bar"><div id="powerFill"></div></div>
+  <div class="hint" id="hint">Tap SHOOT to charge, then tap again to release. Green = perfect!</div>
+
+  <div class="controls">
+    <button id="shootBtn" type="button">SHOOT 🏀</button>
+    <button id="nextBtn" type="button">NEXT MONSTER ➜</button>
+  </div>
+  <div id="final"></div>
+</div>
+
+<script>
+"use strict";
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const scoreEl = document.getElementById("score");
+const streakEl = document.getElementById("streak");
+const levelEl = document.getElementById("level");
+const powerFill = document.getElementById("powerFill");
+const storyEl = document.getElementById("story");
+const hintEl = document.getElementById("hint");
+const shootBtn = document.getElementById("shootBtn");
+const nextBtn = document.getElementById("nextBtn");
+const finalEl = document.getElementById("final");
+
+const LEVELS = [
+  {
+    name: "BOOM — The Anger Monster", emoji: "👹", color: "#2E7D32",
+    msg: "BOOM: “I'M HUGE! YOU'RE NOTHING!” — Don't rush. Breathe.",
+    need: 5, speed: 0.75, targetWidth: 76
+  },
+  {
+    name: "GOR — The Doubt Monster", emoji: "👁️", color: "#5D4037",
+    msg: "Coach Gor: “See? You missed. I told you.” That voice is lying. Shoot again.",
+    need: 7, speed: 1.25, targetWidth: 68
+  },
+  {
+    name: "YOU — The Final Monster", emoji: "👾", color: "#1A237E",
+    msg: "The last monster is the voice in YOUR head. Prove it wrong.",
+    need: 10, speed: 1.8, targetWidth: 60
+  }
+];
+
+let score = 0;
+let streak = 0;
+let level = 1;
+let shotsInLevel = 0;
+let power = 0;
+let powerDirection = 1;
+let charging = false;
+let ballX = 220;
+let ballY = 455;
+let ballVX = 0;
+let ballVY = 0;
+let ballMoving = false;
+let hoopX = 220;
+let hoopDirection = 1;
+let hoopSpeed = LEVELS[0].speed;
+let shotResultTimer = 0;
+let gameOver = false;
+let levelComplete = false;
+let lastFrame = 0;
+
+function updateUI() {
+  scoreEl.textContent = score;
+  streakEl.textContent = streak;
+  levelEl.textContent = `${level} / ${LEVELS.length}`;
+  powerFill.style.width = `${power}%`;
+}
+
+function setStory(html) {
+  storyEl.innerHTML = html;
+}
+
+function resetBall() {
+  ballX = 220;
+  ballY = 455;
+  ballVX = 0;
+  ballVY = 0;
+  ballMoving = false;
+}
+
+function beginCharge() {
+  if (gameOver || levelComplete || ballMoving) return;
+  charging = true;
+  hintEl.textContent = "Charging… tap SHOOT again when the power is in the green zone!";
+  shootBtn.textContent = "RELEASE! 🏀";
+}
+
+function releaseShot() {
+  if (!charging || ballMoving || gameOver || levelComplete) return;
+  charging = false;
+  shootBtn.textContent = "SHOOT 🏀";
+
+  const perfect = power >= 43 && power <= 62;
+  const accuracy = perfect ? 0 : (power < 43 ? -1 : 1);
+  ballVX = (hoopX - ballX) * 0.018 + accuracy * 1.15;
+  ballVY = -10.5 - power * 0.045;
+  ballMoving = true;
+  shotsInLevel++;
+
+  if (perfect) {
+    setStory("<strong>PERFECT RELEASE!</strong> Zoom found the rhythm. Now watch the shot!");
+  } else {
+    setStory("Zoom takes the shot… Keep your eyes on the hoop!");
+  }
+  hintEl.textContent = "Shot in the air!";
+}
+
+function pressShoot() {
+  if (gameOver || levelComplete) return;
+  if (ballMoving) return;
+  if (!charging) beginCharge();
+  else releaseShot();
+}
+
+function scoreShot() {
+  const current = LEVELS[level - 1];
+  const distance = Math.abs(ballX - hoopX);
+  const made = distance < current.targetWidth / 2 + 8 && ballY < 155;
+
+  if (made) {
+    const perfect = power >= 43 && power <= 62;
+    streak++;
+    const points = perfect ? 150 : 100;
+    const bonus = streak >= 3 ? 2 : 1;
+    score += points * bonus;
+    setStory(`<strong>${perfect ? "PERFECT SWISH! +" : "BUCKET! +"}${points * bonus}</strong><br>${streak >= 3 ? "🔥 ON FIRE! Your streak bonus is active." : "Nice shot, Zoom. Keep it going!"}`);
+    hintEl.textContent = perfect ? "Perfect timing! +150 points." : "Bucket! +100 points.";
+  } else {
+    streak = 0;
+    setStory("<strong>MISS!</strong> The monster laughs — but Zoom gets another chance. Adjust your timing!");
+    hintEl.textContent = "Missed! Charge again and try a different release.";
+  }
+
+  updateUI();
+  resetBall();
+
+  if (shotsInLevel >= current.need) {
+    if (score >= level * 350 || shotsInLevel >= current.need + 2) {
+      completeLevel();
+    } else {
+      shotsInLevel = Math.max(0, current.need - 2);
+    }
+  }
+}
+
+function completeLevel() {
+  levelComplete = true;
+  charging = false;
+  shootBtn.disabled = true;
+  nextBtn.style.display = "block";
+  shootBtn.style.opacity = ".55";
+  setStory(`<strong>${LEVELS[level - 1].name} DEFEATED!</strong><br>Zoom didn't give up. Get ready for the next challenge.`);
+  hintEl.textContent = "Level complete!";
+  if (level === LEVELS.length) {
+    nextBtn.textContent = "SEE RESULTS ➜";
+  }
+}
+
+function nextLevel() {
+  if (!levelComplete) return;
+  if (level >= LEVELS.length) {
+    finishGame();
+    return;
+  }
+  level++;
+  shotsInLevel = 0;
+  hoopSpeed = LEVELS[level - 1].speed;
+  hoopX = 220;
+  hoopDirection = 1;
+  power = 0;
+  levelComplete = false;
+  shootBtn.disabled = false;
+  shootBtn.style.opacity = "1";
+  nextBtn.style.display = "none";
+  nextBtn.textContent = "NEXT MONSTER ➜";
+  finalEl.style.display = "none";
+  setStory(`<strong>${LEVELS[level - 1].name}</strong><br>${LEVELS[level - 1].msg}`);
+  hintEl.textContent = "Tap SHOOT to charge, then tap again to release. Green = perfect!";
+  updateUI();
+}
+
+function finishGame() {
+  gameOver = true;
+  shootBtn.disabled = true;
+  nextBtn.style.display = "none";
+  finalEl.style.display = "block";
+  finalEl.innerHTML = `🏆 YOU BEAT ALL THE MONSTERS!<br>FINAL SCORE: ${score}<br>Best streak: ${streak}<br><button id="restartBtn" type="button" style="margin-top:10px;background:#111;color:#fff">PLAY AGAIN</button>`;
+  document.getElementById("restartBtn").addEventListener("click", restartGame);
+  setStory("<strong>CHAMPION!</strong> Zoom proved that courage and practice matter more than size.");
+  hintEl.textContent = "You completed Monster Ball!";
+}
+
+function restartGame() {
+  score = 0; streak = 0; level = 1; shotsInLevel = 0;
+  power = 0; powerDirection = 1; charging = false;
+  hoopX = 220; hoopDirection = 1; hoopSpeed = LEVELS[0].speed;
+  gameOver = false; levelComplete = false;
+  shootBtn.disabled = false; shootBtn.style.opacity = "1";
+  shootBtn.textContent = "SHOOT 🏀";
+  nextBtn.style.display = "none";
+  finalEl.style.display = "none";
+  setStory(`Coach Gor: <strong>“Zoom, you're too small for this league. Go home.”</strong><br>Zoom: “Watch me.”`);
+  hintEl.textContent = "Tap SHOOT to charge, then tap again to release. Green = perfect!";
+  resetBall();
+  updateUI();
+}
+
+function drawCourt() {
+  ctx.clearRect(0, 0, 440, 520);
+
+  // Court floor and lines
+  const gradient = ctx.createLinearGradient(0, 0, 0, 520);
+  gradient.addColorStop(0, "#35a64a");
+  gradient.addColorStop(1, "#17672b");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 440, 520);
+  ctx.strokeStyle = "rgba(255,255,255,.55)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(20, 18, 400, 484);
+  ctx.beginPath();
+  ctx.arc(220, 520, 110, Math.PI, 0);
+  ctx.stroke();
+
+  // Hoop and backboard
+  ctx.fillStyle = "#e8f4ff";
+  ctx.fillRect(hoopX - 48, 78, 96, 9);
+  ctx.fillStyle = "#ff7043";
+  ctx.fillRect(hoopX - 39, 87, 78, 8);
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(hoopX, 112, 31, 8, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(hoopX - 25, 112);
+  ctx.lineTo(hoopX - 18, 146);
+  ctx.moveTo(hoopX + 25, 112);
+  ctx.lineTo(hoopX + 18, 146);
+  ctx.stroke();
+
+  // Monster
+  ctx.font = "64px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText(LEVELS[level - 1].emoji, hoopX, 70);
+
+  // Zoom
+  ctx.font = "42px Arial";
+  ctx.fillText("🔵", 220, 493);
+  ctx.font = "bold 12px Arial";
+  ctx.fillStyle = "#fff";
+  ctx.fillText("ZOOM", 220, 510);
+
+  // Ball
+  ctx.beginPath();
+  ctx.arc(ballX, ballY, 17, 0, Math.PI * 2);
+  ctx.fillStyle = "#ff7b00";
+  ctx.fill();
+  ctx.strokeStyle = "#111";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(ballX - 16, ballY);
+  ctx.lineTo(ballX + 16, ballY);
+  ctx.moveTo(ballX, ballY - 16);
+  ctx.lineTo(ballX, ballY + 16);
+  ctx.stroke();
+
+  // HUD
+  ctx.textAlign = "left";
+  ctx.font = "bold 13px Arial";
+  ctx.fillStyle = "#fff";
+  ctx.fillText(`LEVEL ${level}`, 30, 42);
+  if (streak >= 3) {
+    ctx.font = "bold 17px Arial";
+    ctx.fillStyle = "#ff5252";
+    ctx.fillText("🔥 ON FIRE! x2 POINTS", 125, 42);
+  }
+}
+
+function update(delta) {
+  const dt = Math.min(delta / 16.67, 2);
+
+  if (charging && !ballMoving) {
+    power += powerDirection * 1.8 * dt;
+    if (power >= 100) { power = 100; powerDirection = -1; }
+    if (power <= 0) { power = 0; powerDirection = 1; }
+    powerFill.style.width = `${power}%`;
+  }
+
+  if (!gameOver && !levelComplete) {
+    hoopX += hoopSpeed * hoopDirection * dt;
+    if (hoopX > 345 || hoopX < 95) hoopDirection *= -1;
+  }
+
+  if (ballMoving) {
+    ballX += ballVX * dt;
+    ballY += ballVY * dt;
+    ballVY += 0.22 * dt;
+
+    if (ballY <= 112 && ballVY > 0) {
+      // The ball has passed the hoop area; score is judged at the basket.
+      scoreShot();
+    } else if (ballY < 90 || ballX < -30 || ballX > 470 || ballY > 540) {
+      scoreShot();
+    }
+  }
+}
+
+function frame(timestamp) {
+  if (!lastFrame) lastFrame = timestamp;
+  const delta = timestamp - lastFrame;
+  lastFrame = timestamp;
+  update(delta);
+  drawCourt();
+  requestAnimationFrame(frame);
+}
+
+shootBtn.addEventListener("click", pressShoot);
+nextBtn.addEventListener("click", nextLevel);
+updateUI();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

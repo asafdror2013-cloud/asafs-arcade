@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<!--
+  © 2026 Asaf. All rights reserved.
+  "DOPAMINE OVERLOAD" is free to play. You may not copy, edit, re-upload, sell, or present this game,
+  or any part of it, as your own without Asaf's permission.
+-->
+<meta name="author" content="Asaf">
+<meta name="copyright" content="© 2026 Asaf. All rights reserved.">
+<script>
+/*! © 2026 Asaf. All rights reserved. Free to play; not to be copied or claimed as your own. */
+(function () {
+  'use strict';
+  var CFG = {"id": "dopamine-overload", "owner": "Asaf", "year": 2026, "mark": "br", "dx": 0, "dy": 74, "mount": null, "hubCss": null};
+  var NOTICE = '© ' + CFG.year + ' ' + CFG.owner;
+
+  // Inside Asaf's Arcade the game runs in a frame of the arcade page: borrow its cloud saves, let it show the notice.
+  var hub = null;
+  try {
+    var P = window.parent;
+    if (P && P !== window && P.__ASAF_ARCADE__ && P.__ASAF_ARCADE__.v === 1) hub = P.__ASAF_ARCADE__;
+  } catch (e) { hub = null; }
+  window.__ASAF_HUB__ = !!hub;
+  if (hub) {
+    window.__asafClaude = makeClaude(hub, CFG.id);
+    if (CFG.hubCss) {
+      var hs = document.createElement('style');
+      hs.textContent = CFG.hubCss;
+      (document.head || document.documentElement).appendChild(hs);
+    }
+    return;
+  }
+
+  // ---- played on its own: a small permanent tag plus a short notice when the game opens
+  var css = '' +
+    '#asaf-cr{all:initial;position:fixed;z-index:2147483646;display:block;box-sizing:border-box;pointer-events:none;user-select:none;-webkit-user-select:none;' +
+    'font:600 10px/1 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;letter-spacing:.04em;color:rgba(255,255,255,.88);' +
+    'background:rgba(6,6,16,.52);padding:4px 8px;border-radius:999px;white-space:nowrap;opacity:.82;transition:opacity .7s ease}' +
+    '#asaf-cr.asaf-busy{opacity:.14}' +
+    '#asaf-cr-toast{all:initial;position:fixed;z-index:2147483647;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));display:block;box-sizing:border-box;' +
+    'transform:translateX(-50%);pointer-events:none;user-select:none;-webkit-user-select:none;width:max-content;max-width:min(90vw,430px);' +
+    'font:500 12.5px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#fff;text-align:center;' +
+    'background:rgba(8,8,20,.9);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:9px 15px;box-shadow:0 10px 30px rgba(0,0,0,.5);' +
+    'opacity:0;animation:asafCrIn .45s ease .6s forwards,asafCrOut .6s ease 5.2s forwards}' +
+    '#asaf-cr-toast b{all:unset;font-weight:800}' +
+    '#asaf-cr-toast i{all:unset;display:block;margin-top:2px;font-size:11.5px;opacity:.78}' +
+    '@keyframes asafCrIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}' +
+    '@keyframes asafCrOut{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,0)}}';
+  var st = document.createElement('style');
+  st.id = 'asaf-cr-style';
+  st.textContent = css;
+  (document.head || document.documentElement).appendChild(st);
+
+  var dx = 6 + (CFG.dx || 0), dy = 6 + (CFG.dy || 0);
+  var T = 'top:calc(' + dy + 'px + env(safe-area-inset-top,0px));';
+  var B = 'bottom:calc(' + dy + 'px + env(safe-area-inset-bottom,0px));';
+  var L = 'left:calc(' + dx + 'px + env(safe-area-inset-left,0px));';
+  var R = 'right:calc(' + dx + 'px + env(safe-area-inset-right,0px));';
+  var C = 'left:50%;transform:translateX(-50%);';
+  var POS = { tl: T + L, tr: T + R, bl: B + L, br: B + R, tc: T + C, bc: B + C };
+
+  var tag = document.createElement('div');
+  tag.id = 'asaf-cr';
+  tag.setAttribute('role', 'note');
+  tag.setAttribute('aria-label', NOTICE + '. All rights reserved.');
+  tag.textContent = NOTICE;
+  tag.style.cssText = POS[CFG.mark] || POS.br;
+
+  var toast = document.createElement('div');
+  toast.id = 'asaf-cr-toast';
+  toast.setAttribute('aria-hidden', 'true');
+  var b = document.createElement('b'); b.textContent = NOTICE + ' · All rights reserved';
+  var i = document.createElement('i'); i.textContent = 'Free to play. Please don’t copy it or claim it as your own.';
+  toast.appendChild(b); toast.appendChild(i);
+  setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 6200);
+
+  function home() {
+    if (CFG.mount) { var m = document.querySelector(CFG.mount); if (m) return m; }
+    return document.documentElement;
+  }
+  function mount() {
+    var h = home();
+    if (tag.parentNode !== h) h.appendChild(tag);
+  }
+  function start() {
+    mount();
+    home().appendChild(toast);
+    setInterval(mount, 2500);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+
+  // fade the tag while someone is actively playing, bring it back when they pause
+  var idle = 0;
+  function busy() {
+    tag.classList.add('asaf-busy');
+    clearTimeout(idle);
+    idle = setTimeout(function () { tag.classList.remove('asaf-busy'); }, 2600);
+  }
+  ['pointerdown', 'keydown', 'touchstart', 'wheel'].forEach(function (ev) {
+    window.addEventListener(ev, busy, { capture: true, passive: true });
+  });
+
+  // ---- cloud saves through the arcade page (strings only cross between the two pages)
+  function makeClaude(H, gid) {
+    var cache = {};
+    function fail(code) { var e = new Error(code || 'unavailable'); e.code = code || 'unavailable'; return e; }
+    function call(fn, args) {
+      return new Promise(function (res, rej) {
+        var p;
+        try { p = H[fn].apply(null, [gid].concat(args || [])); } catch (e) { rej(fail('unavailable')); return; }
+        Promise.resolve(p).then(function (s) {
+          var r;
+          try { r = JSON.parse(s); } catch (e) { rej(fail('internal')); return; }
+          if (r && r.ok) res(r.v); else rej(fail(r && r.code));
+        }, function () { rej(fail('unavailable')); });
+      });
+    }
+    function snap(path, v) {
+      var parts = path.split('/');
+      return { id: parts[parts.length - 1], exists: v !== null && v !== undefined,
+        data: function () { return v === null || v === undefined ? undefined : JSON.parse(JSON.stringify(v)); } };
+    }
+    function doc(path) {
+      return {
+        id: path.split('/').pop(), path: path,
+        get: function () { return call('get', [path]).then(function (v) { return snap(path, v); }); },
+        set: function (data) { return call('set', [path, JSON.stringify(data)]).then(function () {}); }
+      };
+    }
+    function query(path, lim) {
+      return {
+        path: path,
+        limit: function (n) { return query(path, n); },
+        doc: function (id) { return doc(path + '/' + id); },
+        onSnapshot: function (next, error) {
+          var dead = false, off = null;
+          function onErr(code) { if (!dead && typeof error === 'function') error(fail(code)); }
+          try {
+            off = H.watch(gid, path, lim || 0, function (s) {
+              if (dead) return;
+              var rows; try { rows = JSON.parse(s); } catch (e) { return; }
+              var docs = rows.map(function (d) { return snap(path + '/' + d.id, d.v); });
+              next({ docs: docs, size: docs.length, empty: !docs.length, forEach: function (f) { docs.forEach(f); } });
+            }, onErr);
+          } catch (e) { setTimeout(function () { onErr('unavailable'); }, 0); }
+          return function () { dead = true; try { if (off) off(); } catch (e) { /* page gone */ } };
+        }
+      };
+    }
+    var db = { doc: doc, collection: function (p) { return query(p, 0); } };
+    var user = {
+      id: function () { return call('uid', []); },
+      me: function () { return call('uid', []).then(function (id) { return { id: id }; }); },
+      can: function (n) { return call('can', [String(n)]); },
+      profiles: function (ids) { return call('profiles', [JSON.stringify(ids || [])]); },
+      isOwner: function () { return false; },
+      canEdit: function () { return false; }
+    };
+    return {
+      use: function (name) {
+        if (!cache[name]) {
+          cache[name] = call('ready', [String(name)]).then(function (ok) {
+            if (!ok) return null;
+            return name === 'db' ? db : name === 'user' ? user : null;
+          }, function () { return null; });
+        }
+        return cache[name];
+      }
+    };
+  }
+})();
+</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>DOPAMINE OVERLOAD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#09090b; --panel:#131318; --panel2:#1b1b23; --line:#2a2a36;
+  --cyan:#00f5d4; --mag:#f72585; --gold:#fee440; --purp:#9b5de5; --green:#39ff88;
+  --txt:#f4f4f7; --dim:#9a9aae;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:'Rubik',system-ui,sans-serif;
+  font-variant-numeric:tabular-nums;overscroll-behavior:none}
+body{min-height:100vh;user-select:none;-webkit-user-select:none;touch-action:manipulation;padding-bottom:72px}
+button{font-family:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation}
+.n{direction:ltr;unicode-bidi:isolate;display:inline-block}
+
+/* animated fever background + screen edge fire */
+#bg{position:fixed;inset:0;z-index:-1;opacity:0;transition:opacity .6s;
+  background:linear-gradient(120deg,#3a0647,#0b3a52,#52103a,#3d3205,#3a0647);background-size:400% 400%;
+  animation:bgmove 4s linear infinite}
+@keyframes bgmove{0%{background-position:0% 50%}100%{background-position:400% 50%}}
+#edge{position:fixed;inset:0;pointer-events:none;z-index:40;opacity:0;transition:opacity .4s;
+  animation:edge 0.5s ease-in-out infinite alternate}
+@keyframes edge{from{box-shadow:inset 0 0 40px 6px var(--mag),inset 0 0 90px 10px rgba(254,228,64,.35)}
+  to{box-shadow:inset 0 0 70px 14px var(--gold),inset 0 0 140px 30px rgba(247,37,133,.5)}}
+body.fever #bg,body.fever #edge{opacity:1}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:60}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:95}
+#flash.go{animation:flash .6s ease-out}
+@keyframes flash{0%{opacity:1}100%{opacity:0}}
+
+/* HUD */
+header{position:sticky;top:0;z-index:30;background:rgba(9,9,11,.92);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:8px 12px}
+.hrow{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.logo{font-weight:900;font-size:14px;letter-spacing:1px;direction:ltr;
+  background:linear-gradient(90deg,var(--cyan),var(--mag),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.ib{width:36px;height:36px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);font-size:16px}
+#dp{font-size:34px;font-weight:900;color:var(--gold);text-shadow:0 0 18px rgba(254,228,64,.45);line-height:1.1}
+.dpl{font-size:11px;color:var(--dim)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:500}
+.chip b{font-weight:700}
+.c-cy b{color:var(--cyan)} .c-mg b{color:var(--mag)} .c-pp b{color:var(--purp)}
+.fvrow{margin-top:7px;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700}
+.fbar{flex:1;height:12px;border-radius:999px;background:var(--panel2);overflow:hidden;border:1px solid var(--line)}
+#fvfill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,var(--cyan),var(--mag),var(--gold));
+  box-shadow:0 0 12px var(--mag);transition:width .1s linear}
+body.fever #fvfill{animation:hue 1s linear infinite}
+@keyframes hue{to{filter:hue-rotate(360deg)}}
+body.fever .fvl{color:var(--gold)}
+
+/* layout */
+main{max-width:1400px;margin:0 auto;padding:10px;display:block}
+.panel{display:none;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:12px;min-width:0}
+body[data-p=core] #p-core,body[data-p=games] #p-games,body[data-p=upg] #p-upg{display:block}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:35;display:flex;background:rgba(15,15,20,.97);
+  border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+nav button{flex:1;padding:8px 4px;border-radius:12px;font-weight:700;font-size:13px;color:var(--dim);position:relative}
+nav button .ic{display:block;font-size:20px}
+nav button.on{color:var(--cyan);background:var(--panel2)}
+.dot{position:absolute;top:4px;inset-inline-end:22%;width:10px;height:10px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 10px var(--green);display:none;animation:pulse 1s infinite}
+@media(min-width:1024px){
+  body{padding-bottom:0}
+  main{display:grid;grid-template-columns:1.1fr 1.1fr 1fr;grid-template-areas:"upg games core";gap:12px;align-items:start}
+  .panel{display:block!important}
+  #p-core{grid-area:core;position:sticky;top:150px} #p-games{grid-area:games} #p-upg{grid-area:upg}
+  nav{display:none}
+  #dp{font-size:42px}
+}
+
+/* core */
+.corewrap{display:flex;flex-direction:column;align-items:center;padding:6px 0 4px;position:relative}
+#combo{height:30px;font-weight:900;font-size:22px;color:var(--cyan);text-shadow:0 0 12px var(--cyan);opacity:0;transition:opacity .2s}
+#core{width:clamp(190px,56vw,250px);aspect-ratio:1;border-radius:50%;margin:8px 0 12px;position:relative;font-size:76px;
+  background:radial-gradient(circle at 35% 30%,#ff7ab8,var(--mag) 38%,#7209b7 75%,#3a0ca3);
+  box-shadow:0 0 40px rgba(247,37,133,.65),0 0 100px rgba(155,93,229,.35),inset 0 -14px 30px rgba(0,0,0,.35),inset 0 10px 24px rgba(255,255,255,.3);
+  display:flex;align-items:center;justify-content:center;animation:breathe 2.4s ease-in-out infinite}
+#core::after{content:"";position:absolute;inset:-12px;border-radius:50%;border:2px dashed rgba(0,245,212,.5);animation:spin 14s linear infinite}
+@media(min-width:1024px){#core{width:230px}}
+@keyframes breathe{50%{box-shadow:0 0 60px rgba(247,37,133,.9),0 0 130px rgba(155,93,229,.5),inset 0 -14px 30px rgba(0,0,0,.35),inset 0 10px 24px rgba(255,255,255,.3)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+body.fever #core{background:radial-gradient(circle at 35% 30%,#fff7b0,var(--gold) 38%,#ff7b00 75%,#d00000)}
+.hint{color:var(--dim);font-size:12px;text-align:center}
+#buffs{display:flex;gap:10px;justify-content:center;min-height:64px;margin-top:8px}
+.buff{display:none;position:relative;width:60px;height:60px}
+.buff.on{display:block}
+.buff svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.buff circle{fill:none;stroke-width:4}
+.buff .tr{stroke:var(--line)} .buff .pr{stroke:var(--gold);stroke-linecap:round;stroke-dasharray:157}
+.buff .bi{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:18px;line-height:1}
+.buff .bi small{font-size:10px;font-weight:700;color:var(--gold)}
+#drone{position:fixed;z-index:55;left:0;top:0;width:64px;height:64px;font-size:40px;display:none;align-items:center;justify-content:center;
+  border-radius:50%;background:radial-gradient(circle,rgba(254,228,64,.55),rgba(254,228,64,0) 70%);
+  filter:drop-shadow(0 0 14px var(--gold));animation:wob .5s ease-in-out infinite alternate;cursor:pointer}
+@keyframes wob{from{font-size:38px}to{font-size:46px}}
+
+/* tabs */
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tabs button{flex:1;padding:9px 4px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);font-weight:700;font-size:13px;color:var(--dim);position:relative}
+.tabs button.on{color:#000;background:var(--cyan);border-color:var(--cyan);box-shadow:0 0 14px rgba(0,245,212,.5)}
+.tabc{display:none}.tabc.on{display:block}
+h3{margin:4px 0 8px;font-size:15px}
+.sub{color:var(--dim);font-size:12px;margin:0 0 10px}
+
+/* buttons */
+.btn{padding:11px 16px;border-radius:12px;font-weight:900;font-size:15px;background:var(--cyan);color:#000;box-shadow:0 0 14px rgba(0,245,212,.4);transition:transform .08s}
+.btn:active{transform:scale(.95)}
+.btn.mg{background:var(--mag);color:#fff;box-shadow:0 0 14px rgba(247,37,133,.5)}
+.btn.gd{background:var(--gold);box-shadow:0 0 14px rgba(254,228,64,.5)}
+.btn.pp{background:var(--purp);color:#fff;box-shadow:0 0 14px rgba(155,93,229,.5)}
+.btn.gh{background:var(--panel2);color:var(--txt);box-shadow:none;border:1px solid var(--line)}
+.btn[disabled]{opacity:.4;filter:grayscale(.7);pointer-events:none}
+.btn.w{width:100%}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+/* loot */
+.chests{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chest{background:var(--panel2);border:2px solid var(--line);border-radius:14px;padding:10px 4px;text-align:center;transition:transform .08s}
+.chest:active{transform:scale(.95)}
+.chest .ce{font-size:38px;display:block}
+.chest .cn{font-weight:700;font-size:13px;display:block}
+.chest .cc{font-size:12px;font-weight:700;display:block;margin-top:2px}
+.chest.t0{border-color:#cd7f32}.chest.t0 .cc{color:#e9a25b}
+.chest.t1{border-color:var(--cyan)}.chest.t1 .cc{color:var(--cyan)}
+.chest.t2{border-color:var(--purp)}.chest.t2 .cc{color:#c79bff}
+.chest.no{opacity:.5}
+.chest.free{animation:pulse 1s infinite;box-shadow:0 0 16px var(--green);border-color:var(--green)}
+.chest.free .cc{color:var(--green)}
+.coll{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+.cd{aspect-ratio:3/4;border-radius:10px;background:var(--panel2);border:2px solid var(--rc,var(--line));display:flex;flex-direction:column;
+  align-items:center;justify-content:center;font-size:24px;position:relative;box-shadow:0 0 8px -2px var(--rc,transparent)}
+.cd small{font-size:9px;font-weight:700;color:var(--rc);text-align:center;line-height:1.1;padding:0 2px}
+.cd .ct{position:absolute;top:2px;inset-inline-start:4px;font-size:10px;font-weight:900;color:#fff}
+.cd.lock{filter:grayscale(1);opacity:.35}
+.r0{--rc:#9ca3af}.r1{--rc:#00f5d4}.r2{--rc:#f72585}.r3{--rc:#9b5de5}.r4{--rc:#fee440}
+
+/* loot modal */
+.ov{position:fixed;inset:0;z-index:80;background:rgba(5,5,8,.9);display:none;align-items:center;justify-content:center;padding:16px}
+.ov.on{display:flex}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px;width:min(420px,100%);text-align:center;
+  max-height:90vh;overflow:auto;box-shadow:0 0 50px rgba(155,93,229,.35)}
+.box h2{margin:0 0 8px;font-size:22px}
+.box p{color:var(--dim);margin:6px 0 14px;font-size:14px;line-height:1.5}
+.box .big{font-size:34px;font-weight:900;color:var(--gold);margin:8px 0;text-shadow:0 0 18px rgba(254,228,64,.5)}
+.row{display:flex;gap:8px}.row>*{flex:1}
+#loot{flex-direction:column;overflow:hidden}
+#rays{position:absolute;width:160vmax;height:160vmax;border-radius:50%;opacity:0;transition:opacity 1s;pointer-events:none;
+  background:repeating-conic-gradient(from 0deg,var(--rc,#fee440) 0deg 8deg,transparent 8deg 20deg);
+  -webkit-mask:radial-gradient(circle,#000 0,transparent 55%);mask:radial-gradient(circle,#000 0,transparent 55%);animation:spin 10s linear infinite}
+#loot.ray #rays{opacity:.35}
+#chest{font-size:120px;position:relative;filter:drop-shadow(0 0 30px var(--rc,#fee440))}
+#chest.shake{animation:shake 1.5s ease-in forwards}
+@keyframes shake{0%{transform:rotate(0) scale(1)}10%{transform:rotate(-4deg)}20%{transform:rotate(4deg)}30%{transform:rotate(-7deg) scale(1.05)}
+ 40%{transform:rotate(7deg)}50%{transform:rotate(-11deg) scale(1.1)}60%{transform:rotate(11deg)}70%{transform:rotate(-15deg) scale(1.18)}
+ 80%{transform:rotate(15deg)}90%{transform:rotate(-19deg) scale(1.28)}100%{transform:rotate(0) scale(1.5)}}
+#reveal{display:none;position:relative;flex-direction:column;align-items:center;width:min(380px,100%)}
+#reveal.on{display:flex;animation:popin .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes popin{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}
+.bigcard{width:190px;border-radius:18px;padding:18px 10px;background:linear-gradient(160deg,#22222c,#101016);border:3px solid var(--rc);
+  box-shadow:0 0 40px var(--rc),inset 0 0 30px -10px var(--rc)}
+.bigcard .be{font-size:74px;line-height:1.1}
+.bigcard .bn{font-weight:900;font-size:19px;margin-top:4px}
+.bigcard .br{font-weight:900;color:var(--rc);font-size:14px;letter-spacing:1px}
+.bigcard .bb{font-size:13px;color:var(--dim);margin-top:6px}
+.strip{display:flex;gap:8px;margin:14px 0 4px;align-items:center}
+.strip .cd{width:54px;font-size:22px}
+.strip .cd.me{width:64px;box-shadow:0 0 16px var(--rc)}
+.strip .cd.miss{animation:pulse .6s infinite}
+#nearmiss{min-height:22px;font-weight:900;color:var(--gold);font-size:14px;margin-bottom:10px}
+
+/* wheel */
+.wheelwrap{position:relative;width:min(300px,82vw);aspect-ratio:1;margin:6px auto 12px}
+#wheel{width:100%;height:100%;border-radius:50%;box-shadow:0 0 30px rgba(254,228,64,.35),0 0 0 6px #23232e,0 0 0 9px var(--gold)}
+.ptr{position:absolute;top:-12px;left:50%;margin-left:-14px;width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;
+  border-top:28px solid var(--mag);filter:drop-shadow(0 0 8px var(--mag));z-index:2;transform-origin:50% 0}
+#wmsg{text-align:center;min-height:24px;font-weight:900;margin-bottom:8px}
+
+/* crash */
+#crashc{width:100%;height:auto;border-radius:14px;background:#0c0c11;border:1px solid var(--line);display:block}
+#cmult{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:900;pointer-events:none;
+  text-shadow:0 0 20px currentColor}
+.cwrap{position:relative;margin-bottom:8px}
+.hist{display:flex;gap:5px;flex-wrap:wrap;min-height:24px;margin-bottom:8px;direction:ltr}
+.hist span{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--panel2)}
+.bets{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.bets button{padding:9px 0;border-radius:10px;background:var(--panel2);border:1px solid var(--line);font-weight:700}
+.bets button.on{border-color:var(--gold);color:var(--gold);box-shadow:0 0 10px rgba(254,228,64,.35)}
+#betinfo{text-align:center;font-size:13px;color:var(--dim);margin-bottom:8px}
+
+/* upgrades */
+.modes{display:flex;gap:6px;margin-bottom:8px}
+.modes button{flex:1;padding:6px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);font-weight:700;font-size:13px}
+.modes button.on{border-color:var(--gold);color:var(--gold)}
+.up{display:flex;align-items:center;gap:10px;width:100%;text-align:start;background:var(--panel2);border:1px solid var(--line);border-radius:14px;
+  padding:9px 10px;margin-bottom:7px;position:relative;overflow:hidden;opacity:.5;transition:transform .08s}
+.up.ok{opacity:1;border-color:var(--cyan);box-shadow:0 0 12px -4px var(--cyan)}
+.up.ok:active{transform:scale(.97)}
+.up .ue{font-size:28px;width:38px;text-align:center}
+.up .um{flex:1;min-width:0}
+.up .un{font-weight:700;font-size:14px}
+.up .ud{font-size:11px;color:var(--dim)}
+.up .uc{font-weight:900;font-size:13px;color:var(--gold)}
+.up .uo{font-size:22px;font-weight:900;color:var(--purp);min-width:36px;text-align:center}
+.up .ub{position:absolute;bottom:0;inset-inline-start:0;height:3px;background:var(--mag);box-shadow:0 0 6px var(--mag)}
+
+/* quests */
+.q{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:9px 10px;margin-bottom:7px;display:flex;gap:10px;align-items:center}
+.q .qe{font-size:24px}
+.q .qm{flex:1;min-width:0}
+.q .qt{font-weight:700;font-size:13px}
+.q .qr{font-size:11px;color:var(--gold)}
+.q .qb{height:6px;border-radius:99px;background:#0c0c11;margin-top:5px;overflow:hidden}
+.q .qb i{display:block;height:100%;background:var(--cyan);border-radius:99px;width:0}
+.claim{padding:8px 12px;border-radius:10px;font-weight:900;font-size:13px;background:#2a2a36;color:var(--dim);pointer-events:none;white-space:nowrap}
+.claim.rdy{background:var(--green);color:#000;pointer-events:auto;animation:pulse .8s infinite;box-shadow:0 0 16px var(--green)}
+.claim.done{background:transparent;color:var(--green)}
+.gembox{text-align:center;padding:14px 6px}
+.gembox .gi{font-size:64px;filter:drop-shadow(0 0 22px var(--purp));animation:pulse 2s infinite}
+
+#toasts{position:fixed;top:150px;left:0;right:0;z-index:70;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+.toast{background:rgba(27,27,35,.96);border:1px solid var(--gold);border-radius:999px;padding:8px 16px;font-weight:700;font-size:14px;
+  box-shadow:0 0 18px rgba(254,228,64,.35);animation:tin .3s ease-out,tout .4s ease-in 2.3s forwards;max-width:92vw;text-align:center}
+@keyframes tin{from{transform:translateY(-20px) scale(.8);opacity:0}}
+@keyframes tout{to{transform:translateY(-10px);opacity:0}}
+</style>
+</head>
+<body data-p="core">
+<div id="bg"></div><div id="edge"></div>
+<canvas id="fx"></canvas><div id="flash"></div>
+<div id="drone" data-act="drone">🛸</div>
+<div id="toasts"></div>
+
+<header>
+  <div class="hrow">
+    <div>
+      <div class="dpl">Dopamine Points</div>
+      <div id="dp" class="n">0</div>
+    </div>
+    <div style="text-align:end">
+      <div class="logo">DOPAMINE OVERLOAD</div>
+      <div style="margin-top:4px;display:flex;gap:6px;justify-content:flex-end">
+        <button class="ib" id="mute" data-act="mute" aria-label="Mute">🔊</button>
+        <button class="ib" data-act="askreset" aria-label="Reset">🗑️</button>
+      </div>
+    </div>
+  </div>
+  <div class="chips">
+    <div class="chip c-cy">⚡ <b class="n" id="dps">0</b> /sec</div>
+    <div class="chip c-mg">👆 <b class="n" id="dpc">1</b> /click</div>
+    <div class="chip c-pp">💎 <b class="n" id="gems">0</b></div>
+    <div class="chip">✖️ <b class="n" id="mult">1.00</b></div>
+  </div>
+  <div class="fvrow"><span class="fvl" id="fvl">🔥 Hype</span><div class="fbar"><div id="fvfill"></div></div><span class="n" id="fvp">0%</span></div>
+</header>
+
+<main>
+  <!-- LEFT: active core -->
+  <section class="panel" id="p-core">
+    <div class="corewrap">
+      <div id="combo" class="n">x1</div>
+      <button id="core" aria-label="Click">🧠</button>
+      <div class="hint">Click fast to fill the Hype meter. In FEVER mode, all earnings are multiplied <span class="n">×5</span></div>
+      <div id="buffs">
+        <div class="buff" id="b-fever"><svg viewBox="0 0 60 60"><circle class="tr" cx="30" cy="30" r="25"/><circle class="pr" cx="30" cy="30" r="25"/></svg><div class="bi">🔥<small class="n">×5</small></div></div>
+        <div class="buff" id="b-auto"><svg viewBox="0 0 60 60"><circle class="tr" cx="30" cy="30" r="25"/><circle class="pr" cx="30" cy="30" r="25"/></svg><div class="bi">🤖<small>AUTO</small></div></div>
+        <div class="buff" id="b-boost"><svg viewBox="0 0 60 60"><circle class="tr" cx="30" cy="30" r="25"/><circle class="pr" cx="30" cy="30" r="25"/></svg><div class="bi">⚡<small class="n">×3</small></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CENTER: gacha + mini games -->
+  <section class="panel" id="p-games">
+    <div class="tabs">
+      <button class="on" data-act="tab" data-g="games" data-t="loot">🎁 Boxes</button>
+      <button data-act="tab" data-g="games" data-t="wheel">🎡 Wheel</button>
+      <button data-act="tab" data-g="games" data-t="crash">🚀 Crash</button>
+    </div>
+    <div class="tabc on" data-g="games" data-t="loot">
+      <h3>The Box Machine</h3>
+      <p class="sub">Every card gives a permanent bonus to all earnings. Duplicates stack!</p>
+      <div class="chests" id="chests"></div>
+      <h3 style="margin-top:14px">My Collection <span class="n" id="collc" style="color:var(--dim);font-size:12px"></span></h3>
+      <div class="coll" id="coll"></div>
+    </div>
+    <div class="tabc" data-g="games" data-t="wheel">
+      <h3>Wheel of Fortune</h3>
+      <div class="wheelwrap"><div class="ptr" id="ptr"></div><canvas id="wheel" width="600" height="600"></canvas></div>
+      <div id="wmsg"></div>
+      <button class="btn gd w" id="spinbtn" data-act="spin">Spin now!</button>
+    </div>
+    <div class="tabc" data-g="games" data-t="crash">
+      <h3>Crash: cash out before it blows!</h3>
+      <div class="cwrap"><canvas id="crashc" width="600" height="280"></canvas><div id="cmult" class="n">×1.00</div></div>
+      <div class="hist" id="hist"></div>
+      <div class="bets" id="bets">
+        <button data-act="bet" data-v="0.1" class="on n">10%</button>
+        <button data-act="bet" data-v="0.25" class="n">25%</button>
+        <button data-act="bet" data-v="0.5" class="n">50%</button>
+        <button data-act="bet" data-v="1" class="n">ALL IN</button>
+      </div>
+      <div id="betinfo"></div>
+      <button class="btn mg w" id="crashbtn" data-act="crash">Launch!</button>
+    </div>
+  </section>
+
+  <!-- RIGHT: upgrades, quests, prestige -->
+  <section class="panel" id="p-upg">
+    <div class="tabs">
+      <button class="on" data-act="tab" data-g="upg" data-t="ups">⬆️ Upgrades</button>
+      <button data-act="tab" data-g="upg" data-t="quests">🏆 Quests<span class="dot" id="qdot"></span></button>
+      <button data-act="tab" data-g="upg" data-t="prestige">💎 Rebirth</button>
+    </div>
+    <div class="tabc on" data-g="upg" data-t="ups">
+      <div class="modes" id="modes">
+        <button class="on n" data-act="mode" data-v="1">×1</button>
+        <button class="n" data-act="mode" data-v="10">×10</button>
+        <button data-act="mode" data-v="0">MAX</button>
+      </div>
+      <div id="ups"></div>
+    </div>
+    <div class="tabc" data-g="upg" data-t="quests">
+      <h3>Quests</h3><div id="quests"></div>
+      <h3 style="margin-top:14px">Achievements <span style="color:var(--dim);font-size:12px">(each one: <span class="n">+3%</span> to all earnings)</span></h3><div id="achs"></div>
+    </div>
+    <div class="tabc" data-g="upg" data-t="prestige">
+      <div class="gembox">
+        <div class="gi">💎</div>
+        <h3>Rebirth</h3>
+        <p class="sub">Reset your points and upgrades to earn prestige gems. Each gem adds <span class="n">+10%</span> to all earnings, forever. Your cards and achievements stay.</p>
+        <div>You'll get now:</div>
+        <div class="n" id="pgain" style="font-size:40px;font-weight:900;color:var(--purp);text-shadow:0 0 18px var(--purp)">0</div>
+        <div class="sub" id="pnext"></div>
+        <button class="btn pp w" id="pbtn" data-act="askasc">Ascend ✨</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button class="on" data-act="nav" data-p="core"><span class="ic">🧠</span>Core</button>
+  <button data-act="nav" data-p="games"><span class="ic">🎰</span>Luck<span class="dot" id="gdot"></span></button>
+  <button data-act="nav" data-p="upg"><span class="ic">⬆️</span>Upgrades<span class="dot" id="udot"></span></button>
+</nav>
+
+<!-- loot opening overlay -->
+<div class="ov" id="loot">
+  <div id="rays"></div>
+  <div id="chest">📦</div>
+  <div id="reveal">
+    <div class="bigcard" id="bigcard"></div>
+    <div class="strip" id="strip"></div>
+    <div id="nearmiss"></div>
+    <div class="row" style="width:100%"><button class="btn gh" data-act="lootclose">Collect</button><button class="btn gd" id="again" data-act="lootagain">One more!</button></div>
+  </div>
+</div>
+<!-- generic modal -->
+<div class="ov" id="modal"><div class="box" id="mbox"></div></div>
+
+<script>
+'use strict';
+/* ============================================================
+   DOPAMINE OVERLOAD — single-file incremental game
+   ============================================================ */
+
+// ---------- helpers ----------
+const $ = id => document.getElementById(id);
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+function fmt(n) {
+  if (typeof n !== 'number' || !isFinite(n)) return '0';
+  if (n < 0) return '-' + fmt(-n);
+  if (n < 1000) return (n < 10 && n % 1 !== 0) ? n.toFixed(1) : String(Math.floor(n));
+  let e = Math.floor(Math.log10(n) / 3);
+  let v = n / Math.pow(1000, e);
+  let d = v < 10 ? 2 : v < 100 ? 1 : 0;
+  if (+v.toFixed(d) >= 1000) { v /= 1000; e++; d = 2; }
+  if (e >= SUF.length) return n.toExponential(2).replace('+', '');
+  return v.toFixed(d) + SUF[e];
+}
+function fmtTime(s) {
+  s = Math.max(0, Math.floor(s));
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60;
+  if (h > 0) return h + ':' + String(m).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
+  return m + ':' + String(ss).padStart(2, '0');
+}
+
+// ---------- game data ----------
+// k:1 => click generator, otherwise idle generator
+const GENS = [
+  { n: 'Micro-Tap', e: '👆', c: 10, p: 1, k: 1 },
+  { n: 'Auto Bot', e: '🤖', c: 25, p: 1 },
+  { n: 'Dopamine Farm', e: '🌱', c: 200, p: 6 },
+  { n: 'Bionic Finger', e: '🦾', c: 2500, p: 40, k: 1 },
+  { n: 'Meme Factory', e: '😂', c: 1500, p: 30 },
+  { n: 'Neural Link', e: '🧬', c: 12000, p: 150 },
+  { n: 'Infinite Feed', e: '📲', c: 1e5, p: 800 },
+  { n: 'Quantum Casino', e: '🎰', c: 1e6, p: 5000 },
+  { n: 'Serotonin Lab', e: '🧪', c: 1.2e7, p: 35000 },
+  { n: 'Reality Bender', e: '🌀', c: 1.5e8, p: 250000 },
+  { n: 'Black Hole of Likes', e: '🕳️', c: 2e9, p: 2e6 },
+  { n: 'Galaxy Brain', e: '🌌', c: 3e10, p: 1.8e7 },
+  { n: 'Bliss Singularity', e: '♾️', c: 5e11, p: 1.5e8 },
+];
+const RAR = ['Common', 'Rare', 'Epic', 'Legendary', 'Mythic'];
+const RCOL = ['#9ca3af', '#00f5d4', '#f72585', '#9b5de5', '#fee440'];
+const RBON = [0.02, 0.06, 0.2, 0.75, 3];
+const CARDS = [
+  { e: '🍬', n: 'Neon Candy', r: 0 }, { e: '👍', n: 'First Like', r: 0 }, { e: '🔔', n: 'Sweet Ping', r: 0 }, { e: '☕', n: 'Double Espresso', r: 0 },
+  { e: '🎧', n: 'Bass Quake', r: 1 }, { e: '🕹️', n: 'Golden Joystick', r: 1 }, { e: '🍩', n: 'Cosmic Donut', r: 1 }, { e: '📱', n: 'Endless Screen', r: 1 },
+  { e: '🧠', n: 'Electric Brain', r: 2 }, { e: '🎰', n: 'Slot Machine', r: 2 }, { e: '🚀', n: 'Serotonin Rocket', r: 2 },
+  { e: '👑', n: 'Dopamine Crown', r: 3 }, { e: '🐉', n: 'Neon Dragon', r: 3 },
+  { e: '💠', n: 'Galaxy Heart', r: 4 }, { e: '🔱', n: 'Infinity Loop', r: 4 },
+];
+const BOXES = [
+  { n: 'Bronze', e: '📦', c: 100, col: '#cd7f32', odds: [70, 24, 5, 0.9, 0.1] },
+  { n: 'Neon', e: '🎁', c: 7500, col: '#00f5d4', odds: [40, 38, 17, 4.5, 0.5] },
+  { n: 'Cosmic', e: '🔮', c: 1e6, col: '#9b5de5', odds: [10, 35, 35, 16, 4] },
+];
+// wheel segments; index 0 is the Mythic jackpot
+const WSEG = [
+  { l: '👑', t: 'jack', col: '#fee440' }, { l: '×1', t: 'dp', v: 1, col: '#1f1f2b' }, { l: '📦', t: 'box', v: 0, col: '#7b4a1e' },
+  { l: '×3', t: 'dp', v: 3, col: '#0d6e63' }, { l: '⚡', t: 'boost', col: '#9b5de5' }, { l: '×10', t: 'dp', v: 10, col: '#b5179e' },
+  { l: '💎', t: 'gem', col: '#3a0ca3' }, { l: '×5', t: 'dp', v: 5, col: '#0d6e63' }, { l: '🎁', t: 'box', v: 1, col: '#0b7285' },
+  { l: '×1', t: 'dp', v: 1, col: '#1f1f2b' },
+];
+const WHEEL_CD = 45000;
+const seq = (arr, grow) => l => l < arr.length ? arr[l] : arr[arr.length - 1] * Math.pow(grow, l - arr.length + 1);
+const QUESTS = [
+  { e: '👆', t: seq([20, 100, 300, 1000], 3), v: () => S.clicks, txt: t => `Click ${fmt(t)} times` },
+  { e: '💰', t: l => 1000 * Math.pow(10, l), v: () => S.life, txt: t => `Earn ${fmt(t)} DP in total` },
+  { e: '⬆️', t: l => l < 4 ? [5, 15, 30, 50][l] : 50 + 25 * (l - 3), v: () => totalGens(), txt: t => `Own ${fmt(t)} upgrades` },
+  { e: '🎁', t: seq([1, 3, 10, 25], 2), v: () => S.opened, txt: t => `Open ${fmt(t)} boxes` },
+  { e: '🎡', t: seq([1, 3, 10, 25], 2), v: () => S.spins, txt: t => `Spin the wheel ${fmt(t)} times` },
+  { e: '🚀', t: seq([1, 3, 10, 25], 2), v: () => S.wins, txt: t => `Win ${fmt(t)} Crash rounds` },
+  { e: '🛸', t: seq([1, 3, 10, 25], 2), v: () => S.drones, txt: t => `Catch ${fmt(t)} golden drones` },
+];
+const ACHS = [
+  { n: 'First Click', d: 'Every journey starts with a click', c: () => S.clicks >= 1 },
+  { n: 'Hot Finger', d: '1,000 clicks', c: () => S.clicks >= 1000 },
+  { n: 'Steel Finger', d: '10,000 clicks', c: () => S.clicks >= 10000 },
+  { n: 'Millionaire', d: 'Earn 1M DP', c: () => S.life >= 1e6 },
+  { n: 'Billionaire', d: 'Earn 1B DP', c: () => S.life >= 1e9 },
+  { n: 'Trillionaire', d: 'Earn 1T DP', c: () => S.life >= 1e12 },
+  { n: 'Rookie Collector', d: '5 different cards', c: () => uniqueCards() >= 5 },
+  { n: 'Obsessive Collector', d: '12 different cards', c: () => uniqueCards() >= 12 },
+  { n: 'Living Legend', d: 'Get a Legendary card', c: () => hasRarity(3) },
+  { n: 'Myth', d: 'Get a Mythic card', c: () => hasRarity(4) },
+  { n: 'Running Hot', d: 'Enter FEVER', c: () => S.fevers >= 1 },
+  { n: 'Fever Addict', d: 'Enter FEVER 10 times', c: () => S.fevers >= 10 },
+  { n: 'Drone Hunter', d: 'Catch 5 drones', c: () => S.drones >= 5 },
+  { n: 'Nerves of Steel', d: 'Cash out a Crash at ×5 or more', c: () => S.best >= 5 },
+  { n: 'Jackpot!', d: 'Win the crown on the wheel', c: () => S.jack >= 1 },
+  { n: 'Empire', d: '100 upgrades', c: () => totalGens() >= 100 },
+  { n: 'Born Again', d: 'Ascend once', c: () => S.asc >= 1 },
+];
+
+// ---------- state ----------
+const KEY = 'dopamine_overload_v1';
+function fresh() {
+  return { dp: 0, run: 0, life: 0, clicks: 0, gems: 0, g: GENS.map(() => 0), cards: CARDS.map(() => 0), boxes: [0, 0, 0], free: [0, 0, 0],
+    opened: 0, spins: 0, jack: 0, wins: 0, best: 0, drones: 0, fevers: 0, asc: 0, q: QUESTS.map(() => 0), ach: ACHS.map(() => 0),
+    wheelAt: 0, muted: false, last: Date.now() };
+}
+let S = fresh();
+const num = (v, d) => (typeof v === 'number' && isFinite(v) && v >= 0) ? v : d;
+function load() {
+  let raw = null;
+  try { raw = JSON.parse(localStorage.getItem(KEY)); } catch (e) { raw = null; }
+  if (!raw || typeof raw !== 'object') return false;
+  const d = fresh();
+  for (const k in d) {
+    if (Array.isArray(d[k])) d[k] = d[k].map((x, i) => Math.floor(num(raw[k] && raw[k][i], 0)));
+    else if (typeof d[k] === 'number') d[k] = num(raw[k], d[k]);
+    else if (typeof d[k] === 'boolean') d[k] = !!raw[k];
+  }
+  S = d; return true;
+}
+function save() { S.last = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* storage unavailable */ } }
+
+// runtime (non-persistent)
+let fever = 0, feverT = 0, autoT = 0, autoAcc = 0, boostT = 0, combo = 0, lastClick = 0, buyMode = 1;
+const FEVER_LEN = 15, AUTO_LEN = 10, BOOST_LEN = 30;
+
+// ---------- math ----------
+const totalGens = () => S.g.reduce((a, b) => a + b, 0);
+const uniqueCards = () => S.cards.filter(c => c > 0).length;
+const hasRarity = r => CARDS.some((c, i) => c.r === r && S.cards[i] > 0);
+const genProd = i => GENS[i].p * S.g[i] * Math.pow(2, Math.floor(S.g[i] / 25));
+function cardBonus() { let b = 0; for (let i = 0; i < CARDS.length; i++) b += S.cards[i] * RBON[CARDS[i].r]; return b; }
+function permMult() { return (1 + cardBonus()) * (1 + 0.1 * S.gems) * (1 + 0.03 * S.ach.reduce((a, b) => a + b, 0)); }
+function mult() { return permMult() * (feverT > 0 ? 5 : 1) * (boostT > 0 ? 3 : 1); }
+function baseDps() { let s = 0; for (let i = 0; i < GENS.length; i++) if (!GENS[i].k) s += genProd(i); return s; }
+function baseDpc() { let s = 1; for (let i = 0; i < GENS.length; i++) if (GENS[i].k) s += genProd(i); return s; }
+const dps = () => baseDps() * mult();
+const dpc = () => baseDpc() * mult() + dps() * 0.05;
+const genCost = (i, n) => GENS[i].c * Math.pow(1.15, S.g[i]) * (Math.pow(1.15, n) - 1) / 0.15;
+function maxBuy(i) {
+  const v = S.dp * 0.15 / (GENS[i].c * Math.pow(1.15, S.g[i])) + 1;
+  return v > 1 ? Math.max(0, Math.floor(Math.log(v) / Math.log(1.15) + 1e-9)) : 0;
+}
+const buyN = i => buyMode === 0 ? Math.max(1, maxBuy(i)) : buyMode;
+const boxCost = t => BOXES[t].c * Math.pow(1.22, S.boxes[t]);
+const pendingGems = () => Math.floor(Math.sqrt(S.run / 1e6));
+const rewardBase = () => Math.max(baseDps() * permMult() * 45, (baseDpc() * permMult()) * 25, 25);
+function gain(x) { if (!(x > 0) || !isFinite(x)) return; S.dp += x; S.run += x; S.life += x; }
+
+// ---------- audio (Web Audio synth, no files) ----------
+const A = {
+  ctx: null, out: null, step: 0, next: 0,
+  init() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {}); return; }
+    try {
+      const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+      this.ctx = new C(); this.out = this.ctx.createGain();
+      this.out.gain.value = S.muted ? 0 : 0.9; this.out.connect(this.ctx.destination);
+      this.next = this.ctx.currentTime + 0.2;
+    } catch (e) { this.ctx = null; }
+  },
+  setMute(m) { if (this.out) this.out.gain.value = m ? 0 : 0.9; },
+  tone(f, dur, type, vol, when, f2) {
+    if (!this.ctx || S.muted) return;
+    try {
+      const t = this.ctx.currentTime + (when || 0), o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.type = type || 'sine'; o.frequency.setValueAtTime(f, t);
+      if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol || 0.2, t + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(this.out); o.start(t); o.stop(t + dur + 0.03);
+    } catch (e) {}
+  },
+  noise(dur, vol, when, freq) {
+    if (!this.ctx || S.muted) return;
+    try {
+      const t = this.ctx.currentTime + (when || 0), len = Math.floor(this.ctx.sampleRate * dur);
+      const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+      const s = this.ctx.createBufferSource(), g = this.ctx.createGain(), f = this.ctx.createBiquadFilter();
+      f.type = 'bandpass'; f.frequency.value = freq || 1800; s.buffer = buf; g.gain.value = vol || 0.2;
+      s.connect(f); f.connect(g); g.connect(this.out); s.start(t);
+    } catch (e) {}
+  },
+  pop(c) { const f = 300 * Math.pow(2, Math.min(c, 48) / 24); this.tone(f, 0.09, 'sine', 0.22, 0, f * 1.6); },
+  crit() { this.tone(880, 0.25, 'triangle', 0.25, 0, 1760); this.tone(1320, 0.25, 'sine', 0.15, 0.04, 2640); },
+  coin() { this.tone(1319, 0.08, 'square', 0.07); this.tone(1976, 0.3, 'triangle', 0.16, 0.06); this.tone(2637, 0.25, 'sine', 0.08, 0.06); },
+  tick() { this.tone(1100, 0.03, 'square', 0.09); },
+  deny() { this.tone(160, 0.12, 'sawtooth', 0.08, 0, 110); },
+  fanfare() { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, 0.18, 'triangle', 0.18, i * 0.09));
+    [523, 659, 784, 1047, 1319].forEach(f => this.tone(f, 0.9, 'sawtooth', 0.05, 0.4)); [523, 784, 1047].forEach(f => this.tone(f, 0.9, 'triangle', 0.12, 0.4)); },
+  boom() { this.noise(0.6, 0.5, 0, 300); this.tone(180, 0.6, 'sawtooth', 0.25, 0, 35); },
+  whoosh() { this.noise(0.5, 0.2, 0, 2500); this.tone(600, 0.4, 'sine', 0.1, 0, 1800); },
+  rattle() { for (let i = 0; i < 12; i++) this.tone(200 + i * 45, 0.07, 'square', 0.05 + i * 0.006, i * 0.12 * (1 - i * 0.02)); this.noise(1.4, 0.12, 0, 900); },
+  reveal(r) { this.noise(0.4, 0.35, 0, 4000); [392, 494, 587, 784, 988].slice(0, 2 + r).forEach((f, i) => this.tone(f * (1 + r * 0.1), 0.35, 'triangle', 0.16, i * 0.06)); },
+  // tiny generative background arpeggio; speeds up and pitches up in fever
+  music() {
+    if (!this.ctx || S.muted || this.ctx.state !== 'running') return;
+    const now = this.ctx.currentTime;
+    if (this.next < now - 0.5) this.next = now + 0.05;
+    const fv = feverT > 0, sp = fv ? 0.12 : 0.2, pm = fv ? 1.5 : 1;
+    const scale = [220, 261.6, 293.7, 329.6, 392, 440, 523.3, 587.3];
+    const pat = [0, 2, 4, 5, 4, 2, 3, 5, 0, 3, 4, 6, 4, 3, 2, 1];
+    while (this.next < now + 0.15) {
+      const w = this.next - now;
+      this.tone(scale[pat[this.step % 16]] * pm, sp * 0.9, 'triangle', fv ? 0.05 : 0.028, w);
+      if (this.step % 4 === 0) this.tone((this.step % 16 < 8 ? 55 : 65.4) * pm, sp * 3, 'sine', fv ? 0.1 : 0.06, w);
+      if (fv && this.step % 2 === 0) this.noise(0.04, 0.05, w, 6000);
+      this.step++; this.next += sp;
+    }
+  }
+};
+
+// ---------- particle / FX canvas ----------
+const fx = $('fx'), fc = fx.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+function resize() { DPR = Math.min(window.devicePixelRatio || 1, 2); W = window.innerWidth; H = window.innerHeight;
+  fx.width = W * DPR; fx.height = H * DPR; fc.setTransform(DPR, 0, 0, DPR, 0, 0); }
+window.addEventListener('resize', resize); resize();
+const P = [];
+const COLS = ['#00f5d4', '#f72585', '#fee440', '#9b5de5', '#ffffff'];
+function burst(x, y, n, col, pow) {
+  for (let i = 0; i < n && P.length < 700; i++) {
+    const a = Math.random() * Math.PI * 2, v = rnd(120, 420) * (pow || 1);
+    P.push({ k: 0, x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120, l: 0, m: rnd(0.45, 0.9), c: col || pick(COLS), s: rnd(2, 5) });
+  }
+}
+function confetti(x, y, n, cols) {
+  for (let i = 0; i < n && P.length < 900; i++) {
+    const a = Math.random() * Math.PI * 2, v = rnd(150, 700);
+    P.push({ k: 1, x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 250, l: 0, m: rnd(1.2, 2.4), c: pick(cols || COLS), s: rnd(5, 10), r: Math.random() * 6, vr: rnd(-10, 10) });
+  }
+}
+function ring(x, y, col, max) { P.push({ k: 2, x, y, l: 0, m: 0.45, c: col || '#00f5d4', s: max || 150 }); }
+function floatText(x, y, txt, col, size) { P.push({ k: 3, x: x + rnd(-24, 24), y, vy: -rnd(90, 140), l: 0, m: 1.1, c: col || '#fff', s: size || 20, t: txt }); }
+function drawFx(dt) {
+  fc.clearRect(0, 0, W, H);
+  for (let i = P.length - 1; i >= 0; i--) {
+    const p = P[i]; p.l += dt;
+    if (p.l >= p.m) { P[i] = P[P.length - 1]; P.pop(); continue; }
+    const a = 1 - p.l / p.m;
+    if (p.k === 0) {
+      p.vy += 900 * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+      fc.globalAlpha = a * 0.25; fc.fillStyle = p.c; fc.beginPath(); fc.arc(p.x, p.y, p.s * 2.6, 0, 6.283); fc.fill();
+      fc.globalAlpha = a; fc.beginPath(); fc.arc(p.x, p.y, p.s, 0, 6.283); fc.fill();
+    } else if (p.k === 1) {
+      p.vy += 700 * dt; p.vx *= (1 - 1.2 * dt); p.x += p.vx * dt; p.y += p.vy * dt; p.r += p.vr * dt;
+      fc.globalAlpha = Math.min(1, a * 2); fc.fillStyle = p.c; fc.save(); fc.translate(p.x, p.y); fc.rotate(p.r);
+      fc.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2 * Math.abs(Math.cos(p.r * 1.7)) + 1); fc.restore();
+    } else if (p.k === 2) {
+      const q = p.l / p.m;
+      fc.globalAlpha = a; fc.strokeStyle = p.c; fc.lineWidth = 5 * a + 1; fc.beginPath(); fc.arc(p.x, p.y, 40 + p.s * q, 0, 6.283); fc.stroke();
+    } else {
+      p.y += p.vy * dt; p.vy *= (1 - 1.5 * dt);
+      const pop = p.l < 0.12 ? 0.6 + p.l / 0.12 * 0.6 : 1.2 - Math.min(0.2, (p.l - 0.12));
+      fc.globalAlpha = Math.min(1, a * 1.8); fc.font = `900 ${Math.round(p.s * pop)}px Rubik,sans-serif`; fc.textAlign = 'center';
+      fc.lineWidth = 4; fc.strokeStyle = 'rgba(0,0,0,.75)'; fc.strokeText(p.t, p.x, p.y); fc.fillStyle = p.c; fc.fillText(p.t, p.x, p.y);
+    }
+  }
+  fc.globalAlpha = 1;
+}
+function flash() { const f = $('flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); }
+function toast(html) {
+  const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = html; const box = $('toasts');
+  box.appendChild(t); while (box.children.length > 4) box.removeChild(box.firstChild);
+  setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 2800);
+}
+const N = x => `<span class="n">${x}</span>`;
+
+// ---------- core click ----------
+const coreEl = $('core');
+function coreCenter() { const r = coreEl.getBoundingClientRect(); return r.width ? [r.left + r.width / 2, r.top + r.height / 2] : [W / 2, H / 2]; }
+function doClick(x, y, auto) {
+  const now = performance.now();
+  if (!auto) {
+    combo = (now - lastClick < 1200) ? combo + 1 : 1; lastClick = now; S.clicks++;
+    if (feverT <= 0) { fever = Math.min(100, fever + 3); if (fever >= 100) startFever(); }
+  }
+  const crit = Math.random() < 0.06;
+  const cm = 1 + Math.min(combo, 200) * 0.005;
+  const g = dpc() * cm * (crit ? 10 : 1);
+  gain(g);
+  const vis = coreEl.offsetParent !== null;
+  if (vis) {
+    burst(x, y, auto ? 3 : (crit ? 26 : 12), crit ? '#fee440' : null);
+    if (!auto || crit) ring(x, y, crit ? '#fee440' : (feverT > 0 ? '#f72585' : '#00f5d4'), crit ? 240 : 150);
+    if (crit) floatText(x, y - 40, 'CRIT! +' + fmt(g), '#fee440', 44);
+    else floatText(x, y - 30, '+' + fmt(g), feverT > 0 ? '#ff9f1c' : '#ffffff', auto ? 16 : 22);
+    if (coreEl.animate) coreEl.animate([{ transform: 'scale(.92)' }, { transform: 'scale(1.05)' }, { transform: 'scale(1)' }], { duration: 170, easing: 'ease-out' });
+  }
+  if (crit) A.crit(); else if (!auto || Math.random() < 0.3) A.pop(combo);
+}
+coreEl.addEventListener('pointerdown', e => { e.preventDefault(); A.init(); doClick(e.clientX, e.clientY, false); });
+coreEl.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!e.repeat) { A.init(); const c = coreCenter(); doClick(c[0], c[1], false); } } });
+
+function startFever() {
+  feverT = FEVER_LEN; fever = 100; S.fevers++; document.body.classList.add('fever');
+  $('fvl').textContent = '🔥 FEVER ×5!'; flash(); A.fanfare();
+  confetti(W / 2, H / 3, 90); toast('🔥 <b>FEVER MODE!</b> All earnings ' + N('×5') + ' for 15 seconds');
+}
+function endFever() { feverT = 0; fever = 0; document.body.classList.remove('fever'); $('fvl').textContent = '🔥 Hype'; }
+
+// ---------- upgrades ----------
+const upEls = [];
+function buildUps() {
+  const box = $('ups'); box.innerHTML = ''; upEls.length = 0;
+  GENS.forEach((g, i) => {
+    const b = document.createElement('button'); b.className = 'up'; b.dataset.act = 'buy'; b.dataset.i = i;
+    b.innerHTML = `<span class="ue">${g.e}</span><span class="um"><div class="un">${g.n} <span class="n ux" style="color:var(--cyan);font-size:11px"></span></div>` +
+      `<div class="ud"></div><div class="uc n"></div></span><span class="uo n">0</span><i class="ub"></i>`;
+    box.appendChild(b);
+    upEls.push({ b, x: b.querySelector('.ux'), d: b.querySelector('.ud'), c: b.querySelector('.uc'), o: b.querySelector('.uo'), bar: b.querySelector('.ub') });
+  });
+}
+function updUps() {
+  const m = mult();
+  GENS.forEach((g, i) => {
+    const el = upEls[i], n = buyN(i), cost = genCost(i, n), ms = Math.pow(2, Math.floor(S.g[i] / 25));
+    el.b.classList.toggle('ok', S.dp >= cost);
+    el.x.textContent = '+' + n;
+    el.d.innerHTML = N('+' + fmt(g.p * ms * m)) + (g.k ? ' /click' : ' /sec') + ' each' + (ms > 1 ? ' · bonus ' + N('×' + fmt(ms)) : '');
+    el.c.textContent = '💰 ' + fmt(cost);
+    el.o.textContent = S.g[i];
+    el.bar.style.width = (S.g[i] % 25) / 25 * 100 + '%';
+  });
+}
+function buy(i, ev) {
+  const n = buyN(i), cost = genCost(i, n);
+  if (S.dp < cost || !isFinite(cost)) { A.deny(); return; }
+  const before = Math.floor(S.g[i] / 25);
+  S.dp -= cost; S.g[i] += n; A.coin();
+  if (ev) burst(ev.clientX, ev.clientY, 8, '#fee440', 0.6);
+  if (Math.floor(S.g[i] / 25) > before) {
+    toast(`🎉 Milestone! <b>${GENS[i].n}</b> now produces ${N('×2')}`); A.fanfare(); confetti(W / 2, H / 2, 60);
+  }
+  updUps();
+}
+
+// ---------- loot boxes ----------
+function buildChests() {
+  $('chests').innerHTML = BOXES.map((b, t) => `<button class="chest t${t}" data-act="box" data-t="${t}"><span class="ce">${b.e}</span><span class="cn">${b.n}</span><span class="cc n" id="cc${t}"></span></button>`).join('');
+}
+function updChests() {
+  let anyFree = false;
+  BOXES.forEach((b, t) => {
+    const el = $('cc' + t), btn = el.parentNode, fr = S.free[t] > 0; anyFree = anyFree || fr;
+    el.textContent = fr ? 'FREE ×' + S.free[t] : '💰 ' + fmt(boxCost(t));
+    btn.classList.toggle('free', fr); btn.classList.toggle('no', !fr && S.dp < boxCost(t));
+  });
+  $('gdot').style.display = (anyFree || Date.now() >= S.wheelAt) ? 'block' : 'none';
+}
+function cardHtml(i, cls, showCount) {
+  const c = CARDS[i];
+  return `<div class="cd r${c.r} ${cls || ''}">${showCount && S.cards[i] > 1 ? `<span class="ct n">×${S.cards[i]}</span>` : ''}${c.e}<small>${c.n}</small></div>`;
+}
+function renderColl() {
+  $('coll').innerHTML = CARDS.map((c, i) => S.cards[i] > 0 ? cardHtml(i, '', true) : `<div class="cd lock r${c.r}">❓<small>${RAR[c.r]}</small></div>`).join('');
+  $('collc').textContent = uniqueCards() + '/' + CARDS.length + ' · +' + Math.round(cardBonus() * 100) + '%';
+}
+function rollCard(t) {
+  const o = BOXES[t].odds; let r = Math.random() * 100, rar = 0;
+  for (let i = 0; i < o.length; i++) { if (r < o[i]) { rar = i; break; } r -= o[i]; rar = i; }
+  const pool = []; CARDS.forEach((c, i) => { if (c.r === rar) pool.push(i); });
+  return pick(pool);
+}
+let lootBusy = false, lootTier = 0;
+function openBox(t) {
+  if (lootBusy) return;
+  if (S.free[t] > 0) S.free[t]--;
+  else { const c = boxCost(t); if (S.dp < c) { A.deny(); toast('You need ' + N(fmt(c - S.dp)) + ' more DP'); return; } S.dp -= c; S.boxes[t]++; }
+  lootBusy = true; lootTier = t; S.opened++;
+  const ci = rollCard(t), card = CARDS[ci]; S.cards[ci]++;
+  // neighbours on the "reel" are cosmetic; sometimes a Mythic sits right next to the result (near-miss)
+  let nb = [rollCard(t), rollCard(t)], near = false;
+  const myth = []; CARDS.forEach((c, i) => { if (c.r === 4) myth.push(i); });
+  if (card.r < 4 && Math.random() < 0.25) { nb[Math.random() < 0.5 ? 0 : 1] = pick(myth); near = true; }
+  else nb = nb.map(i => (CARDS[i].r === 4 && card.r < 4) ? ci : i);
+  const L = $('loot'), ch = $('chest'), rv = $('reveal');
+  L.style.setProperty('--rc', BOXES[t].col); L.classList.add('on'); rv.classList.remove('on');
+  ch.style.display = 'block'; ch.textContent = BOXES[t].e; ch.classList.remove('shake'); void ch.offsetWidth; ch.classList.add('shake');
+  setTimeout(() => L.classList.add('ray'), 30); A.rattle();
+  setTimeout(() => {
+    flash(); ch.style.display = 'none'; L.style.setProperty('--rc', RCOL[card.r]);
+    $('bigcard').className = 'bigcard r' + card.r;
+    $('bigcard').innerHTML = `<div class="be">${card.e}</div><div class="br">${RAR[card.r]}</div><div class="bn">${card.n}</div>` +
+      `<div class="bb">Permanent bonus: ${N('+' + Math.round(RBON[card.r] * 100) + '%')}${S.cards[ci] > 1 ? ' · You have ' + N('×' + S.cards[ci]) : ' · NEW!'}</div>`;
+    $('strip').innerHTML = cardHtml(nb[0], near && CARDS[nb[0]].r === 4 ? 'miss' : '') + cardHtml(ci, 'me') + cardHtml(nb[1], near && CARDS[nb[1]].r === 4 ? 'miss' : '');
+    $('nearmiss').textContent = near ? '😱 So close! A Mythic card was one slot away!' : '';
+    rv.classList.add('on');
+    confetti(W / 2, H / 2 - 60, 50 + card.r * 45, [RCOL[card.r], '#ffffff', RCOL[card.r]]);
+    ring(W / 2, H / 2 - 60, RCOL[card.r], 320);
+    A.reveal(card.r); if (card.r >= 3) setTimeout(() => A.fanfare(), 250);
+    const can = S.free[t] > 0 || S.dp >= boxCost(t);
+    $('again').disabled = !can; $('again').textContent = S.free[t] > 0 ? 'One more, free!' : 'One more! (' + fmt(boxCost(t)) + ')';
+    lootBusy = false; renderColl();
+  }, 1550);
+}
+function closeLoot() { if (lootBusy) return; $('loot').classList.remove('on', 'ray'); }
+
+// ---------- wheel of fortune ----------
+const wc = $('wheel').getContext('2d');
+let wRot = Math.random() * 6.28, wVel = 0, wSpin = false, wIdx = -1;
+const SEG = Math.PI * 2 / WSEG.length;
+function wheelIdx() { let a = (-Math.PI / 2 - wRot) % (Math.PI * 2); if (a < 0) a += Math.PI * 2; return Math.floor(a / SEG) % WSEG.length; }
+function drawWheel() {
+  const c = wc, R = 300; c.clearRect(0, 0, 600, 600); c.save(); c.translate(R, R); c.rotate(wRot);
+  WSEG.forEach((s, i) => {
+    c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, R - 4, i * SEG, (i + 1) * SEG); c.closePath();
+    c.fillStyle = s.col; c.fill(); c.strokeStyle = '#09090b'; c.lineWidth = 4; c.stroke();
+    c.save(); c.rotate(i * SEG + SEG / 2); c.translate(R * 0.68, 0); c.rotate(Math.PI / 2);
+    c.font = '900 52px Rubik,sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = i === 0 ? '#000' : '#fff'; c.fillText(s.l, 0, 0); c.restore();
+  });
+  c.beginPath(); c.arc(0, 0, 44, 0, 6.283); c.fillStyle = '#09090b'; c.fill(); c.strokeStyle = '#fee440'; c.lineWidth = 6; c.stroke();
+  c.restore();
+}
+function spin() {
+  if (wSpin) return;
+  if (Date.now() < S.wheelAt) { A.deny(); return; }
+  wSpin = true; wVel = rnd(13, 22); S.wheelAt = Date.now() + WHEEL_CD; S.spins++; $('wmsg').textContent = ''; A.whoosh();
+}
+function updWheel(dt) {
+  if (!wSpin) return;
+  wRot += wVel * dt; wVel -= (0.55 * wVel + 0.9) * dt;
+  const idx = wheelIdx();
+  if (idx !== wIdx) { wIdx = idx; A.tick(); const p = $('ptr'); if (p.animate) p.animate([{ transform: 'rotate(-18deg)' }, { transform: 'rotate(0)' }], { duration: 90 }); }
+  if (wVel <= 0) { wVel = 0; wSpin = false; wheelResult(idx); }
+  drawWheel();
+}
+function wheelResult(idx) {
+  const s = WSEG[idx], base = rewardBase(), r = $('wheel').getBoundingClientRect();
+  const cx = r.width ? r.left + r.width / 2 : W / 2, cy = r.width ? r.top + r.height / 2 : H / 2;
+  let msg = '';
+  if (s.t === 'jack') { const v = base * 50; gain(v); S.free[2]++; S.jack++; msg = '👑 MYTHIC JACKPOT! +' + fmt(v) + ' and a Cosmic box!'; flash(); A.fanfare(); confetti(cx, cy, 220); }
+  else if (s.t === 'dp') { const v = base * s.v; gain(v); msg = '💰 +' + fmt(v) + ' DP'; A.coin(); confetti(cx, cy, 20 + s.v * 8); }
+  else if (s.t === 'box') { S.free[s.v]++; msg = '🎁 Free ' + BOXES[s.v].n + ' box!'; A.coin(); confetti(cx, cy, 50); }
+  else if (s.t === 'boost') { boostT = BOOST_LEN; msg = '⚡ ×3 boost for 30 seconds!'; A.fanfare(); confetti(cx, cy, 60); }
+  else if (s.t === 'gem') { S.gems++; msg = '💎 Prestige gem! +10% forever'; A.fanfare(); confetti(cx, cy, 80, ['#9b5de5', '#fff']); }
+  if (idx === 1 || idx === WSEG.length - 1) msg += ' · 😱 Almost the jackpot! Just one slot away!';
+  $('wmsg').textContent = msg; $('wmsg').style.color = s.t === 'jack' ? 'var(--gold)' : 'var(--cyan)';
+  toast(msg);
+}
+
+// ---------- crash mini-game ----------
+const cc = $('crashc').getContext('2d');
+const C = { on: false, bet: 0, t: 0, m: 1, at: 1, frac: 0.1, hist: [], pts: [], end: '' };
+const crashMult = t => Math.exp(0.36 * t);
+function crashStart() {
+  if (C.on) { crashOut(); return; }
+  const bet = Math.floor(S.dp * C.frac);
+  if (bet < 1) { A.deny(); toast('Not enough DP to bet'); return; }
+  S.dp -= bet; const r = Math.random();
+  C.on = true; C.bet = bet; C.t = 0; C.m = 1; C.pts = []; C.end = '';
+  C.at = r < 0.03 ? 1 : Math.max(1.01, 0.97 / (1 - r)); // house edge ~3%, auto-cashout at ×10
+  A.whoosh();
+}
+function crashOut() {
+  if (!C.on) return;
+  const win = C.bet * C.m; gain(win); C.on = false; C.end = 'win'; S.wins++; S.best = Math.max(S.best, C.m);
+  C.hist.unshift(Math.min(C.at, 10)); crashHist();
+  const r = $('crashc').getBoundingClientRect(); confetti(r.left + r.width / 2, r.top + r.height / 2, 30 + C.m * 12); A.coin(); if (C.m >= 5) A.fanfare();
+  toast('🚀 Cashed out at ' + N('×' + C.m.toFixed(2)) + ' · ' + N('+' + fmt(win)) + ' DP');
+}
+function crashHist() { C.hist.length = Math.min(C.hist.length, 9);
+  $('hist').innerHTML = C.hist.map(h => `<span style="color:${h >= 10 ? '#fee440' : h >= 2 ? '#39ff88' : '#f72585'}">×${h.toFixed(2)}</span>`).join(''); }
+let crashTick = 0;
+function updCrash(dt) {
+  if (C.on) {
+    C.t += dt; C.m = crashMult(C.t); C.pts.push(C.m);
+    crashTick += dt; if (crashTick > 0.12) { crashTick = 0; A.tone(220 * C.m, 0.06, 'sine', 0.06); }
+    if (C.m >= C.at && C.at < 10) { C.m = C.at; C.on = false; C.end = 'lose'; C.hist.unshift(C.at); crashHist(); A.boom();
+      const r = $('crashc').getBoundingClientRect(); if (r.width) burst(r.left + r.width / 2, r.top + r.height / 2, 40, '#f72585', 1.4);
+      toast('💥 Crashed at ' + N('×' + C.at.toFixed(2)) + ' · you lost ' + N(fmt(C.bet)));
+    } else if (C.m >= 10) { C.m = 10; crashOut(); }
+  }
+  // draw
+  const c = cc; c.clearRect(0, 0, 600, 280);
+  c.strokeStyle = '#1f1f2b'; c.lineWidth = 1; for (let i = 1; i < 6; i++) { c.beginPath(); c.moveTo(0, i * 47); c.lineTo(600, i * 47); c.stroke(); }
+  const n = C.pts.length;
+  if (n > 1) {
+    const top = Math.max(2, C.m * 1.15), col = C.end === 'lose' ? '#f72585' : C.end === 'win' ? '#39ff88' : '#00f5d4';
+    c.beginPath();
+    for (let i = 0; i < n; i++) { const x = 20 + i / (n - 1) * 540, y = 260 - (C.pts[i] - 1) / (top - 1) * 230; i ? c.lineTo(x, y) : c.moveTo(x, y); }
+    c.strokeStyle = col; c.lineWidth = 5; c.lineJoin = 'round'; c.stroke();
+    c.lineTo(560, 260); c.lineTo(20, 260); c.closePath(); c.globalAlpha = 0.15; c.fillStyle = col; c.fill(); c.globalAlpha = 1;
+    const ly = 260 - (C.pts[n - 1] - 1) / (top - 1) * 230; c.font = '34px sans-serif'; c.textAlign = 'center'; c.fillText(C.end === 'lose' ? '💥' : '🚀', 560, ly + 6);
+  }
+  const cm = $('cmult'); cm.textContent = '×' + C.m.toFixed(2);
+  cm.style.color = C.end === 'lose' ? '#f72585' : C.end === 'win' ? '#39ff88' : (C.on ? '#fee440' : '#555');
+}
+function updCrashUi() {
+  const b = $('crashbtn');
+  if (C.on) { b.textContent = 'Cash out! +' + fmt(C.bet * C.m); b.className = 'btn gd w'; }
+  else { b.textContent = 'Launch! 🚀'; b.className = 'btn mg w'; }
+  $('betinfo').innerHTML = C.on ? 'Bet: ' + N(fmt(C.bet)) + ' DP' : 'Bet: ' + N(fmt(Math.floor(S.dp * C.frac))) + ' DP · auto cash-out at ' + N('×10');
+}
+
+// ---------- golden drone (variable-ratio reward) ----------
+const droneEl = $('drone');
+const D = { on: false, t: 0, dur: 9, y: 0, dir: 1, next: rnd(30, 60) };
+function updDrone(dt) {
+  if (!D.on) { D.next -= dt; if (D.next <= 0) { D.on = true; D.t = 0; D.dir = Math.random() < 0.5 ? 1 : -1; D.y = rnd(0.3, 0.7) * H; droneEl.style.display = 'flex'; A.whoosh(); } return; }
+  D.t += dt; const q = D.t / D.dur;
+  if (q >= 1) { D.on = false; D.next = rnd(30, 60); droneEl.style.display = 'none'; return; }
+  const x = D.dir > 0 ? -70 + q * (W + 140) : W + 70 - q * (W + 140), y = D.y + Math.sin(D.t * 2.2) * 70;
+  droneEl.style.transform = `translate(${x - 32}px,${y - 32}px)`;
+  if (Math.random() < 0.5 && P.length < 600) P.push({ k: 0, x, y: y + 10, vx: rnd(-30, 30), vy: rnd(-40, 20), l: 0, m: 0.6, c: '#fee440', s: rnd(1.5, 3.5) });
+}
+function catchDrone(e) {
+  if (!D.on) return;
+  D.on = false; D.next = rnd(30, 60); droneEl.style.display = 'none'; S.drones++;
+  const x = e.clientX, y = e.clientY; confetti(x, y, 80, ['#fee440', '#fff', '#00f5d4']); ring(x, y, '#fee440', 260); A.fanfare();
+  const r = Math.random();
+  if (r < 0.45) { const v = rewardBase() * rnd(3, 8); gain(v); floatText(x, y, '+' + fmt(v), '#fee440', 40); toast('🛸 Dopamine frenzy! ' + N('+' + fmt(v)) + ' DP'); }
+  else if (r < 0.75) { const t = Math.random() < 0.7 ? 0 : 1; S.free[t]++; toast('🛸 The drone dropped a free ' + BOXES[t].n + ' box! 🎁'); }
+  else { autoT = AUTO_LEN; toast('🛸 Unlimited auto-clicks for 10 seconds! 🤖'); }
+}
+
+// ---------- quests & achievements ----------
+const qEls = [], aEls = [];
+function questReward(i) { const l = S.q[i]; return l % 3 === 0 ? { box: Math.min(2, Math.floor(l / 3)) } : { dp: rewardBase() * (2 + l * 0.5) }; }
+function buildQuests() {
+  const box = $('quests'); box.innerHTML = ''; qEls.length = 0;
+  QUESTS.forEach((q, i) => {
+    const d = document.createElement('div'); d.className = 'q';
+    d.innerHTML = `<span class="qe">${q.e}</span><div class="qm"><div class="qt"></div><div class="qr"></div><div class="qb"><i></i></div></div><button class="claim" data-act="claimq" data-i="${i}">Claim!</button>`;
+    box.appendChild(d); qEls.push({ t: d.querySelector('.qt'), r: d.querySelector('.qr'), b: d.querySelector('i'), c: d.querySelector('.claim') });
+  });
+  const ab = $('achs'); ab.innerHTML = ''; aEls.length = 0;
+  ACHS.forEach((a, i) => {
+    const d = document.createElement('div'); d.className = 'q';
+    d.innerHTML = `<span class="qe">🏅</span><div class="qm"><div class="qt">${a.n}</div><div class="qr" style="color:var(--dim)">${a.d}</div></div><button class="claim" data-act="claima" data-i="${i}">Claim!</button>`;
+    ab.appendChild(d); aEls.push({ c: d.querySelector('.claim'), e: d.querySelector('.qe') });
+  });
+}
+function updQuests() {
+  let ready = 0;
+  QUESTS.forEach((q, i) => {
+    const el = qEls[i], tg = q.t(S.q[i]), v = q.v(), ok = v >= tg, rw = questReward(i);
+    el.t.innerHTML = q.txt(tg) + ' ' + N('(' + fmt(Math.min(v, tg)) + '/' + fmt(tg) + ')');
+    el.r.innerHTML = 'Reward: ' + (rw.box !== undefined ? '🎁 ' + BOXES[rw.box].n + ' box' : '💰 ' + N(fmt(rw.dp)) + ' DP');
+    el.b.style.width = Math.min(100, v / tg * 100) + '%'; el.c.classList.toggle('rdy', ok); if (ok) ready++;
+  });
+  ACHS.forEach((a, i) => {
+    const el = aEls[i], done = S.ach[i] > 0, ok = !done && a.c();
+    el.c.classList.toggle('rdy', ok); el.c.classList.toggle('done', done); el.c.textContent = done ? '✓' : 'Claim!'; el.e.textContent = done ? '🏆' : '🏅';
+    if (ok) ready++;
+  });
+  $('qdot').style.display = $('udot').style.display = ready ? 'block' : 'none';
+}
+function claimQuest(i, ev) {
+  const q = QUESTS[i]; if (q.v() < q.t(S.q[i])) return;
+  const rw = questReward(i); S.q[i]++;
+  if (rw.box !== undefined) { S.free[rw.box]++; toast('🎁 You got a free ' + BOXES[rw.box].n + ' box! Open it in the Luck tab'); }
+  else { gain(rw.dp); toast('✅ Quest complete! ' + N('+' + fmt(rw.dp)) + ' DP'); }
+  A.fanfare(); confetti(ev.clientX, ev.clientY, 60, ['#39ff88', '#fff', '#fee440']); updQuests();
+}
+function claimAch(i, ev) {
+  if (S.ach[i] > 0 || !ACHS[i].c()) return;
+  S.ach[i] = 1; A.fanfare(); confetti(ev.clientX, ev.clientY, 90); toast('🏆 Achievement: <b>' + ACHS[i].n + '</b> · ' + N('+3%') + ' to all earnings'); updQuests();
+}
+
+// ---------- modals, prestige, reset, offline ----------
+function modal(html) { $('mbox').innerHTML = html; $('modal').classList.add('on'); }
+function closeModal() { $('modal').classList.remove('on'); }
+function askAscend() {
+  const g = pendingGems(); if (g < 1) { A.deny(); return; }
+  modal(`<div style="font-size:70px">✨💎✨</div><h2>Ascend?</h2><p>Your points and upgrades will reset.<br>Your cards, achievements and gems stay with you forever.</p>
+    <div class="big n">+${fmt(g)} 💎</div><p>New permanent bonus: ${N('+' + fmt((S.gems + g) * 10) + '%')}</p>
+    <div class="row"><button class="btn gh" data-act="close">Not yet</button><button class="btn pp" data-act="ascend">Ascend!</button></div>`);
+}
+function ascend() {
+  const g = pendingGems(); if (g < 1) return;
+  closeModal(); S.gems += g; S.asc++; S.dp = 0; S.run = 0; S.g = GENS.map(() => 0);
+  endFever(); autoT = 0; boostT = 0; C.on = false; C.pts = []; C.end = ''; C.m = 1;
+  flash(); A.fanfare(); setTimeout(() => A.fanfare(), 450); confetti(W / 2, H / 2, 300, ['#9b5de5', '#fff', '#fee440', '#00f5d4']);
+  toast('✨ Reborn with ' + N('+' + fmt(g)) + ' 💎'); save(); refreshAll();
+}
+function askReset() {
+  modal(`<div style="font-size:60px">🗑️</div><h2>Reset everything?</h2><p>All your progress will be deleted forever, including cards and gems.</p>
+    <div class="row"><button class="btn gh" data-act="close">Cancel</button><button class="btn mg" data-act="reset">Delete everything</button></div>`);
+}
+function hardReset() {
+  const m = S.muted; S = fresh(); S.muted = m; endFever(); autoT = 0; boostT = 0; combo = 0; C.on = false; C.pts = []; C.hist = []; C.end = ''; C.m = 1; crashHist();
+  save(); closeModal(); refreshAll(); toast('Game reset. Good luck!');
+}
+let offlineEarn = 0;
+function checkOffline() {
+  const away = (Date.now() - S.last) / 1000;
+  if (!(away > 60)) return;
+  const e = baseDps() * permMult() * Math.min(away, 8 * 3600);
+  if (!(e > 0)) return;
+  offlineEarn = e;
+  modal(`<div style="font-size:60px">🌙</div><h2>Welcome back!</h2><p>You were away for ${N(fmtTime(away))}. While you were gone, you earned:</p>
+    <div class="big n">+${fmt(e)} DP</div>
+    <div class="row"><button class="btn gh" data-act="offline" data-m="1">Collect</button><button class="btn gd" data-act="offline" data-m="2" style="animation:pulse .8s infinite">Collect ×2! 🎉</button></div>`);
+}
+function claimOffline(m, ev) {
+  if (offlineEarn > 0) { gain(offlineEarn * m); toast('💰 ' + N('+' + fmt(offlineEarn * m)) + ' DP'); confetti(ev.clientX, ev.clientY, 100); A.fanfare(); }
+  offlineEarn = 0; closeModal();
+}
+
+// ---------- event delegation ----------
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  A.init(); const a = el.dataset.act;
+  if (a === 'nav') { document.body.dataset.p = el.dataset.p; document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b === el)); window.scrollTo(0, 0); }
+  else if (a === 'tab') {
+    const g = el.dataset.g;
+    document.querySelectorAll(`.tabs [data-g="${g}"]`).forEach(b => b.classList.toggle('on', b === el));
+    document.querySelectorAll(`.tabc[data-g="${g}"]`).forEach(c => c.classList.toggle('on', c.dataset.t === el.dataset.t));
+  }
+  else if (a === 'mode') { buyMode = +el.dataset.v; document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('on', b === el)); updUps(); }
+  else if (a === 'buy') buy(+el.dataset.i, e);
+  else if (a === 'box') openBox(+el.dataset.t);
+  else if (a === 'lootclose') closeLoot();
+  else if (a === 'lootagain') { if (!lootBusy) { $('loot').classList.remove('ray'); openBox(lootTier); } }
+  else if (a === 'spin') spin();
+  else if (a === 'bet') { C.frac = +el.dataset.v; document.querySelectorAll('#bets button').forEach(b => b.classList.toggle('on', b === el)); updCrashUi(); }
+  else if (a === 'crash') crashStart();
+  else if (a === 'claimq') claimQuest(+el.dataset.i, e);
+  else if (a === 'claima') claimAch(+el.dataset.i, e);
+  else if (a === 'askasc') askAscend();
+  else if (a === 'ascend') ascend();
+  else if (a === 'askreset') askReset();
+  else if (a === 'reset') hardReset();
+  else if (a === 'close') closeModal();
+  else if (a === 'offline') claimOffline(+el.dataset.m, e);
+  else if (a === 'mute') { S.muted = !S.muted; A.setMute(S.muted); el.textContent = S.muted ? '🔇' : '🔊'; }
+});
+droneEl.addEventListener('pointerdown', e => { e.preventDefault(); A.init(); catchDrone(e); });
+
+// ---------- UI refresh ----------
+function setRing(id, t, len) {
+  const el = $(id); el.classList.toggle('on', t > 0);
+  if (t > 0) el.querySelector('.pr').style.strokeDashoffset = 157 * (1 - t / len);
+}
+function updHud() {
+  $('dps').textContent = fmt(dps()); $('dpc').textContent = fmt(dpc()); $('gems').textContent = fmt(S.gems);
+  const m = mult(); $('mult').textContent = m < 1000 ? m.toFixed(2) : fmt(m);
+  $('fvfill').style.width = (feverT > 0 ? feverT / FEVER_LEN * 100 : fever) + '%';
+  $('fvp').textContent = feverT > 0 ? Math.ceil(feverT) + 's' : Math.floor(fever) + '%';
+  setRing('b-fever', feverT, FEVER_LEN); setRing('b-auto', autoT, AUTO_LEN); setRing('b-boost', boostT, BOOST_LEN);
+  const cb = $('combo'), live = performance.now() - lastClick < 1200 && combo > 1;
+  cb.style.opacity = live ? 1 : 0; if (live) cb.textContent = 'Combo ×' + (1 + Math.min(combo, 200) * 0.005).toFixed(2);
+  // wheel button
+  const sb = $('spinbtn'), left = S.wheelAt - Date.now();
+  sb.disabled = wSpin || left > 0; sb.textContent = wSpin ? 'Spinning…' : left > 0 ? 'Next spin in ' + fmtTime(left / 1000 + 1) : 'Spin now! 🎡';
+  // prestige
+  const g = pendingGems(); $('pgain').textContent = '+' + fmt(g) + ' 💎'; $('pbtn').disabled = g < 1;
+  $('pnext').innerHTML = 'Next gem at ' + N(fmt(Math.pow(g + 1, 2) * 1e6)) + ' DP this run (you have ' + N(fmt(S.run)) + ')';
+}
+function refreshAll() { $('mute').textContent = S.muted ? '🔇' : '🔊'; updUps(); updChests(); renderColl(); updQuests(); updHud(); updCrashUi(); drawWheel(); }
+
+// ---------- main loop ----------
+let lastT = performance.now(), uiAcc = 0, saveAcc = 0;
+function loop(t) {
+  let dt = (t - lastT) / 1000; lastT = t; if (!(dt > 0)) dt = 0;
+  if (dt > 1) { if (feverT > 0) endFever(); autoT = 0; boostT = 0; if (C.on) { C.on = false; gain(C.bet); C.pts = []; } } // tab was hidden: drop temp buffs, refund bet
+  const real = Math.min(dt, 8 * 3600), ph = Math.min(dt, 0.05);
+  gain(dps() * real);
+  if (feverT > 0) { feverT -= ph; if (feverT <= 0) endFever(); }
+  else if (fever > 0 && performance.now() - lastClick > 500) fever = Math.max(0, fever - 9 * ph);
+  if (boostT > 0) boostT = Math.max(0, boostT - ph);
+  if (autoT > 0) {
+    autoT = Math.max(0, autoT - ph); autoAcc += 20 * ph;
+    const c = coreCenter(); while (autoAcc >= 1) { autoAcc -= 1; doClick(c[0] + rnd(-50, 50), c[1] + rnd(-50, 50), true); }
+  }
+  updDrone(ph); updWheel(ph); updCrash(ph); A.music(); drawFx(ph);
+  $('dp').textContent = fmt(S.dp);
+  uiAcc += dt; if (uiAcc >= 0.2) { uiAcc = 0; updHud(); updUps(); updChests(); updQuests(); updCrashUi(); }
+  saveAcc += dt; if (saveAcc >= 5) { saveAcc = 0; save(); }
+  requestAnimationFrame(loop);
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+window.addEventListener('pagehide', save);
+
+// ---------- boot ----------
+const hadSave = load();
+buildUps(); buildChests(); buildQuests(); crashHist(); refreshAll();
+if (hadSave) checkOffline();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
