@@ -300,6 +300,89 @@ body.playing #pauseBtn { display: block; }
 .bub p { margin: 4px 0 6px; font: 800 clamp(16px, 2.4vw, 21px)/1.3 'Rubik'; }
 .bub small { display: block; text-align: right; color: #8a849f; font-weight: 700; font-size: 12px; }
 .skip { position: fixed; right: calc(var(--sar) + 14px); top: calc(var(--sat) + 14px); border: 2px solid rgba(255,255,255,0.3); background: rgba(13,11,20,0.7); color: #fff; border-radius: 999px; padding: 6px 14px; font: 700 14px 'Rubik'; }
+
+/* ---- v2 menus */
+.d-expert { background: linear-gradient(90deg, #9b5cff, #ff4fd8); color: #fff; }
+.mm.wide { width: min(620px, 94vw); max-height: 100%; overflow: auto; touch-action: pan-y; padding: 4px 6px 8px 2px; }
+.mmhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.mmhead .logo.sm { margin: 0 0 6px 6px; font-size: clamp(34px, 6vw, 58px); }
+.fame { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 16px; border: 2px solid rgba(255,255,255,0.12); background: rgba(20,16,34,0.86); text-align: left; box-shadow: 3px 4px 0 #120f1d; }
+.fame b { display: block; font: 400 14px 'Bungee'; color: var(--hot1); }
+.fame small { display: block; font-size: 12px; color: var(--mut); }
+.fame > span:last-child { position: relative; padding-bottom: 7px; min-width: 130px; }
+.fame i { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.12); overflow: hidden; }
+.fame i::after { content: ''; position: absolute; inset: 0; width: calc(var(--f) * 100%); background: linear-gradient(90deg, var(--pink), var(--hot1)); }
+.fame .ic { width: 36px; height: 36px; font-size: 18px; }
+.mgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mgrid .mbtn { font-size: clamp(17px, 2.6vw, 23px); padding: 10px 13px 11px; }
+.mgrid .mbtn small { font-size: 12px; line-height: 1.25; }
+.mgrid .mbtn.hot { grid-column: span 2; font-size: clamp(22px, 3.4vw, 30px); }
+.mgrid .mbtn.focus, .mgrid .mbtn:hover { transform: translateY(-2px) scale(1.02); }
+.song.locked { opacity: 0.45; }
+.pack { margin: 10px 2px 2px; font: 800 11.5px 'Rubik'; letter-spacing: 0.22em; color: var(--mut); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+.chip { border: 2px solid rgba(255,255,255,0.1); border-radius: 999px; padding: 6px 12px; background: rgba(255,255,255,0.05); font: 700 13px 'Rubik'; color: #d6d0ef; }
+.chip.on { background: var(--hot1); color: #241c00; border-color: var(--hot1); }
+.chip:disabled { opacity: 0.45; }
+.cups { display: flex; gap: 8px; margin: 6px 0 4px; }
+.cup { flex: 1; text-align: center; padding: 8px 4px; border-radius: 12px; background: rgba(255,255,255,0.04); opacity: 0.55; }
+.cup.got { opacity: 1; background: rgba(255,225,77,0.12); outline: 1px solid rgba(255,225,77,0.45); }
+.cup b { display: block; font-size: 26px; filter: grayscale(1); }
+.cup.got b { filter: none; }
+.cup small { display: block; font: 800 11px 'Rubik'; letter-spacing: 0.12em; color: var(--mut); }
+.cup span { font: 400 14px 'Bungee'; }
+.bracket { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 4px; }
+.bround { padding: 9px 12px; border-radius: 14px; background: rgba(255,255,255,0.04); border: 2px solid transparent; }
+.bround.cur { border-color: var(--hot1); background: rgba(255,225,77,0.08); }
+.bround small { display: block; font: 800 11px 'Rubik'; letter-spacing: 0.2em; color: var(--mut); }
+.bround div { display: flex; align-items: center; gap: 8px; margin: 4px 0 2px; }
+.bround em { font-style: normal; color: var(--mut); font-weight: 800; }
+.bround > span { font-size: 13px; color: #d6d0ef; }
+.bn { padding: 3px 10px; border-radius: 8px; background: var(--c); color: #120f1d; font: 400 15px 'Bungee'; }
+.bn.out { opacity: 0.35; text-decoration: line-through; }
+.panel.wide { width: min(680px, 96vw); }
+.sgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.sgr { display: flex; flex-direction: column; align-items: center; padding: 4px 4px 8px; border-radius: 14px; border: 2px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); }
+.sgr canvas { width: 100px; height: 110px; }
+.sgr b { font: 400 15px 'Bungee'; color: var(--c); }
+.sgr small { font-size: 11.5px; color: var(--mut); text-align: center; line-height: 1.2; }
+.sgr.on { border-color: var(--c); background: rgba(255,255,255,0.09); }
+.sgr.on small { color: var(--hot1); font-weight: 800; }
+.sgr.locked canvas { filter: brightness(0) opacity(0.5); }
+.ach { padding: 8px 12px; border-radius: 12px; background: rgba(255,255,255,0.03); opacity: 0.5; }
+.ach.got { opacity: 1; background: rgba(255,225,77,0.08); }
+.ach b { display: block; font-size: 15px; }
+.ach.got b { color: var(--hot1); }
+.ach small { color: var(--mut); font-size: 12.5px; }
+.ranks { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ranks th { font: 400 13px 'Bungee'; color: var(--mut); padding: 4px; }
+.ranks td { padding: 4px; text-align: center; color: var(--mut); }
+.ranks td:first-child { text-align: left; color: #fff; font-weight: 700; }
+.ranks tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+.ranks .rk { margin: 0; }
+.timing { margin: 2px 0 8px; text-align: center; }
+.timing small { display: block; font: 800 11px 'Rubik'; letter-spacing: 0.2em; color: var(--mut); }
+.timing span { font-size: 12.5px; color: #d6d0ef; }
+.tbar { display: flex; height: 8px; margin: 5px auto 4px; max-width: 280px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.tbar i { flex: 0 0 calc(var(--f) * 100%); }
+.tbar .e { background: #2fd8ff; } .tbar .o { background: #8dff8a; } .tbar .l { background: #ff9b4d; }
+.timing em { display: block; font-style: normal; font-size: 12px; color: var(--mut); margin-top: 2px; }
+.achs { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin: 6px 0; }
+.achs span { padding: 4px 9px; border-radius: 999px; background: rgba(255,225,77,0.12); color: #fff2b0; font: 700 12px 'Rubik'; }
+.newi { margin: 5px 0; padding: 7px 10px; border-radius: 10px; background: rgba(255,225,77,0.1); color: #fff2b0; font-weight: 700; font-size: 13.5px; text-align: center; }
+.newi.gold { background: linear-gradient(90deg, rgba(255,79,163,0.25), rgba(255,159,28,0.25)); color: #fff; }
+.rs > div { min-width: 0; }
+@media (max-width: 420px) { .rs { flex-wrap: wrap; } .rs > div { flex: 1 1 40%; } }
+.mgrid .mbtn:last-child:nth-child(even) { grid-column: span 2; }
+@media (orientation: landscape) and (max-height: 520px) {
+  .mm.wide { width: min(860px, 96vw); }
+  .mmhead .logo.sm { font-size: 30px; margin-bottom: 2px; }
+  .mgrid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .mgrid .mbtn.hot { grid-column: span 3; font-size: 20px; padding: 7px 12px; }
+  .mgrid .mbtn { font-size: 16px; padding: 7px 11px 8px; }
+  .mgrid .mbtn small { font-size: 11px; }
+  .mgrid .mbtn:last-child:nth-child(even) { grid-column: auto; }
+}
 </style>
 </head>
 <body>
@@ -503,6 +586,8 @@ function vibrate(ms) {
   if (typeof Save === 'undefined' || !Save.data.settings.haptics) return;
   try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* ignored */ }
 }
+const easeInOut = easeInOutSine;
+const hash2 = (a, b, c) => { let h = (a * 374761393 + b * 668265263 + (c || 0) * 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
 
 // ---------------------------------------------------------------- data.js (characters, songs, weeks, judgement)
 const CHARS = {
@@ -510,6 +595,9 @@ const CHARS = {
   metro: { name: 'Metro', range: [55, 67], voice: { wave: 'square', form: 0.95, vib: 0, gain: 0.3, bright: 0.14 }, color: '#f2b134', icon: '#f2b134' },
   vex: { name: 'Vex', range: [50, 62], voice: { wave: 'saw', form: 0.92, vib: 22, gain: 0.46, bright: 0.07 }, color: '#e8436a', icon: '#e8436a' },
   roxy: { name: 'Roxy', range: [64, 76], voice: { wave: 'reed', form: 1.3, vib: 38, gain: 0.38, bright: 0.05 }, color: '#b06cff', icon: '#b06cff' },
+  kai: { name: 'Kai', range: [57, 71], voice: { wave: 'saw', form: 1.05, vib: 14, gain: 0.4, bright: 0.08 }, color: '#ff8a3d', icon: '#ff8a3d' },
+  mira: { name: 'Mira', range: [62, 76], voice: { wave: 'reed', form: 1.24, vib: 26, gain: 0.4, bright: 0.05 }, color: '#7c6bff', icon: '#7c6bff' },
+  maestro: { name: 'Maestro', range: [52, 66], voice: { wave: 'saw', form: 0.98, vib: 30, gain: 0.44, bright: 0.06 }, color: '#ffd34d', icon: '#ffd34d' },
   glitch: { name: 'Glitch', range: [57, 69], voice: { wave: 'pulse', form: 1.02, vib: 0, gain: 0.44, bright: 0.12 }, color: '#4be37a', icon: '#4be37a' },
 };
 const FORM_STD = 'I4 O4A P4A O4A P4A O4B P4B O4B P4B O4C P4C X4A X4C E2';
@@ -525,23 +613,100 @@ const SONGS = [
   { id: 'bitcrush', name: 'Bitcrush', opp: 'glitch', bpm: 140, root: 54, mode: 'minor', prog: [[0, 'm'], [8, 'M'], [3, 'M'], [10, 'M']], style: { drums: 'trap', bass: '808', keys: 'pad', lead: true }, form: FORM_STD, seed: 31, stage: 'cyber' },
   { id: 'overclock', name: 'Overclock', opp: 'glitch', bpm: 160, root: 49, mode: 'minor', prog: [[0, 'm'], [10, 'M'], [8, 'M'], [10, 'M']], progB: [[5, 'm'], [3, 'M'], [10, 'M'], [7, 'M']], style: { drums: 'break', bass: 'pluck', keys: 'arp' }, form: FORM_STD, seed: 17, stage: 'cyber' },
   { id: 'kernel-panic', name: 'Kernel Panic', opp: 'glitch', bpm: 184, root: 52, mode: 'minor', prog: [[0, 'm'], [3, 'M'], [10, 'M'], [5, 'm']], style: { drums: 'four', bass: '808', keys: 'arp', lead: true }, form: FORM_STD, seed: 9, stage: 'cyber' },
+  // week 4: the arena
+  { id: 'opening-act', name: 'Opening Act', opp: 'maestro', bpm: 120, root: 55, mode: 'major', prog: [[0, 'M'], [9, 'm'], [5, 'M'], [7, 'M']], progB: [[4, 'm'], [9, 'm'], [2, 'm'], [7, 'M']], style: { drums: 'four', bass: 'octave', keys: 'stab', lead: true }, form: FORM_STD, seed: 41, stage: 'arena' },
+  { id: 'encore', name: 'Encore', opp: 'maestro', bpm: 138, root: 50, mode: 'minor', prog: [[0, 'm'], [8, 'M'], [3, 'M'], [10, 'M']], progB: [[5, 'm'], [8, 'M'], [10, 'M'], [7, 'M']], style: { drums: 'break', bass: '808', keys: 'pad', lead: true }, form: FORM_STD, seed: 43, stage: 'arena' },
+  { id: 'grand-finale', name: 'Grand Finale', opp: 'maestro', bpm: 150, root: 52, mode: 'minor', prog: [[0, 'm'], [10, 'M'], [8, 'M'], [7, 'M']], progB: [[5, 'm'], [3, 'M'], [10, 'M'], [7, 'M']], style: { drums: 'rock', bass: 'octave', keys: 'power', lead: true }, form: FORM_STD, seed: 47, stage: 'arena', boss: true,
+    mech: [{ kind: 'speed', from: 24, to: 40, k: 1.45 }, { kind: 'mines', from: 40, to: 56, rate: 0.2 }, { kind: 'speed', from: 48, to: 56, k: 1.25 }, { kind: 'doubles', from: 40, to: 60 }] },
+  // boss battles: each rival comes back with a twist
+  { id: 'riot', name: 'Riot', opp: 'vex', bpm: 164, root: 50, mode: 'minor', prog: [[0, 'p5'], [3, 'p5'], [5, 'p5'], [8, 'p5']], progB: [[10, 'p5'], [8, 'p5'], [5, 'p5'], [7, 'p5']], style: { drums: 'rock', bass: 'rock', keys: 'power' }, form: FORM_STD, seed: 51, stage: 'alley', boss: true,
+    mech: [{ kind: 'mines', from: 8, to: 60, rate: 0.22 }, { kind: 'shake', from: 0, to: 60 }] },
+  { id: 'diva', name: 'Diva', opp: 'roxy', bpm: 124, root: 57, mode: 'dorian', prog: [[0, 'm7'], [5, 'd7'], [10, 'M7'], [5, 'd7']], progB: [[3, 'M7'], [5, 'd7'], [8, 'M7'], [7, 'm7']], style: { drums: 'disco', bass: 'octave', keys: 'stab' }, form: FORM_STD, seed: 53, stage: 'disco', boss: true,
+    mech: [{ kind: 'vanish', from: 16, to: 32 }, { kind: 'vanish', from: 40, to: 60 }] },
+  { id: 'system-crash', name: 'System Crash', opp: 'glitch', bpm: 150, root: 49, mode: 'minor', prog: [[0, 'm'], [8, 'M'], [10, 'M'], [5, 'm']], progB: [[3, 'M'], [10, 'M'], [8, 'M'], [7, 'M']], style: { drums: 'trap', bass: '808', keys: 'arp', lead: true }, form: FORM_STD, seed: 57, stage: 'cyber', boss: true,
+    mech: [{ kind: 'swap', from: 16, to: 32 }, { kind: 'flicker', from: 32, to: 44 }, { kind: 'mines', from: 40, to: 60, rate: 0.16 }, { kind: 'swap', from: 48, to: 56 }] },
 ];
 const WEEKS = [
   { id: 'tut', name: 'Soundcheck', blurb: 'Warm up with Metro, the rhythm robot.', opp: 'metro', songs: ['mic-check'] },
   { id: 'w1', name: 'Back Alley', blurb: 'Vex owns this alley. Out-shout the punk.', opp: 'vex', songs: ['rebel-noise', 'safety-pin', 'mosh-pit'] },
   { id: 'w2', name: 'Velvet Club', blurb: 'Roxy has never lost a sing-off. Yet.', opp: 'roxy', songs: ['glitterball', 'velvet-rope', 'spotlight'] },
   { id: 'w3', name: 'Mainframe', blurb: 'An AI that learned to sing from the internet.', opp: 'glitch', songs: ['bitcrush', 'overclock', 'kernel-panic'] },
+  { id: 'w4', name: 'The Arena', blurb: 'Twenty thousand fans. One Maestro. The final stage.', opp: 'maestro', songs: ['opening-act', 'encore', 'grand-finale'] },
 ];
 const SONG = {}; for (const s of SONGS) SONG[s.id] = s;
-const DIFFS = ['easy', 'normal', 'hard'];
-// judgement windows (seconds), score, accuracy weight, health change
+const MAIN_SONGS = SONGS.filter((s) => !s.boss || s.id === 'grand-finale');
+const DIFFS = ['easy', 'normal', 'hard', 'expert'];
+// judgement windows (seconds), score, accuracy weight, health change, crowd energy
 const JUDGE = [
-  { name: 'PERFECT', win: 0.045, score: 350, acc: 1, hp: 0.024, color: '#7ef0ff' },
-  { name: 'GREAT', win: 0.09, score: 200, acc: 0.78, hp: 0.016, color: '#8dff8a' },
-  { name: 'GOOD', win: 0.135, score: 100, acc: 0.5, hp: 0.004, color: '#ffd84d' },
-  { name: 'BAD', win: 0.17, score: 50, acc: 0.2, hp: -0.012, color: '#ff9b4d' },
+  { name: 'PERFECT', win: 0.045, score: 300, acc: 1, hp: 0.024, crowd: 2.4, color: '#7ef0ff' },
+  { name: 'GREAT', win: 0.09, score: 200, acc: 0.8, hp: 0.016, crowd: 1.4, color: '#8dff8a' },
+  { name: 'GOOD', win: 0.15, score: 80, acc: 0.45, hp: 0.002, crowd: 0.3, color: '#ffd84d' },
 ];
-const MISS = { name: 'MISS', score: -10, hp: -0.05, color: '#ff4d6d' };
+const MISS = { name: 'MISS', score: 0, hp: -0.05, crowd: -7, color: '#ff4d6d' };
+// combo → score multiplier
+const MULTS = [[0, 1], [10, 2], [30, 3], [60, 4]];
+const multFor = (combo) => { let m = 1; for (const [c, k] of MULTS) if (combo >= c) m = k; return m; };
+// the crowd: energy 0..100 in five tiers; each tier adds 10% to every hit
+const CROWD = [
+  { at: 0, name: 'COLD', color: '#8a8fb0' }, { at: 20, name: 'WARM', color: '#ffd84d' }, { at: 45, name: 'HYPED', color: '#ff9b4d' },
+  { at: 70, name: 'ON FIRE', color: '#ff4d6d' }, { at: 90, name: 'LEGENDARY', color: '#d36bff' },
+];
+const crowdTier = (e) => { let t = 0; for (let i = 0; i < CROWD.length; i++) if (e >= CROWD[i].at) t = i; return t; };
+// boss battles (unlocked by finishing the week of that rival)
+const BOSSES = [
+  { id: 'riot', song: 'riot', opp: 'vex', name: 'Riot Vex', week: 'w1', twist: 'Spiked notes: never hit the black ✕ notes. The whole alley shakes.' },
+  { id: 'diva', song: 'diva', opp: 'roxy', name: 'Diva Roxy', week: 'w2', twist: 'Spotlight: notes fade out before they reach you. Read them early.' },
+  { id: 'crash', song: 'system-crash', opp: 'glitch', name: 'Glitch.exe', week: 'w3', twist: 'Your arrows swap places, notes flicker and spikes appear.' },
+  { id: 'finale', song: 'grand-finale', opp: 'maestro', name: 'The Maestro', week: 'w4', twist: 'Tempo surges, spikes and double notes in the final act.' },
+];
+// tournament: three rounds; you must beat each rival's accuracy
+const TOUR_POOL = ['metro', 'vex', 'roxy', 'glitch', 'maestro', 'kai', 'mira'];
+const TOUR_ROUNDS = ['Quarter-final', 'Semi-final', 'Final'];
+const TOUR_BASE = { easy: 70, normal: 77, hard: 83, expert: 87 };
+// fame: stars from grades, wins and achievements; levels unlock singers
+const GRADE_STARS = { D: 0, C: 1, B: 2, A: 3, S: 4, 'S+': 5 };
+const FAME = [
+  { at: 0, name: 'Rookie' }, { at: 12, name: 'Opening Act' }, { at: 30, name: 'Club Regular' },
+  { at: 55, name: 'Headliner' }, { at: 90, name: 'Arena Star' }, { at: 140, name: 'Legend' },
+];
+// playable singers and how to get them
+const SINGERS = [
+  { id: 'player', how: 'Your first singer' },
+  { id: 'kai', how: 'Reach Opening Act fame', fame: 12 },
+  { id: 'mira', how: 'Reach Club Regular fame', fame: 30 },
+  { id: 'metro', how: 'Finish the tutorial', week: 'tut' },
+  { id: 'vex', how: 'Beat Riot Vex', boss: 'riot' },
+  { id: 'roxy', how: 'Beat Diva Roxy', boss: 'diva' },
+  { id: 'glitch', how: 'Beat Glitch.exe', boss: 'crash' },
+  { id: 'maestro', how: 'Beat The Maestro', boss: 'finale' },
+];
+const STAGES = [
+  { id: 'studio', name: 'Studio', how: 'Always open' }, { id: 'alley', name: 'Back Alley', week: 'tut' },
+  { id: 'disco', name: 'Velvet Club', week: 'w1' }, { id: 'cyber', name: 'Mainframe', week: 'w2' }, { id: 'arena', name: 'The Arena', week: 'w3' },
+];
+const ACHIEVEMENTS = [
+  { id: 'first', name: 'First Song', text: 'Finish any song' },
+  { id: 'fc', name: 'Full Combo', text: 'Finish a song without a miss' },
+  { id: 'splus', name: 'Flawless', text: 'Get an S+ grade' },
+  { id: 'c100', name: 'Hundred Hits', text: 'Reach a 100 combo' },
+  { id: 'c300', name: 'Unbreakable', text: 'Reach a 300 combo' },
+  { id: 'hyped', name: 'Crowd Pleaser', text: 'Get the crowd HYPED' },
+  { id: 'legend', name: 'Legendary Show', text: 'Get the crowd to LEGENDARY' },
+  { id: 'x4', name: 'Max Multiplier', text: 'Hit the x4 multiplier' },
+  { id: 'w1', name: 'Alley Cat', text: 'Finish Week 1' },
+  { id: 'w2', name: 'On the List', text: 'Finish Week 2' },
+  { id: 'w3', name: 'Debugged', text: 'Finish Week 3' },
+  { id: 'w4', name: 'Headliner', text: 'Finish Week 4' },
+  { id: 'boss1', name: 'Boss Slayer', text: 'Beat a boss battle' },
+  { id: 'boss4', name: 'Final Boss', text: 'Beat every boss' },
+  { id: 'tour', name: 'Champion', text: 'Win a tournament' },
+  { id: 'tourx', name: 'Expert Champion', text: 'Win a tournament on Expert' },
+  { id: 'end60', name: 'Marathon Mic', text: 'Survive 64 bars of Endless' },
+  { id: 'expert', name: 'Expert Ears', text: 'Clear a song on Expert' },
+  { id: 'singer', name: 'New Voice', text: 'Unlock another singer' },
+  { id: 'versus', name: 'Rivals', text: 'Play a Versus match' },
+];
+const ACH_BY_ID = {}; for (const a of ACHIEVEMENTS) ACH_BY_ID[a.id] = a;
 const LANE_COLORS = ['#ff4fa3', '#2fd8ff', '#9dff4f', '#ffb02e'];
 const LANE_NAMES = ['Left', 'Down', 'Up', 'Right'];
 const DEFAULT_KEYS = { p1: [['ArrowLeft', 'KeyD'], ['ArrowDown', 'KeyF'], ['ArrowUp', 'KeyJ'], ['ArrowRight', 'KeyK']], p2: [['KeyA'], ['KeyS'], ['KeyW'], ['KeyD']] };
@@ -549,6 +714,7 @@ const DIALOG = {
   tut: [['metro', 'BEEP. MIC CHECK. ONE, TWO.'], ['player', '\u266a!'], ['metro', 'WATCH MY ARROWS, THEN REPEAT THEM. HIT EACH ONE AS IT LINES UP WITH YOUR TARGETS.'], ['metro', 'HOLD THE LONG ONES. DO NOT DROP THE MIC.']],
   w1: [['vex', 'Oi. Headphones. This alley is MY stage.'], ['player', '\u266b?'], ['vex', 'Out-sing me and you can keep the mic. Lose, and it\u2019s mine.']],
   w2: [['roxy', 'Darling, nobody sings on my floor without an invitation.'], ['player', '\u266a\u266a!'], ['roxy', '...Fine. Dazzle me.']],
+  w4: [['maestro', 'Ah. The little voice from the alleys.'], ['player', '\u266a!'], ['maestro', 'Tonight twenty thousand people decide who owns this stage. Shall we begin?']],
   w3: [['glitch', 'NEW CHALLENGER DETECTED. DOWNLOADING YOUR MOVES...'], ['player', '\u266b!!'], ['glitch', 'PREDICTION: YOU LOSE. CONFIDENCE 99.7%.']],
 };
 
@@ -556,7 +722,8 @@ const DIALOG = {
 const SAVE_KEY = 'micclash.save.v1';
 function defaultSave() {
   return {
-    v: 1, best: {}, weeks: {}, stats: { plays: 0, versus: 0, notes: 0 }, seen: {}, updated: 0,
+    v: 2, best: {}, weeks: {}, stats: { plays: 0, versus: 0, notes: 0 }, seen: {}, updated: 0,
+    pc: 'player', stage: 'auto', bosses: {}, tours: {}, endless: { bars: 0, score: 0 }, ach: {},
     settings: { downscroll: null, speed: 1, offset: 0, ghost: true, music: 0.8, vocals: 1, sfx: 0.7, haptics: true, flashing: true, splashes: true },
     keys: [['ArrowLeft', 'KeyA'], ['ArrowDown', 'KeyS'], ['ArrowUp', 'KeyW'], ['ArrowRight', 'KeyD']],
   };
@@ -568,6 +735,12 @@ function mergeSaves(a, b) {
   for (const src of [a.best, b.best]) for (const k in src) if (!out.best[k] || src[k].score > out.best[k].score) out.best[k] = src[k];
   for (const src of [a.weeks, b.weeks]) for (const k in src) { out.weeks[k] = out.weeks[k] || {}; for (const d in src[k]) out.weeks[k][d] = Math.max(out.weeks[k][d] || 0, src[k][d]); }
   for (const k of ['plays', 'versus', 'notes']) out.stats[k] = Math.max(a.stats[k] || 0, b.stats[k] || 0);
+  for (const src of [a, b]) {
+    for (const k in src.bosses) out.bosses[k] = out.bosses[k] || src.bosses[k];
+    for (const k in src.ach) out.ach[k] = true;
+    for (const k in src.tours) out.tours[k] = Math.max(out.tours[k] || 0, src.tours[k]);
+    out.endless.bars = Math.max(out.endless.bars || 0, src.endless.bars || 0); out.endless.score = Math.max(out.endless.score || 0, src.endless.score || 0);
+  }
   return out;
 }
 const Save = {
@@ -613,6 +786,98 @@ const Save = {
     c.ref.set({ save: JSON.parse(json) }).then(() => { c.lastJson = json; })
       .catch((e) => { const code = e && e.code; if (code && code !== 'unavailable' && code !== 'resource_exhausted') c.ref = null; })
       .finally(() => { c.writing = false; if (c.pending) { c.pending = false; this.cloudWrite(); } });
+  },
+};
+
+// ---------------------------------------------------------------- progress: fame, unlocks, achievements
+const Prog = {
+  fresh: { ach: [], unlocks: [] },
+  fame() {
+    const D = Save.data;
+    let f = 0;
+    for (const k in D.best) f += GRADE_STARS[D.best[k].rank] || 0;
+    f += Object.keys(D.bosses).length * 6;
+    for (const d in D.tours) f += Math.min(3, D.tours[d]) * 5;
+    f += Object.keys(D.ach).length * 2;
+    return f;
+  },
+  level(f) { let l = 0; for (let i = 0; i < FAME.length; i++) if (f >= FAME[i].at) l = i; return l; },
+  singerOpen(s) {
+    const D = Save.data;
+    if (s.fame) return this.fame() >= s.fame;
+    if (s.week) return !!D.weeks[s.week];
+    if (s.boss) return !!D.bosses[s.boss];
+    return true;
+  },
+  stageOpen(st) { return !st.week || !!Save.data.weeks[st.week]; },
+  bossOpen(b) { return !!Save.data.weeks[b.week]; },
+  songOpen(sp) {
+    if (sp.boss && sp.id !== 'grand-finale') { const b = BOSSES.find((x) => x.song === sp.id); return b ? this.bossOpen(b) : false; }
+    const w = WEEKS.findIndex((wk) => wk.songs.indexOf(sp.id) >= 0);
+    return w < 0 || Save.weekUnlocked(w);
+  },
+  snap() { return SINGERS.filter((s) => this.singerOpen(s)).map((s) => 's:' + s.id).concat(STAGES.filter((s) => this.stageOpen(s)).map((s) => 'g:' + s.id)); },
+  begin() { this.fresh = { ach: [], unlocks: [] }; this.before = this.snap(); },
+  diffUnlocks() {
+    const now = this.snap(), before = this.before || now;
+    for (const k of now) if (before.indexOf(k) < 0) {
+      const [t, id] = k.split(':');
+      this.fresh.unlocks.push(t === 's' ? 'New singer: ' + CHARS[id].name : 'New stage: ' + STAGES.find((x) => x.id === id).name);
+      if (t === 's') this.ach('singer');
+    }
+    this.before = now;
+  },
+  ach(id) {
+    const D = Save.data;
+    if (D.ach[id]) return;
+    D.ach[id] = true;
+    this.fresh.ach.push(ACH_BY_ID[id]);
+  },
+  song(res) {
+    const st = res.st, D = Save.data;
+    Save.record(res.songId, res.diff, st);
+    Board.submit(res.songId, res.diff, st);
+    this.ach('first');
+    if (st.fc) this.ach('fc');
+    if (st.rank === 'S+') this.ach('splus');
+    if (st.maxCombo >= 60) this.ach('x4');
+    if (st.maxCombo >= 100) this.ach('c100');
+    if (st.maxCombo >= 300) this.ach('c300');
+    if (st.peak >= 2) this.ach('hyped');
+    if (st.peak >= 4) this.ach('legend');
+    if (res.diff === 'expert') this.ach('expert');
+    if (res.boss && res.boss.won) {
+      const b = BOSSES.find((x) => x.song === res.songId);
+      if (b) { D.bosses[b.id] = D.bosses[b.id] || res.diff; this.ach('boss1'); if (BOSSES.every((x) => D.bosses[x.id])) this.ach('boss4'); }
+    }
+    this.diffUnlocks();
+    Save.persist();
+  },
+  week(w, diff, score) {
+    Save.weekDone(w, diff, score);
+    if (w >= 1) this.ach('w' + w);
+    this.diffUnlocks();
+    Save.persist();
+  },
+  endless(res) {
+    const E = Save.data.endless;
+    res.prevBars = E.bars; res.prevScore = E.score;
+    E.bars = Math.max(E.bars, res.bars); E.score = Math.max(E.score, res.st.score);
+    if (res.bars >= 64) this.ach('end60');
+    if (res.st.peak >= 2) this.ach('hyped');
+    if (res.st.peak >= 4) this.ach('legend');
+    this.diffUnlocks();
+    Save.persist();
+  },
+  tourRound(res) {
+    const T = res.tour;
+    if (res.won && T.round === TOUR_ROUNDS.length - 1) {
+      const D = Save.data; D.tours[res.diff] = (D.tours[res.diff] || 0) + 1;
+      this.ach('tour'); if (res.diff === 'expert') this.ach('tourx');
+      res.champion = true;
+      this.diffUnlocks();
+      Save.persist();
+    }
   },
 };
 
@@ -833,6 +1098,19 @@ Mixer.prototype.count = function (t, n) {
   this.osc(t, 'square', f, n === 0 ? 0.3 : 0.12, 0.12, 0.004, this.sfx);
   if (n === 0) this.osc(t, 'square', f * 1.5, 0.3, 0.08, 0.004, this.sfx);
 };
+// the crowd roars (filtered noise swell with a few whistles)
+Mixer.prototype.cheer = function (t, v) {
+  v = v || 0.6;
+  this.nz(t, 1.6, 'bandpass', 900, 0.6, 0.22 * v, 0.25, this.sfx, 1400);
+  this.nz(t + 0.05, 1.3, 'bandpass', 2400, 0.9, 0.12 * v, 0.2, this.sfx, 3200);
+  for (let i = 0; i < 3; i++) this.osc(t + 0.15 + i * 0.22, 'sine', 1900 + i * 300, 0.25, 0.04 * v, 0.03, this.sfx, 2600 + i * 200);
+};
+// a spike note goes off
+Mixer.prototype.boom = function (t) {
+  this.nz(t, 0.45, 'lowpass', 1400, 0.8, 0.45, 0.002, this.sfx, 90);
+  this.osc(t, 'sine', 140, 0.35, 0.4, 0.002, this.sfx, 40);
+  this.osc(t, 'square', 600, 0.12, 0.08, 0.002, this.sfx, 120);
+};
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
 // ---------------------------------------------------------------- composer.js (turns a song spec into music events + charts)
@@ -883,25 +1161,30 @@ const Composer = {
   pitchesIn(lo, hi, root, set) { const out = []; for (let m = lo; m <= hi; m++) if (set.indexOf(((m - root) % 12 + 12) % 12) >= 0) out.push(m); return out; },
   chordPCs(root, ch) { return QUAL[ch[1]].map((x) => (root + ch[0] + x) % 12); },
   // level of rhythmic density for a difficulty at this tempo
-  level(diff, bpm) { const base = { easy: 0, normal: 1, hard: 2 }[diff]; return Math.max(-1, base - (bpm >= 168 ? 1 : 0)); },
-  build(spec, diff) {
+  level(diff, bpm) { if (diff === 'expert') return 2; const base = { easy: 0, normal: 1, hard: 2 }[diff]; return Math.max(-1, base - (bpm >= 168 ? 1 : 0)); },
+  // pc: the player's singer (their vocal range shapes the answers)
+  build(spec, diff, pc) {
     const rng = new RNG(hashStr(spec.id + ':' + (spec.seed || 1)));
-    const mel = new RNG(hashStr(spec.id + ':' + diff + ':' + (spec.seed || 1)));
-    const lv = this.level(diff, spec.bpm);
-    const song = { spec, diff, bpm: spec.bpm, spb: 60 / spec.bpm, events: [], notes: [[], []], sections: [], bars: 0 };
+    const mel = new RNG(hashStr(spec.id + ':' + diff + ':' + (spec.seed || 1) + ':' + (pc || 'player')));
+    let lv = this.level(diff, spec.bpm);
+    const song = { spec, diff, pc: pc || 'player', bpm: spec.bpm, spb: 60 / spec.bpm, events: [], notes: [[], []], sections: [], bars: 0 };
     // parse the structure: e.g. 'I4 O4A P4A O4B P4B X4A E2'
     const parts = spec.form.split(/\s+/).map((tok) => ({ kind: tok[0], bars: parseInt(tok.slice(1), 10), ph: tok.replace(/^[A-Z]\d+/, '') || 'A' }));
     let bar = 0;
     const motifs = {};
     const motif = (id) => {
+      id = id + ':' + lv;
       if (motifs[id]) return motifs[id];
       const pool = RHY[lv];
       const a = mel.pick(pool), b = mel.pick(pool), c = mel.pick(CAD[lv]);
       motifs[id] = { r: [a, b, a, c], contour: [mel.int(-3, 3), mel.int(-2, 4), mel.int(-3, 2), mel.int(-2, 1)], shift: mel.int(0, 2) };
       return motifs[id];
     };
-    let energy = 0;
+    let energy = 0, pi = 0;
     for (const p of parts) {
+      // endless: the rhythm gets busier every cycle of five sections
+      if (spec.ramp) lv = clamp(-1 + Math.floor(pi / 10), -1, 2);
+      pi++;
       const sec = { bar0: bar, bars: p.bars, beat0: bar * 4, kind: p.kind, ph: p.ph };
       song.sections.push(sec);
       const prog = p.ph === 'B' && spec.progB ? spec.progB : spec.prog;
@@ -924,7 +1207,8 @@ const Composer = {
     song.beats = bar * 4;
     song.length = song.beats * song.spb;
     song.events.sort((a, b) => a.b - b.b);
-    for (const side of [0, 1]) this.chart(song, side, lv);
+    for (const side of [0, 1]) this.chart(song, side, this.level(diff, spec.bpm));
+    this.mechanics(song, diff, mel);
     return song;
   },
   barMusic(song, bar, ch, part, i, energy, rng) {
@@ -985,7 +1269,7 @@ const Composer = {
   },
   // one 4-bar phrase for a singer; mode 0 = call, 1 = answer, 2 = harmony (player sings with the opponent)
   phrase(song, side, bar0, motif, prog, rng, mode) {
-    const spec = song.spec, ch0 = CHARS[side === 0 ? spec.opp : 'player'];
+    const spec = song.spec, ch0 = CHARS[side === 0 ? spec.opp : song.pc];
     const [lo, hi] = ch0.range;
     const root = spec.root, scale = SCALES[spec.mode], penta = PENTA[spec.mode];
     const all = this.pitchesIn(lo, hi, root, scale), pent = this.pitchesIn(lo, hi, root, penta);
@@ -1021,7 +1305,7 @@ const Composer = {
   },
   // the finale: the player sings the opponent's line together with them, a diatonic third up (or in octaves)
   duet(song, notes) {
-    const spec = song.spec, [lo, hi] = CHARS.player.range;
+    const spec = song.spec, [lo, hi] = CHARS[song.pc].range;
     const scale = this.pitchesIn(lo - 12, hi + 12, spec.root, SCALES[spec.mode]);
     for (const n of notes) {
       let m = n.m;
@@ -1065,6 +1349,48 @@ const Composer = {
       prev = n;
     }
   },
+  // boss twists and expert doubles: tag notes by the bar they fall in, add spikes and second arrows
+  mechanics(song, diff, rng) {
+    const M = song.spec.mech || [], spb = song.spb;
+    const inR = (kind, bar) => M.find((m) => m.kind === kind && bar >= m.from && bar < m.to);
+    for (const side of [0, 1]) {
+      const ns = song.notes[side];
+      for (const n of ns) {
+        const bar = Math.floor(n.b / 4);
+        const sp = inR('speed', bar); if (sp) n.speed = sp.k;
+        if (inR('vanish', bar) && side === 1) n.vanish = true;
+        if (inR('flicker', bar) && side === 1) n.flicker = true;
+      }
+      // expert, or a 'doubles' twist: a second arrow on strong beats
+      const dbl = [];
+      for (let i = 0; i < ns.length; i++) {
+        const n = ns[i], bar = Math.floor(n.b / 4);
+        const want = (diff === 'expert' && n.b % 1 === 0) || (inR('doubles', bar) && n.b % 1 === 0);
+        if (!want || n.hold || side === 0 && diff !== 'expert') continue;
+        const prev = ns[i - 1], next = ns[i + 1];
+        if ((prev && n.b - prev.b < 0.45) || (next && next.b - n.b < 0.45) || n.mine) continue;
+        const lane = (n.lane + 2) % 4;
+        dbl.push(Object.assign({}, n, { lane, hold: 0, dbl: true }));
+      }
+      for (const d of dbl) ns.push(d);
+      // spikes: on the player's side, in gaps between notes, on lanes that are free
+      if (side === 1) {
+        for (const m of M) {
+          if (m.kind !== 'mines') continue;
+          for (let b = m.from * 4; b < m.to * 4; b += 0.5) {
+            if (b >= song.beats - 8 || !rng.chance(m.rate * (diff === 'easy' ? 0.5 : 1))) continue;
+            const near = ns.filter((n) => Math.abs(n.b - b) < 0.6 || (n.hold && b >= n.b && b <= n.b + n.hold + 0.25));
+            if (!near.length && !ns.some((n) => Math.abs(n.b - b) < 2)) continue;   // only where you are singing
+            const used = new Set(near.map((n) => n.lane));
+            const free = [0, 1, 2, 3].filter((l) => !used.has(l));
+            if (!free.length) continue;
+            ns.push({ b, d: 0.25, m: 0, lane: free[rng.int(0, free.length - 1)], hold: 0, mine: true });
+          }
+        }
+      }
+      ns.sort((a, b) => a.b - b.b || (a.mine ? 1 : 0) - (b.mine ? 1 : 0));
+    }
+  },
 };
 
 // ---------------------------------------------------------------- engine.js (audio clock, song playback, scheduling)
@@ -1103,7 +1429,14 @@ class SongPlayer {
     this.ei = 0; this.vi = [0, 0]; this.prevF = [0, 0];
     this.start = 0; this.running = false; this.rate = 1;
   }
-  begin(atCtx) { this.start = atCtx; this.running = true; this.ei = 0; this.vi = [0, 0]; }
+  begin(atCtx, fromBeat) {
+    this.start = atCtx; this.running = true; this.ei = 0; this.vi = [0, 0];
+    if (fromBeat > 0) {
+      const E = this.song.events, N = this.song.notes;
+      while (this.ei < E.length && E[this.ei].b < fromBeat) this.ei++;
+      for (const side of [0, 1]) while (this.vi[side] < N[side].length && N[side][this.vi[side]].b < fromBeat) this.vi[side]++;
+    }
+  }
   stop() { this.running = false; }
   // schedule everything that starts before ctx time `until`
   pump(until) {
@@ -1126,9 +1459,10 @@ class SongPlayer {
     }
     for (const side of [0, 1]) {
       if (!this.opts.autoSing || !this.opts.autoSing[side]) continue;
-      const N = S.notes[side], voice = CHARS[side === 0 ? S.spec.opp : 'player'].voice;
+      const N = S.notes[side], voice = CHARS[side === 0 ? S.spec.opp : S.pc].voice;
       while (this.vi[side] < N.length && base + N[this.vi[side]].b * spb < until) {
         const n = N[this.vi[side]++];
+        if (n.mine || n.dbl) continue;
         const t = Math.max(base + n.b * spb, mx.ac.currentTime);
         const f = mtof(n.m);
         mx.sing(t, f, Math.max(0.09, n.d * spb * 0.92), voice, n.syl, this.prevF[side]);
@@ -1141,7 +1475,8 @@ class SongPlayer {
     const mx = this.mx, S = this.song, spb = S.spb;
     const t = Math.max(this.start + n.b * spb, mx.ac.currentTime + 0.002);
     const f = mtof(n.m);
-    const voice = CHARS[side === 0 ? S.spec.opp : 'player'].voice;
+    const voice = CHARS[side === 0 ? S.spec.opp : S.pc].voice;
+    if (n.dbl) return null;
     const h = mx.sing(t, f, Math.max(0.09, (holdSec || n.d * spb * 0.92)), voice, n.syl, this.prevF[side]);
     this.prevF[side] = f;
     return h;
@@ -1185,6 +1520,9 @@ const STYLE = {
   metro: { skin: '#f2b134', pants: '#7d8597', shoe: '#565d6e', sole: '#3a3f4c', top: '#f2b134', top2: '#c98a16', hair: '#f2b134', mic: '#3a3f4c', eye: '#58f3ff', hand: '#9aa3b5', robot: true },
   vex: { skin: '#f3d3c4', pants: '#1f1b29', shoe: '#2a2533', sole: '#e8436a', top: '#2c2440', top2: '#e8436a', hair: '#ff3d8b', mic: '#c9ced9', eye: '#1b1424', hand: '#f3d3c4' },
   roxy: { skin: '#9a6142', pants: '#b06cff', shoe: '#ffd34d', sole: '#c48a12', top: '#b06cff', top2: '#ff5fc8', hair: '#2a1640', mic: '#ffd34d', eye: '#1e1022', hand: '#9a6142', dress: true },
+  kai: { skin: '#c98a62', pants: '#26324f', shoe: '#ffffff', sole: '#ff8a3d', top: '#ff8a3d', top2: '#d0611c', hair: '#1d1a26', mic: '#dfe3ee', eye: '#231b2e', hand: '#c98a62' },
+  mira: { skin: '#f2c49a', pants: '#3a2d6e', shoe: '#7c6bff', sole: '#ffffff', top: '#7c6bff', top2: '#5141c8', hair: '#ff6fb5', mic: '#ffd34d', eye: '#2a1640', hand: '#f2c49a' },
+  maestro: { skin: '#ecc9a6', pants: '#1a1622', shoe: '#14111f', sole: '#ffd34d', top: '#221c30', top2: '#ffd34d', hair: '#f4f6fb', mic: '#ffd34d', eye: '#14111f', hand: '#ffffff', tux: true },
   glitch: { skin: '#cfd8d3', pants: '#1a2420', shoe: '#0f1513', sole: '#4be37a', top: '#173b2a', top2: '#4be37a', hair: '#173b2a', mic: '#4be37a', eye: '#4be37a', hand: '#2a3a33', monitor: true },
 };
 const Chars = {
@@ -1283,6 +1621,20 @@ const Chars = {
         g.fillStyle = S.top2; g.beginPath(); g.moveTo(-12, -95); g.lineTo(12, -95); g.lineTo(14, 4); g.lineTo(-14, 4); g.closePath(); g.fill(); this.stroke(g, 4);
         g.fillStyle = '#d7dce6'; for (let i = 0; i < 5; i++) { g.beginPath(); g.arc(-26, -84 + i * 18, 3, 0, TAU); g.fill(); g.beginPath(); g.arc(26, -84 + i * 18, 3, 0, TAU); g.fill(); }
         g.strokeStyle = '#c9ced9'; g.lineWidth = 3; g.beginPath(); g.moveTo(-14, 0); g.quadraticCurveTo(0, 14, 16, -2); g.stroke();
+      } else if (id === 'kai') {
+        // varsity jacket: white sleeves stripe + big K
+        g.fillStyle = '#ffffff'; g.beginPath(); g.moveTo(-10, -96); g.lineTo(10, -96); g.lineTo(12, 6); g.lineTo(-12, 6); g.closePath(); g.fill(); this.stroke(g, 4);
+        g.font = '400 30px Bungee, sans-serif'; g.textAlign = 'center'; g.fillStyle = S.top2; g.fillText('K', -24, -46);
+      } else if (id === 'mira') {
+        // crop jacket with a star
+        g.fillStyle = S.top2; g.beginPath(); g.moveTo(-38, -20); g.lineTo(38, -20); g.lineTo(38, 6); g.quadraticCurveTo(0, 14, -38, 6); g.closePath(); g.fill(); this.stroke(g, 4);
+        g.fillStyle = '#ffd34d'; g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 7 : 16; g.lineTo(Math.cos(a) * r, -60 + Math.sin(a) * r); } g.closePath(); g.fill(); this.stroke(g, 3);
+      } else if (S.tux) {
+        // tailcoat, white shirt, gold lapels, bow tie
+        g.fillStyle = '#f4f6fb'; g.beginPath(); g.moveTo(-14, -96); g.lineTo(14, -96); g.lineTo(6, -10); g.lineTo(-6, -10); g.closePath(); g.fill(); this.stroke(g, 4);
+        g.fillStyle = S.top2; g.beginPath(); g.moveTo(-14, -96); g.lineTo(-26, -60); g.lineTo(-10, -50); g.closePath(); g.fill(); g.beginPath(); g.moveTo(14, -96); g.lineTo(26, -60); g.lineTo(10, -50); g.closePath(); g.fill();
+        g.fillStyle = '#d0213f'; g.beginPath(); g.moveTo(0, -90); g.lineTo(-14, -98); g.lineTo(-14, -82); g.closePath(); g.moveTo(0, -90); g.lineTo(14, -98); g.lineTo(14, -82); g.closePath(); g.fill(); this.stroke(g, 3);
+        g.fillStyle = S.top2; for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(0, -70 + i * 20, 3, 0, TAU); g.fill(); }
       } else if (id === 'glitch') {
         g.strokeStyle = S.top2; g.lineWidth = 3;
         g.beginPath(); g.moveTo(-30, -60); g.lineTo(-12, -60); g.lineTo(-12, -30); g.lineTo(8, -30); g.moveTo(30, -76); g.lineTo(16, -76); g.lineTo(16, -50); g.stroke();
@@ -1348,6 +1700,22 @@ const Chars = {
     } else if (id === 'roxy') {
       g.fillStyle = '#ffd34d';
       g.beginPath(); g.arc(-46, 30, 10, 0, TAU); g.lineWidth = 4; g.strokeStyle = '#ffd34d'; g.stroke();
+    } else if (id === 'kai') {
+      // short hair under a backwards cap
+      g.fillStyle = S.hair; g.beginPath(); g.moveTo(-56, 0); g.quadraticCurveTo(-60, -44, -20, -52); g.lineTo(40, -48); g.quadraticCurveTo(50, -30, 56, -14); g.quadraticCurveTo(20, -30, -30, -24); g.closePath(); g.fill(); this.stroke(g, 5);
+      g.fillStyle = S.top; g.beginPath(); g.ellipse(-2, -42, 58, 30, -0.08, Math.PI, 0); g.closePath(); g.fill(); this.stroke(g, 5);
+      g.beginPath(); g.moveTo(-56, -40); g.quadraticCurveTo(-84, -36, -90, -24); g.lineTo(-54, -30); g.closePath(); g.fill(); this.stroke(g, 4);
+      g.fillStyle = '#ffffff'; g.beginPath(); g.arc(-2, -66, 6, 0, TAU); g.fill(); this.stroke(g, 3);
+    } else if (id === 'mira') {
+      // pink ponytail and fringe
+      g.fillStyle = S.hair;
+      g.beginPath(); g.moveTo(-40, -44); g.quadraticCurveTo(-110, -70, -100, 10); g.quadraticCurveTo(-90, 50, -70, 70); g.quadraticCurveTo(-80, 20, -50, -10); g.closePath(); g.fill(); this.stroke(g, 5);
+      g.beginPath(); g.moveTo(-58, 0); g.quadraticCurveTo(-62, -60, -4, -66); g.quadraticCurveTo(46, -66, 58, -20); g.quadraticCurveTo(40, -36, 20, -30); g.quadraticCurveTo(10, -14, -6, -26); g.quadraticCurveTo(-30, -36, -40, -8); g.closePath(); g.fill(); this.stroke(g, 5);
+      g.fillStyle = '#ffd34d'; g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 5 : 11; g.lineTo(-30 + Math.cos(a) * r, -46 + Math.sin(a) * r); } g.closePath(); g.fill(); this.stroke(g, 3);
+    } else if (id === 'maestro') {
+      // a wild white mane and a monocle
+      g.fillStyle = S.hair;
+      g.beginPath(); for (let i = 0; i <= 12; i++) { const a = Math.PI * (0.95 + i / 12 * 1.1), r = i % 2 ? 66 : 90; g.lineTo(Math.cos(a) * r - 6, -10 + Math.sin(a) * r); } g.closePath(); g.fill(); this.stroke(g, 5);
     }
     // eyes
     const eo = 18;
@@ -1382,6 +1750,11 @@ const Chars = {
       else if (id === 'vex') { g.moveTo(mx - 12, my + 2); g.lineTo(mx + 10, my - 3); }
       else g.arc(mx, my - 6, 11, Math.PI * 0.2, Math.PI * 0.8);
       g.stroke();
+    }
+    if (id === 'maestro') {
+      g.fillStyle = '#f4f6fb'; g.beginPath(); g.moveTo(mx, my - 12); g.quadraticCurveTo(mx - 22, my - 20, mx - 30, my - 2); g.quadraticCurveTo(mx - 16, my - 10, mx, my - 6); g.quadraticCurveTo(mx + 16, my - 10, mx + 30, my - 2); g.quadraticCurveTo(mx + 22, my - 20, mx, my - 12); g.fill(); this.stroke(g, 3);
+      g.strokeStyle = '#ffd34d'; g.lineWidth = 4; g.beginPath(); g.arc(eo + 30, -6, 16, 0, TAU); g.stroke();
+      g.beginPath(); g.moveTo(eo + 44, 2); g.quadraticCurveTo(eo + 50, 30, eo + 40, 50); g.lineWidth = 2; g.stroke();
     }
     g.restore();
   },
@@ -1426,7 +1799,41 @@ const Chars = {
 // ---------------------------------------------------------------- stage.js (animated backgrounds + the boombox buddy)
 const Stage = {
   id: 'studio', song: null, cache: null, key: '',
-  setSong(song) { this.song = song; this.id = song ? song.spec.stage : 'studio'; this.cache = null; },
+  setSong(song, override) { this.song = song; this.id = override && override !== 'auto' ? override : song ? song.spec.stage : 'studio'; this.cache = null; },
+  // the light show grows with the crowd: beams, then lasers, then strobes
+  show(g, W, H, beat, tier, flash, t) {
+    const ph = ((beat % 1) + 1) % 1, pulse = Math.max(0, 1 - ph * 3), f = flash ? 1 : 0.4;
+    const n = [1, 2, 4, 6, 8][tier] || 1;
+    const cols = ['255,95,200', '110,200,255', '255,211,77', '176,108,255', '120,255,200', '255,120,80'];
+    g.save(); g.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < n; i++) {
+      const x = W * ((i + 0.5) / n), a = Math.PI / 2 + Math.sin(beat * 0.5 * (i % 2 ? 1 : -1) + i * 1.7) * (0.25 + tier * 0.08);
+      const len = H * 1.1, sp = 0.07 + tier * 0.01;
+      const gr = g.createLinearGradient(x, 0, x + Math.cos(a) * len, Math.sin(a) * len);
+      gr.addColorStop(0, 'rgba(' + cols[(((i + Math.floor(beat / 4)) % cols.length) + cols.length) % cols.length] + ',' + (0.1 + tier * 0.04 + pulse * 0.08) * f + ')'); gr.addColorStop(1, 'rgba(' + cols[i % cols.length] + ',0)');
+      g.fillStyle = gr; g.beginPath(); g.moveTo(x, -4); g.lineTo(x + Math.cos(a - sp) * len, Math.sin(a - sp) * len); g.lineTo(x + Math.cos(a + sp) * len, Math.sin(a + sp) * len); g.closePath(); g.fill();
+    }
+    if (tier >= 3) {
+      // lasers fanning out from the back of the stage
+      g.lineWidth = 2;
+      for (let i = 0; i < 10; i++) {
+        const a = -Math.PI / 2 + Math.sin(t * 1.3 + i * 0.6) * 1.1, c = cols[(((i + Math.floor(beat)) % cols.length) + cols.length) % cols.length];
+        g.strokeStyle = 'rgba(' + c + ',' + 0.35 * f + ')';
+        g.beginPath(); g.moveTo(W / 2, H * 0.62); g.lineTo(W / 2 + Math.cos(a) * W, H * 0.62 + Math.sin(a) * W); g.stroke();
+      }
+    }
+    if (tier >= 4 && flash && ph < 0.06 && Math.floor(beat) % 2 === 0) { g.fillStyle = 'rgba(255,255,255,0.12)'; g.fillRect(0, 0, W, H); }
+    g.restore();
+    if (this.id === 'arena') {
+      // big side screens pulse with the beat
+      for (const sx of [W * 0.03, W * 0.83]) {
+        const w = W * 0.14, h = H * 0.24, y = H * 0.18;
+        g.fillStyle = '#0b0a14'; g.fillRect(sx, y, w, h);
+        for (let i = 0; i < 12; i++) { const bh = h * (0.15 + 0.8 * Math.abs(Math.sin(beat * 1.6 + i * 0.7)) * (0.4 + tier * 0.15)); g.fillStyle = 'rgba(' + cols[Math.abs(i + tier) % cols.length] + ',0.85)'; g.fillRect(sx + 4 + i * (w - 8) / 12, y + h - 4 - bh, (w - 8) / 12 - 2, bh); }
+        g.strokeStyle = '#3a3550'; g.lineWidth = 3; g.strokeRect(sx, y, w, h);
+      }
+    }
+  },
   // beat: fractional beat; W,H: stage viewport size in px (already inside the camera transform)
   draw(g, W, H, beat, flash) {
     const k = this.id + W + 'x' + H;
@@ -1578,6 +1985,21 @@ const Stage = {
       g.fillStyle = '#160a22'; g.fillRect(0, y0, W, H - y0);
       g.strokeStyle = 'rgba(255,255,255,0.08)';
       for (let r = 0; r <= 4; r++) { const y = y0 + (r / 4) * (H - y0); g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
+    } else if (this.id === 'arena') {
+      const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#07060f'); gr.addColorStop(0.55, '#1a1238'); gr.addColorStop(1, '#0b0816');
+      g.fillStyle = gr; g.fillRect(0, 0, W, H);
+      // a sea of phone lights in the stands
+      for (let i = 0; i < 360; i++) { const x = rng.range(0, W), y = H * (0.3 + rng.range(0, 0.32)); g.fillStyle = rng.chance(0.5) ? 'rgba(255,240,200,0.5)' : 'rgba(150,200,255,0.35)'; g.fillRect(x, y, 2, 2); }
+      // lighting truss
+      g.strokeStyle = '#3a3550'; g.lineWidth = 6; g.beginPath(); g.moveTo(0, H * 0.06); g.lineTo(W, H * 0.06); g.moveTo(0, H * 0.1); g.lineTo(W, H * 0.1); g.stroke();
+      g.lineWidth = 2; for (let x = 0; x < W; x += W / 40) { g.beginPath(); g.moveTo(x, H * 0.06); g.lineTo(x + W / 80, H * 0.1); g.lineTo(x + W / 40, H * 0.06); g.stroke(); }
+      for (let i = 0; i < 12; i++) { const x = W * (0.05 + i * 0.082); g.fillStyle = '#26223a'; g.fillRect(x - 8, H * 0.1, 16, 18); g.fillStyle = '#ffe9b0'; g.beginPath(); g.arc(x, H * 0.1 + 20, 5, 0, TAU); g.fill(); }
+      // stage deck with an edge of lights
+      const fy = H * 0.74;
+      g.fillStyle = '#16121f'; g.fillRect(0, fy, W, H - fy);
+      g.fillStyle = '#2a2240'; g.fillRect(0, fy, W, 8);
+      for (let x = 10; x < W; x += 26) { g.fillStyle = 'rgba(255,211,77,0.7)'; g.fillRect(x, fy + 2, 10, 4); }
+      g.strokeStyle = 'rgba(255,255,255,0.05)'; for (let i = 0; i < 20; i++) { g.beginPath(); g.moveTo(W / 2 + (i - 10) * W * 0.03, fy); g.lineTo(W / 2 + (i - 10) * W * 0.12, H); g.stroke(); }
     } else if (this.id === 'cyber') {
       const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#030806'); gr.addColorStop(0.62, '#0b2416'); gr.addColorStop(1, '#020403');
       g.fillStyle = gr; g.fillRect(0, 0, W, H);
@@ -1648,6 +2070,9 @@ const Render = {
       L.score = { x: W / 2, y: H * 0.415 + 36 };
       L.top = down ? H * 0.43 : H;   // notes enter from here
       L.pops = [{ x: W * 0.25, y: H * 0.2 }, { x: W * 0.5, y: down ? H * 0.62 : H * 0.8 }];
+      L.meter = { x: W * 0.5, y: H * 0.415 + 34, w: W * 0.44 };
+      L.score = { x: W / 2, y: H * 0.415 + 58 };
+      L.boss = { x: W * 0.5, y: 16 + App.safe.t + 6, w: W * 0.4 };
     } else {
       const size = Math.min(W * 0.068, H * 0.125);
       const sp = size * 1.08;
@@ -1659,6 +2084,9 @@ const Render = {
       L.score = { x: W / 2, y: L.health.y + 32 };
       L.top = down ? 0 : H;
       L.pops = [{ x: W * 0.27, y: H * 0.42 }, { x: W * 0.62, y: H * 0.42 }];
+      L.meter = { x: W / 2, y: down ? L.health.y + 54 : L.health.y - 34, w: W * 0.28 };
+      L.score = { x: W / 2, y: down ? L.health.y + 30 : L.health.y + 26 };
+      L.boss = { x: W / 2, y: down ? L.meter.y + 34 : size * 0.85 + App.safe.t + size + 24, w: W * 0.34 };
     }
     this.L = L;
     this.makeSprites(Math.round(L.strum[1].size * dpr));
@@ -1741,16 +2169,27 @@ const Render = {
     g.save();
     if (L.portrait) { g.beginPath(); g.rect(0, 0, W, L.stage.h); g.clip(); }
     const SH = L.stage.h, z = 1.04 + (flashing ? this.cam.bump : this.cam.bump * 0.3);
-    g.translate(W / 2, SH / 2); g.scale(z, z); g.translate(-W / 2 - this.cam.x, -SH / 2);
+    let shx = 0, shy = 0;
+    if (song && G.state === 'play' && !G.paused && G.mech('shake', beat) && flashing) { const k = Math.max(0, 1 - ph * 4) * 7; shx = (Math.random() - 0.5) * k; shy = (Math.random() - 0.5) * k; }
+    this.shake = Math.max(0, (this.shake || 0) - dt * 2);
+    if (this.shake > 0) { shx += (Math.random() - 0.5) * this.shake * 20; shy += (Math.random() - 0.5) * this.shake * 20; }
+    g.translate(W / 2 + shx, SH / 2 + shy); g.scale(z, z); g.translate(-W / 2 - this.cam.x, -SH / 2);
+    const tier = song && G.crowd ? G.crowd.tier : 1;
     Stage.draw(g, W, SH, beat, flashing);
+    Stage.show(g, W, SH, beat, tier, flashing, this.t);
     if (song || UI.atMenu) this.drawCast(g, beat, pos);
+    this.drawCrowd(g, W, SH, beat, tier);
+    this.drawParts(g, W, SH, dt);
     g.restore();
+    if (G.mech && song && G.state === 'play' && G.mech('shake', beat) && flashing) { /* the camera shakes on boss beats */ }
     if (L.portrait) { g.fillStyle = '#0d0b14'; g.fillRect(0, L.stage.h, W, H - L.stage.h); }
     if (!song || G.state === 'idle') return;
     // HUD
     for (let side = 0; side < 2; side++) this.drawStrum(g, side, pos, spb);
     this.drawHealth(g, beat);
+    this.drawMeter(g, beat);
     this.drawText(g, pos, spb);
+    this.drawBanner(g, dt);
   },
   drawCast(g, beat, pos) {
     const L = this.L, G = Game, S = L.stage;
@@ -1770,11 +2209,18 @@ const Render = {
       return { pose, k, bop: pose === -1 ? bop : 0, t: this.t, beat, miss: sd.miss };
     };
     Chars.draw(g, opp, S.opp, S.feet, S.sc, 1, st(0));
-    Chars.draw(g, 'player', S.pl, S.feet, S.sc, -1, st(1));
+    Chars.draw(g, G.song ? G.pc : (Save.data.pc || 'player'), S.pl, S.feet, S.sc, -1, st(1));
   },
   drawStrum(g, side, pos, spb) {
-    const G = Game, L = this.L, sd = G.sides[side], st = L.strum[side];
-    if (!st) return;
+    const G = Game, L = this.L, sd = G.sides[side], st0 = L.strum[side];
+    if (!st0) return;
+    // a swap twist mirrors the arrows (smoothly)
+    const beat = pos / spb;
+    const sw = side === 1 && G.mech('swap', beat) ? 1 : 0;
+    this.swapK = this.swapK === undefined ? 0 : this.swapK;
+    if (side === 1) this.swapK += (sw - this.swapK) * Math.min(1, 0.12);
+    const k = side === 1 ? easeInOut(this.swapK) : 0;
+    const st = k > 0.001 ? Object.assign({}, st0, { xs: st0.xs.map((x, l) => x + (st0.xs[3 - l] - x) * k) }) : st0;
     const size = st.size, spr = this.spr, sc = size / (this.sprSize / this.dpr);
     const dir = L.down ? -1 : 1;
     const speed = (L.portrait ? this.H * 0.75 : this.H * 0.95) * Save.data.settings.speed * (0.82 + G.song.bpm / 520) * (st.mini ? 0.42 : 1);
@@ -1794,12 +2240,20 @@ const Render = {
     const range = Math.abs(top - st.y) / speed + 0.25;
     for (let i = sd.cursor; i < N.length; i++) {
       const n = N[i];
-      if (n.t - pos > range) break;
-      if ((n.hit && !n.holding) || (n.missed && !n.hold)) continue;
+      if (n.t - pos > range * 1.6) break;
+      if ((n.hit && !n.holding) || (n.missed && !n.hold) || (n.mine && n.done)) continue;
       const x = st.xs[n.lane];
-      let y = st.y + (n.t - pos) * speed * dir;
+      const nsp = speed * (n.speed || 1);
+      let y = st.y + (n.t - pos) * nsp * dir;
+      if ((y - st.y) * dir > Math.abs(top - st.y) + size) continue;
+      if (n.mine) { this.drawMine(g, x, y, size, pos); continue; }
+      // spotlight twist: arrows fade before they arrive
+      let va = 1;
+      if (n.vanish) { const f = Math.abs(y - st.y) / Math.abs(top - st.y); va = clamp((f - 0.3) / 0.25, 0, 1); }
+      if (n.flicker) va *= 0.25 + 0.75 * (Math.sin(pos * 22 + n.lane * 2) > -0.2 ? 1 : 0);
+      if (va < 1) g.globalAlpha = alpha * va;
       if (n.hold) {
-        const yEnd = st.y + (n.end - pos) * speed * dir;
+        const yEnd = st.y + (n.end - pos) * nsp * dir;
         const yStart = n.holding ? st.y : y;
         if ((yEnd - yStart) * dir > 0) {
           g.globalAlpha = alpha * (n.missed || n.dropped ? 0.35 : 0.92);
@@ -1814,8 +2268,8 @@ const Render = {
         }
         if (n.holding || n.hit) continue;
       }
-      if (n.missed) g.globalAlpha = alpha * 0.4;
-      this.blit(g, spr[n.lane].note, x, y, sc);
+      if (n.missed) g.globalAlpha = alpha * 0.4 * va;
+      this.blit(g, spr[n.lane].note, x, y, sc * (n.dbl ? 0.98 : 1));
       g.globalAlpha = alpha;
     }
     // splashes
@@ -1839,14 +2293,14 @@ const Render = {
     const G = Game, L = this.L, hb = L.health;
     const hp = G.health / 2;
     const split = hb.x + hb.w * (1 - hp);
-    const oppC = CHARS[G.song.spec.opp].color, plC = CHARS.player.color;
+    const oppC = CHARS[G.song.spec.opp].color, plC = CHARS[G.pc].color;
     g.fillStyle = '#120f1d'; g.beginPath(); g.roundRect(hb.x - 4, hb.y - hb.h / 2 - 4, hb.w + 8, hb.h + 8, 10); g.fill();
     g.fillStyle = G.mode === 'versus' ? oppC : '#d03b5a'; g.beginPath(); g.roundRect(hb.x, hb.y - hb.h / 2, Math.max(0, split - hb.x), hb.h, 6); g.fill();
     g.fillStyle = plC; g.beginPath(); g.roundRect(split, hb.y - hb.h / 2, Math.max(0, hb.x + hb.w - split), hb.h, 6); g.fill();
     const bop = 1 + Math.max(0, 1 - (((beat % 1) + 1) % 1) * 4) * 0.12;
     const isz = (L.portrait ? 0.27 : 0.42 * (this.H / 720)) * bop;
     Chars.icon(g, G.song.spec.opp, split - 30 * isz * 2.2, hb.y, isz, hp > 0.8, beat, 1);
-    Chars.icon(g, 'player', split + 30 * isz * 2.2, hb.y, isz, hp < 0.2, beat, -1);
+    Chars.icon(g, G.pc, split + 30 * isz * 2.2, hb.y, isz, hp < 0.2, beat, -1);
   },
   drawText(g, pos, spb) {
     const G = Game, L = this.L, W = this.W, H = this.H;
@@ -1861,8 +2315,13 @@ const Render = {
       line('P1 · ' + a.score.toLocaleString() + ' · ' + a.acc.toFixed(1) + '%', W * 0.75, L.score.y);
     } else {
       const s = G.stats(1);
-      const judged = G.sides[1].accN + s.misses + s.drops;
-      line('Score ' + s.score.toLocaleString() + '  ·  Misses ' + (s.misses + s.drops) + '  ·  ' + (judged ? s.acc.toFixed(2) + '%' : '—'), L.score.x, L.score.y);
+      const judged = G.sides[1].accN + s.misses + s.drops + s.mines;
+      let extra = '';
+      if (G.tour) extra = '  ·  beat ' + G.tour.target.toFixed(0) + '%';
+      else if (G.endless) extra = '  ·  bar ' + G.endless.bars;
+      else if (G.practice) extra = '  ·  practice ' + Math.round(G.practice.rate * 100) + '%';
+      line(s.score.toLocaleString() + '  ·  ' + (s.misses + s.drops + s.mines) + ' miss  ·  ' + (judged ? s.acc.toFixed(2) + '%' : '—') + extra, L.score.x, L.score.y);
+      if (G.tour && judged) { g.fillStyle = s.acc >= G.tour.target ? '#8dff8a' : '#ff6b7a'; g.beginPath(); g.arc(L.score.x + g.measureText(s.score.toLocaleString() + '  ·  ' + (s.misses + s.drops) + ' miss  ·  ' + s.acc.toFixed(2) + '%' + extra).width / 2 + 12, L.score.y, 5, 0, TAU); g.fill(); g.fillStyle = '#ffffff'; }
     }
     // rating popups
     for (let side = 0; side < 2; side++) {
@@ -1875,9 +2334,11 @@ const Render = {
         g.font = '400 ' + Math.round(fs * 2.1 * s) + 'px Bungee, sans-serif';
         g.lineWidth = 6; g.strokeStyle = '#120f1d'; g.fillStyle = p.color;
         g.strokeText(p.text, pp.x, y); g.fillText(p.text, pp.x, y);
-        if (p.combo >= 5 && p.text !== 'MISS' && p.text !== 'DROP') {
+        if (p.sub) { g.font = '700 ' + Math.round(fs * 0.95) + 'px Rubik, sans-serif'; g.lineWidth = 4; g.fillStyle = p.sub === 'EARLY' ? '#7ab8ff' : '#ffb27a'; g.strokeText(p.sub, pp.x, y - fs * 1.6); g.fillText(p.sub, pp.x, y - fs * 1.6); }
+        if (p.combo >= 5 && p.text !== 'MISS' && p.text !== 'DROP' && p.text !== 'SPIKE!') {
           g.font = '400 ' + Math.round(fs * 1.5) + 'px Bungee, sans-serif'; g.fillStyle = '#ffffff';
-          g.strokeText(p.combo + 'x', pp.x, y + fs * 2.1); g.fillText(p.combo + 'x', pp.x, y + fs * 2.1);
+          const m = multFor(p.combo);
+          g.strokeText(p.combo + (m > 1 ? '  ×' + m : ''), pp.x, y + fs * 2.1); g.fillStyle = m >= 4 ? '#ff9bff' : m >= 3 ? '#ffd84d' : '#ffffff'; g.fillText(p.combo + (m > 1 ? '  ×' + m : ''), pp.x, y + fs * 2.1);
         }
       }
       g.globalAlpha = 1;
@@ -1930,6 +2391,137 @@ const Render = {
       g.fillRect(x0, L.portrait ? L.stage.h : 0, colW, H);
       g.globalAlpha = 1;
     }
+  },
+  // ------------------------------------------------ the show: crowd, confetti, pyro, banners
+  resetShow() { this.parts = []; this.banner = null; this.shake = 0; this.swapK = 0; },
+  hype(kind, n) {
+    const W = this.W, SH = this.L ? this.L.stage.h : this.H;
+    const txt = kind === 'combo' ? n + ' COMBO!' : kind === 'boss' ? 'BOSS DEFEATED!' : kind === 'tier' ? (n >= 4 ? 'LEGENDARY!' : n >= 3 ? 'CROWD ON FIRE!' : 'CROWD IS HYPED!') : '';
+    const col = kind === 'boss' ? '#ffd84d' : kind === 'tier' ? CROWD[n].color : '#7ef0ff';
+    this.banner = { txt, col, t: 0 };
+    this.cam.bump = Math.max(this.cam.bump, 0.06);
+    if (!Save.data.settings.flashing) return;
+    const burst = kind === 'tier' ? 50 + n * 20 : 60;
+    for (let i = 0; i < burst; i++) {
+      const left = i % 2 === 0, x = left ? W * 0.08 : W * 0.92;
+      this.parts.push({ k: 'conf', x, y: SH * 0.92, vx: (left ? 1 : -1) * (120 + Math.random() * 380), vy: -(380 + Math.random() * 520), r: Math.random() * TAU, vr: (Math.random() - 0.5) * 14, c: ['#ff5fc8', '#7ef0ff', '#ffd84d', '#8dff8a', '#b06cff', '#ffffff'][i % 6], t: 0, life: 2.2 + Math.random() });
+    }
+    if ((kind === 'tier' && n >= 3) || kind === 'boss') for (const x of [W * 0.04, W * 0.96]) for (let i = 0; i < 26; i++) this.parts.push({ k: 'pyro', x: x + (Math.random() - 0.5) * 20, y: SH * 0.95, vx: (Math.random() - 0.5) * 60, vy: -(500 + Math.random() * 500), t: 0, life: 0.5 + Math.random() * 0.4, s: 8 + Math.random() * 10 });
+  },
+  boom(side, lane) {
+    const st = this.L.strum[side]; if (!st) return;
+    const x = st.xs[lane], y = st.y;
+    for (let i = 0; i < 18; i++) { const a = Math.random() * TAU, v = 150 + Math.random() * 300; this.parts.push({ k: 'spark', hud: true, x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, life: 0.45, c: i % 2 ? '#ff4d6d' : '#ffd84d' }); }
+    this.shake = 0.5;
+  },
+  comboBreak(side, combo) { if (side === 1) this.breakT = { combo, t: 0 }; },
+  drawParts(g, W, SH, dt) {
+    if (!this.parts || !this.parts.length) return;
+    for (const p of this.parts) {
+      p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt;
+      if (p.k === 'conf') { p.vy += 900 * dt; p.vx *= 0.985; p.vy = Math.min(p.vy, 180); p.r += p.vr * dt; }
+      else if (p.k === 'pyro') { p.vy += 400 * dt; }
+      else p.vy += 600 * dt;
+    }
+    this.parts = this.parts.filter((p) => p.t < p.life);
+    for (const p of this.parts) {
+      if (p.hud) continue;
+      const a = clamp(1 - p.t / p.life, 0, 1);
+      if (p.k === 'conf') { g.save(); g.translate(p.x, p.y); g.rotate(p.r); g.globalAlpha = Math.min(1, a * 2); g.fillStyle = p.c; g.fillRect(-5, -2.5 * Math.abs(Math.cos(p.r * 2)) - 0.5, 10, 5 * Math.abs(Math.cos(p.r * 2)) + 1); g.restore(); }
+      else if (p.k === 'pyro') { g.globalCompositeOperation = 'lighter'; const gr = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.s * 2); gr.addColorStop(0, 'rgba(255,240,180,' + a + ')'); gr.addColorStop(0.4, 'rgba(255,140,40,' + a * 0.8 + ')'); gr.addColorStop(1, 'rgba(255,60,20,0)'); g.fillStyle = gr; g.beginPath(); g.arc(p.x, p.y, p.s * 2, 0, TAU); g.fill(); g.globalCompositeOperation = 'source-over'; }
+    }
+    g.globalAlpha = 1;
+  },
+  // the audience: rows of heads and arms at the front of the stage, livelier with every tier
+  drawCrowd(g, W, H, beat, tier) {
+    if (!Game.song && !UI.atMenu) return;
+    const ph = ((beat % 1) + 1) % 1, jump = Math.max(0, 1 - ph * 2.5), rows = 2, t = this.t;
+    const base = H + 6, n = Math.ceil(W / 34) + 2;
+    for (let r = 0; r < rows; r++) {
+      const y0 = base - (rows - 1 - r) * 18, dark = r === 0 ? '#120d1c' : '#1b1428', sc = r === 0 ? 0.85 : 1;
+      for (let i = 0; i < n; i++) {
+        const h = hash2(i, r, 77), x = (i + (r ? 0.5 : 0)) * 34 - 20 + h * 10;
+        const bounce = tier >= 1 ? jump * (tier >= 3 ? 14 : tier >= 2 ? 9 : 4) * (0.6 + h * 0.6) : Math.sin(t * 1.5 + i) * 1.5;
+        const y = y0 - bounce * sc;
+        g.fillStyle = dark;
+        // arms up when the crowd is into it
+        if (tier >= 2 && h > (tier >= 3 ? 0.2 : 0.55)) {
+          const wave = Math.sin(beat * Math.PI + i) * 0.3;
+          g.save(); g.translate(x, y - 30 * sc); g.rotate(-0.35 + wave); g.fillRect(-3, -34 * sc, 6, 34 * sc); g.restore();
+          g.save(); g.translate(x + 14 * sc, y - 30 * sc); g.rotate(0.35 - wave); g.fillRect(-3, -34 * sc, 6, 34 * sc); g.restore();
+          if (tier >= 3 && h > 0.7) {
+            // glowsticks and phone lights
+            const c = ['#7ef0ff', '#ff5fc8', '#ffd84d', '#8dff8a'][i % 4];
+            g.save(); g.translate(x - 6 * sc + Math.sin(-0.35 + wave) * -34 * sc, y - 30 * sc - Math.cos(-0.35 + wave) * 34 * sc); g.rotate(-0.35 + wave);
+            g.shadowColor = c; g.shadowBlur = 10; g.fillStyle = c; g.fillRect(-2, -14, 4, 14); g.restore(); g.shadowBlur = 0;
+            g.fillStyle = dark;
+          }
+        }
+        g.beginPath(); g.arc(x + 7 * sc, y - 40 * sc, 13 * sc, 0, TAU); g.fill();
+        g.beginPath(); g.ellipse(x + 7 * sc, y, 22 * sc, 34 * sc, 0, Math.PI, 0); g.fill();
+      }
+    }
+  },
+  drawMine(g, x, y, size, pos) {
+    const r = size * 0.32, spin = pos * 3;
+    g.save(); g.translate(x, y); g.rotate(spin);
+    g.fillStyle = '#1a1622'; g.strokeStyle = '#ff4d6d'; g.lineWidth = 3;
+    g.beginPath(); for (let i = 0; i < 16; i++) { const a = i * TAU / 16, rr = i % 2 ? r : r * 1.45; g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } g.closePath(); g.fill(); g.stroke();
+    g.rotate(-spin);
+    g.strokeStyle = '#ff4d6d'; g.lineWidth = 4; g.beginPath(); g.moveTo(-r * 0.45, -r * 0.45); g.lineTo(r * 0.45, r * 0.45); g.moveTo(r * 0.45, -r * 0.45); g.lineTo(-r * 0.45, r * 0.45); g.stroke();
+    g.restore();
+  },
+  drawMeter(g, beat) {
+    const G = Game, L = this.L, M = L.meter;
+    if (!M || G.mode === 'versus') return;
+    const C = G.crowd, T = CROWD[C.tier], w = M.w, x0 = M.x - w / 2, y = M.y, h = 8;
+    g.fillStyle = 'rgba(18,15,29,0.85)'; g.beginPath(); g.roundRect(x0 - 3, y - h / 2 - 3, w + 6, h + 6, 7); g.fill();
+    const gr = g.createLinearGradient(x0, 0, x0 + w, 0);
+    gr.addColorStop(0, '#8a8fb0'); gr.addColorStop(0.2, '#ffd84d'); gr.addColorStop(0.45, '#ff9b4d'); gr.addColorStop(0.7, '#ff4d6d'); gr.addColorStop(0.9, '#d36bff'); gr.addColorStop(1, '#ffffff');
+    g.save(); g.beginPath(); g.roundRect(x0, y - h / 2, w * C.e / 100, h, 4); g.clip(); g.fillStyle = gr; g.fillRect(x0, y - h / 2, w, h); g.restore();
+    for (const tt of CROWD) if (tt.at > 0) { g.fillStyle = 'rgba(18,15,29,0.7)'; g.fillRect(x0 + w * tt.at / 100 - 1, y - h / 2, 2, h); }
+    const fs = Math.round(Math.max(11, Math.min(14, this.W / 70)));
+    g.font = '400 ' + fs + 'px Bungee, sans-serif'; g.textAlign = 'right'; g.textBaseline = 'middle';
+    g.lineWidth = 4; g.strokeStyle = '#120f1d'; g.fillStyle = T.color;
+    const lbl = 'CROWD ' + T.name + (C.tier ? '  +' + C.tier * 10 + '%' : '');
+    const tight = g.measureText(lbl).width > x0 - 14, l2 = tight ? T.name : lbl;
+    g.strokeText(l2, x0 - 10, y); g.fillText(l2, x0 - 10, y);
+    g.textAlign = 'left';
+    const m = multFor(G.sides[1].combo), mt = '×' + m + (tight && C.tier ? ' +' + C.tier * 10 + '%' : '');
+    g.fillStyle = m >= 4 ? '#ff9bff' : m >= 3 ? '#ffd84d' : m >= 2 ? '#7ef0ff' : '#8a8fb0';
+    g.strokeText(mt, x0 + w + 10, y); g.fillText(mt, x0 + w + 10, y);
+    // boss health
+    if (G.boss && L.boss) {
+      const B = L.boss, bw = B.w, bx = B.x - bw / 2, by = B.y;
+      g.fillStyle = 'rgba(18,15,29,0.9)'; g.beginPath(); g.roundRect(bx - 4, by - 10, bw + 8, 20, 9); g.fill();
+      g.fillStyle = G.boss.dead ? '#8dff8a' : '#ff4d6d'; g.beginPath(); g.roundRect(bx, by - 6, bw * G.boss.hp, 12, 6); g.fill();
+      g.font = '400 ' + fs + 'px Bungee, sans-serif'; g.textAlign = 'center'; g.fillStyle = '#ffffff'; g.strokeText(G.boss.dead ? 'DEFEATED' : (BOSSES.find((b) => b.song === G.song.spec.id) || { name: CHARS[G.song.spec.opp].name }).name.toUpperCase(), B.x, by + 22); g.fillText(G.boss.dead ? 'DEFEATED' : (BOSSES.find((b) => b.song === G.song.spec.id) || { name: CHARS[G.song.spec.opp].name }).name.toUpperCase(), B.x, by + 22);
+    }
+  },
+  drawBanner(g, dt) {
+    const W = this.W, H = this.H, L = this.L;
+    if (this.breakT) {
+      this.breakT.t += dt;
+      const k = this.breakT.t / 0.8;
+      if (k >= 1) this.breakT = null;
+      else { g.globalAlpha = 1 - k; g.font = '400 ' + Math.round(Math.min(W, H) * 0.035) + 'px Bungee, sans-serif'; g.textAlign = 'center'; g.lineWidth = 5; g.strokeStyle = '#120f1d'; g.fillStyle = '#ff6b7a'; const y = L.pops[1].y + Math.min(W, H) * 0.12; g.strokeText('COMBO BREAK · ' + this.breakT.combo, L.pops[1].x, y); g.fillText('COMBO BREAK · ' + this.breakT.combo, L.pops[1].x, y); g.globalAlpha = 1; }
+    }
+    for (const p of this.parts || []) {
+      if (!p.hud) continue;
+      g.globalAlpha = clamp(1 - p.t / p.life, 0, 1); g.fillStyle = p.c; g.beginPath(); g.arc(p.x, p.y, 4, 0, TAU); g.fill();
+    }
+    g.globalAlpha = 1;
+    const b = this.banner;
+    if (!b) return;
+    b.t += dt;
+    if (b.t > 1.8) { this.banner = null; return; }
+    const k = b.t, a = k < 0.15 ? k / 0.15 : k > 1.4 ? (1.8 - k) / 0.4 : 1, s = k < 0.25 ? easeOutBack(k / 0.25) : 1;
+    const y = L.portrait ? L.stage.h * 0.4 : H * 0.3;
+    g.save(); g.globalAlpha = a; g.translate(W / 2, y); g.scale(s, s); g.rotate(-0.04);
+    g.font = '400 ' + Math.round(Math.min(W * 0.085, H * 0.09)) + 'px Bungee, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.lineWidth = 10; g.strokeStyle = '#120f1d'; g.strokeText(b.txt, 0, 0);
+    g.shadowColor = b.col; g.shadowBlur = 24; g.fillStyle = b.col; g.fillText(b.txt, 0, 0);
+    g.restore();
   },
   update(dt) {
     for (const s of this.splashes) s.t += dt;
@@ -2010,10 +2602,11 @@ const Board = {
   rankOf(key) { const t = this.top(key); const i = t.findIndex((x) => x.id === this.me); return i < 0 ? null : { pos: i + 1, of: t.length }; },
 };
 
-// ---------------------------------------------------------------- game.js (song session: timing, judging, health, results)
+// ---------------------------------------------------------------- game.js (a song: timing, judging, combo, crowd, bosses, results)
 const Game = {
   mx: null, song: null, player: null, state: 'idle', mode: 'free', diff: 'normal', sides: null, human: [false, true],
   health: 1, story: null, paused: false, pauseAt: 0, startCtx: 0, deadT: 0, endT: 0, demo: false,
+  pc: 'player', crowd: null, boss: null, tour: null, practice: null, endless: null, opts: null,
 
   ensureAudio() {
     if (this.mx) { if (this.mx.ac.state === 'suspended') this.mx.ac.resume().catch(() => {}); return true; }
@@ -2030,35 +2623,53 @@ const Game = {
     const s = Save.data.settings;
     this.mx.setVolumes(s.music, s.vocals, s.sfx);
   },
-  // opts: { songId, diff, mode: 'story'|'free'|'versus'|'demo', story: {week, idx, score, misses} }
+  // opts: { songId | spec, diff, mode, story, pc, practice: { rate, from }, tour, boss }
   start(opts) {
     if (!this.ensureAudio()) return;
     this.stop();
-    const spec = SONG[opts.songId];
+    this.opts = opts;
+    if (opts.mode !== 'demo') Prog.begin();
+    let spec = opts.spec || SONG[opts.songId];
+    this.practice = opts.mode === 'practice' ? Object.assign({ rate: 1, from: 0 }, opts.practice || {}) : null;
+    if (this.practice && this.practice.rate !== 1) spec = Object.assign({}, spec, { bpm: Math.round(spec.bpm * this.practice.rate) });
     this.mode = opts.mode; this.diff = opts.diff; this.story = opts.story || null; this.demo = opts.mode === 'demo';
-    this.song = Composer.build(spec, opts.diff);
+    this.pc = opts.mode === 'versus' || this.demo ? 'player' : (opts.pc || Save.data.pc || 'player');
+    this.song = Composer.build(spec, opts.diff, this.pc);
     const S = this.song, spb = S.spb;
     this.human = this.mode === 'versus' ? [true, true] : this.demo ? [false, false] : [false, true];
     this.sides = [0, 1].map((side) => ({
       notes: S.notes[side].map((n) => ({ ...n, t: n.b * spb, end: (n.b + n.hold) * spb, hit: false, missed: false, holding: false, done: false, voice: null })),
       cursor: 0, keys: [false, false, false, false], glow: [0, 0, 0, 0], press: [0, 0, 0, 0],
-      score: 0, combo: 0, maxCombo: 0, counts: [0, 0, 0, 0], misses: 0, drops: 0, accSum: 0, accN: 0,
+      score: 0, combo: 0, maxCombo: 0, counts: JUDGE.map(() => 0), misses: 0, drops: 0, mines: 0, accSum: 0, accN: 0, early: 0, late: 0, deltas: [],
       pose: -1, poseT: 0, poseHold: 0, miss: 0, pops: [],
     }));
     this.health = 1;
+    this.crowd = { e: 14, tier: 0, peak: 0, shown: 0 };
+    const real = this.sides[1].notes.filter((n) => !n.mine).length;
+    this.boss = S.spec.boss && (this.mode === 'boss' || this.mode === 'story') ? { hp: 1, total: real, dead: false } : null;
+    this.tour = opts.tour || null;
+    this.endless = this.mode === 'endless' ? { bars: 0 } : null;
+    // practice can start later in the song
+    let fromBeat = 0;
+    if (this.practice && this.practice.from > 0) {
+      const sec = S.sections[this.practice.from]; fromBeat = sec ? sec.beat0 : 0;
+      for (const sd of this.sides) for (const n of sd.notes) if (n.b < fromBeat) { n.hit = true; n.done = true; }
+    }
+    this.fromBeat = fromBeat;
     this.player = new SongPlayer(this.mx, S, { autoSing: [!this.human[0], !this.human[1]] });
-    // count-in: four beats (at least 1.6 s) before beat 0
+    // count-in: four beats (at least 1.6 s) before the first beat we play
     const lead = Math.max(1.6, 4 * spb);
-    this.startCtx = this.mx.ac.currentTime + lead + 0.15;
+    this.startCtx = this.mx.ac.currentTime + lead + 0.15 - fromBeat * spb;
     Clock.start = this.startCtx;
     Clock.offset = (Save.data.settings.offset || 0) / 1000;
-    this.player.begin(this.startCtx);
-    for (let i = 0; i < 4; i++) this.mx.count(this.startCtx - (4 - i) * spb, 3 - i);
-    this.countBeats = [3, 2, 1, 0].map((n, i) => ({ n, t: -(4 - i) * spb }));
+    this.player.begin(this.startCtx, fromBeat);
+    for (let i = 0; i < 4; i++) this.mx.count(this.startCtx + fromBeat * spb - (4 - i) * spb, 3 - i);
+    this.countBeats = [3, 2, 1, 0].map((n, i) => ({ n, t: fromBeat * spb - (4 - i) * spb }));
     this.state = 'play';
     this.paused = false;
     this.endT = S.length + 0.6;
-    Stage.setSong(S);
+    Stage.setSong(S, opts.stage);
+    Render.resetShow();
     UI.hud(true);
     App.layout();
   },
@@ -2083,8 +2694,10 @@ const Game = {
     this.mx.ac.resume().catch(() => {});
     UI.close();
   },
-  restart() { const o = { songId: this.song.spec.id, diff: this.diff, mode: this.mode, story: this.story }; this.start(o); },
+  restart() { this.start(this.opts); },
   pos() { return this.song ? Clock.pos() : 0; },
+  // the twist active at a beat (boss songs)
+  mech(kind, beat) { const M = this.song && this.song.spec.mech; if (!M) return null; const bar = beat / 4; return M.find((m) => m.kind === kind && bar >= m.from && bar < m.to) || null; },
 
   // ------------------------------------------------ input
   press(side, lane, ts) {
@@ -2092,14 +2705,17 @@ const Game = {
     const sd = this.sides[side], pos = Clock.posAt(ts);
     sd.keys[lane] = true; sd.press[lane] = 1;
     const N = sd.notes, W = JUDGE[JUDGE.length - 1].win;
-    let best = null;
+    let best = null, mine = null;
     for (let i = sd.cursor; i < N.length; i++) {
       const n = N[i];
       if (n.t > pos + W) break;
-      if (n.hit || n.missed || n.lane !== lane) continue;
-      if (Math.abs(n.t - pos) <= W) { best = n; break; }
+      if (n.hit || n.missed || n.lane !== lane || n.done) continue;
+      if (Math.abs(n.t - pos) > W) continue;
+      if (n.mine) { if (!mine && Math.abs(n.t - pos) < 0.09) mine = n; continue; }
+      best = n; break;
     }
     if (best) this.judge(side, best, pos - best.t);
+    else if (mine) this.explode(side, mine);
     else if (!Save.data.settings.ghost) this.ghost(side);
   },
   release(side, lane, ts) {
@@ -2112,8 +2728,8 @@ const Game = {
       if (n.holding && n.lane === lane) {
         n.holding = false;
         if (pos < n.end - 0.12) {
-          n.dropped = true; sd.drops++; sd.combo = 0;
-          this.addHealth(side, -0.03);
+          n.dropped = true; sd.drops++; this.breakCombo(side);
+          this.addHealth(side, -0.03); this.crowdAdd(side, -4);
           if (n.voice) this.mx.stopSing(n.voice, this.mx.ac.currentTime);
           this.pop(side, 'DROP', '#ff9b4d');
         } else n.done = true;
@@ -2126,38 +2742,78 @@ const Game = {
     if (j < 0) j = JUDGE.length - 1;
     const J = JUDGE[j];
     n.hit = true; n.rating = j; n.delta = delta;
-    sd.counts[j]++; sd.score += J.score; sd.accSum += J.acc; sd.accN++;
+    sd.counts[j]++; sd.accSum += J.acc; sd.accN++;
+    if (sd.deltas.length < 2000) sd.deltas.push(delta);
+    if (ad > 0.02) { if (delta < 0) sd.early++; else sd.late++; }
     sd.combo++; sd.maxCombo = Math.max(sd.maxCombo, sd.combo);
+    const tier = this.crowd.tier;
+    sd.score += J.score * multFor(sd.combo) * (1 + tier * 0.1);
     this.addHealth(side, J.hp);
+    this.crowdAdd(side, J.crowd);
+    if (sd.combo % 50 === 0) { this.crowdAdd(side, 6); Render.hype('combo', sd.combo); this.mx.cheer(this.mx.ac.currentTime, 0.7); }
+    if (this.boss && side === 1 && !this.boss.dead) {
+      this.boss.hp -= J.acc / (this.boss.total * 0.8);
+      if (this.boss.hp <= 0) { this.boss.hp = 0; this.boss.dead = true; Render.hype('boss'); this.mx.cheer(this.mx.ac.currentTime, 1); }
+    }
     const holdSec = n.hold ? n.end - n.t : 0;
     n.voice = this.player.singNote(side, n, holdSec ? holdSec + 0.02 : 0);
     if (n.hold) n.holding = true;
     sd.glow[n.lane] = 1;
     this.setPose(side, n.lane, n.hold ? holdSec : 0);
-    this.pop(side, J.name, J.color, delta);
+    this.pop(side, J.name, J.color, delta, j > 0 && ad > 0.022 ? (delta < 0 ? 'EARLY' : 'LATE') : '');
     if (j === 0) Render.splash(side, n.lane);
     if (j <= 1 && Save.data.settings.haptics) vibrate(4);
   },
+  explode(side, n) {
+    const sd = this.sides[side];
+    n.hit = true; n.done = true; n.boom = true;
+    sd.mines++; this.breakCombo(side);
+    this.addHealth(side, -0.1); this.crowdAdd(side, -10);
+    if (this.boss && side === 1) this.boss.hp = Math.min(1, this.boss.hp + 1 / this.boss.total);
+    this.mx.boom(this.mx.ac.currentTime);
+    Render.boom(side, n.lane);
+    sd.miss = 0.45; sd.pose = -1;
+    this.pop(side, 'SPIKE!', '#ff4d6d');
+    if (Save.data.settings.haptics) vibrate(40);
+  },
+  breakCombo(side) {
+    const sd = this.sides[side];
+    if (sd.combo >= 20) Render.comboBreak(side, sd.combo);
+    sd.combo = 0;
+  },
   ghost(side) {
     const sd = this.sides[side];
-    sd.combo = 0; sd.misses++;
+    this.breakCombo(side); sd.misses++;
     this.addHealth(side, -0.02);
     this.mx.miss(this.mx.ac.currentTime);
     sd.miss = 0.35;
   },
   addHealth(side, d) {
     if (this.mode === 'versus') this.health = clamp(this.health + (side === 1 ? d : -d) * 0.6, 0, 2);
-    else if (side === 1) this.health = clamp(this.health + d, 0, 2);
+    else if (side === 1) this.health = clamp(this.health + d, this.practice ? 0.05 : 0, 2);
+  },
+  // the crowd follows the player (in versus, both singers)
+  crowdAdd(side, d) {
+    if (side === 0 && this.mode !== 'versus') return;
+    const C = this.crowd;
+    C.e = clamp(C.e + d, 0, 100);
+    const t = crowdTier(C.e);
+    if (t > C.tier) { C.tier = t; if (t > C.peak) { C.peak = t; if (t >= 2) { Render.hype('tier', t); this.mx.cheer(this.mx.ac.currentTime, 0.5 + t * 0.12); } } }
+    else if (t < C.tier) C.tier = t;
   },
   setPose(side, lane, hold) { const sd = this.sides[side]; sd.pose = lane; sd.poseT = 0; sd.poseHold = Math.max(0.42, hold || 0); sd.miss = 0; },
-  pop(side, text, color, delta) { this.sides[side].pops.push({ text, color, t: 0, delta, combo: this.sides[side].combo }); if (this.sides[side].pops.length > 4) this.sides[side].pops.shift(); },
+  pop(side, text, color, delta, sub) { this.sides[side].pops.push({ text, color, t: 0, delta, sub, combo: this.sides[side].combo }); if (this.sides[side].pops.length > 4) this.sides[side].pops.shift(); },
 
   // ------------------------------------------------ per frame
   update(dt) {
     if (this.state !== 'play' || this.paused || !this.song) return;
     const ac = this.mx.ac;
     this.player.pump(ac.currentTime + 0.3);
-    const pos = Clock.pos();
+    const pos = Clock.pos(), beat = pos / this.song.spb;
+    // the crowd cools off when nothing happens
+    const C = this.crowd;
+    if (beat > this.fromBeat) { C.e = Math.max(0, C.e - dt * (this.sides[1].combo < 5 ? 1.6 : 0.35)); const t = crowdTier(C.e); if (t < C.tier) C.tier = t; }
+    if (this.endless) this.endless.bars = Math.max(this.endless.bars, Math.floor(beat / 4));
     for (let side = 0; side < 2; side++) {
       const sd = this.sides[side], N = sd.notes;
       sd.poseT += dt;
@@ -2165,12 +2821,13 @@ const Game = {
       sd.miss = Math.max(0, sd.miss - dt);
       for (const p of sd.pops) p.t += dt;
       sd.pops = sd.pops.filter((p) => p.t < 0.7);
-      while (sd.cursor < N.length && (N[sd.cursor].hit || N[sd.cursor].missed) && !N[sd.cursor].holding) sd.cursor++;
+      while (sd.cursor < N.length && (N[sd.cursor].hit || N[sd.cursor].missed || N[sd.cursor].done) && !N[sd.cursor].holding) sd.cursor++;
       if (!this.human[side]) {
         // the computer singer hits everything exactly
         for (let i = sd.cursor; i < N.length; i++) {
           const n = N[i];
           if (n.t > pos) break;
+          if (n.mine) { n.done = true; continue; }
           if (!n.hit) { n.hit = true; n.rating = 0; sd.glow[n.lane] = 1; sd.press[n.lane] = 0.6; this.setPose(side, n.lane, n.hold ? n.end - n.t : 0); if (n.hold) n.holding = true; }
           if (n.holding) { sd.glow[n.lane] = Math.max(sd.glow[n.lane], 0.7); if (pos >= n.end) { n.holding = false; n.done = true; } }
         }
@@ -2181,23 +2838,27 @@ const Game = {
         if (n.t > pos + 0.2) break;
         if (n.holding) {
           sd.glow[n.lane] = Math.max(sd.glow[n.lane], 0.75);
-          sd.score += dt * 160;
+          sd.score += dt * 160 * multFor(sd.combo);
           this.addHealth(side, dt * 0.06);
           sd.poseT = Math.min(sd.poseT, 0.2);
           if (pos >= n.end) { n.holding = false; n.done = true; }
           continue;
         }
+        if (n.mine) { if (!n.done && pos > n.t + 0.1) n.done = true; continue; }
         if (!n.hit && !n.missed && pos > n.t + JUDGE[JUDGE.length - 1].win) {
-          n.missed = true; sd.misses++; sd.combo = 0;
+          n.missed = true; sd.misses++; this.breakCombo(side);
           this.addHealth(side, MISS.hp);
+          this.crowdAdd(side, MISS.crowd);
+          if (this.boss && side === 1) this.boss.hp = Math.min(1, this.boss.hp + 0.4 / this.boss.total);
           this.mx.miss(ac.currentTime);
           sd.miss = 0.45; sd.pose = -1;
           this.pop(side, 'MISS', MISS.color);
         }
       }
     }
-    // death / KO
-    if (this.mode !== 'versus' && this.health <= 0 && !this.demo) { this.die(); return; }
+    // death / KO (practice never fails)
+    if (this.practice && this.health < 0.05) this.health = 0.05;
+    if (this.mode !== 'versus' && this.health <= 0 && !this.demo) { if (this.endless) { this.finish(); return; } this.die(); return; }
     if (this.mode === 'versus' && (this.health <= 0 || this.health >= 2)) { this.finish(this.health <= 0 ? 0 : 1); return; }
     if (pos > this.endT) this.finish();
   },
@@ -2212,11 +2873,11 @@ const Game = {
   },
   stats(side) {
     const sd = this.sides[side];
-    const judged = sd.accN + sd.misses + sd.drops;
+    const judged = sd.accN + sd.misses + sd.drops + sd.mines;
     const acc = judged ? (sd.accSum / judged) * 100 : 0;
-    const fc = sd.misses === 0 && sd.drops === 0;
+    const fc = sd.misses === 0 && sd.drops === 0 && sd.mines === 0;
     const rank = acc >= 99.99 && fc && sd.counts[0] === sd.accN ? 'S+' : acc >= 95 ? 'S' : acc >= 90 ? 'A' : acc >= 80 ? 'B' : acc >= 70 ? 'C' : 'D';
-    return { score: Math.round(sd.score), acc, fc, rank, counts: sd.counts.slice(), misses: sd.misses, drops: sd.drops, maxCombo: sd.maxCombo, notes: sd.notes.length };
+    return { score: Math.round(sd.score), acc, fc, rank, counts: sd.counts.slice(), misses: sd.misses, drops: sd.drops, mines: sd.mines, maxCombo: sd.maxCombo, notes: sd.notes.filter((n) => !n.mine).length, early: sd.early, late: sd.late, deltas: sd.deltas, peak: this.crowd.peak };
   },
   finish(koWinner) {
     if (this.state !== 'play') return;
@@ -2228,32 +2889,53 @@ const Game = {
       const a = this.stats(1), b = this.stats(0);
       const winner = koWinner !== undefined ? koWinner : a.score === b.score ? -1 : a.score > b.score ? 1 : 0;
       Save.data.stats.versus++;
+      Prog.ach('versus');
       Save.persist();
       UI.showVersusResults({ p1: a, p2: b, winner, ko: koWinner !== undefined });
       return;
     }
     const st = this.stats(1);
-    const prev = Save.best(id, diff);
-    const isBest = !prev || st.score > prev.score;
-    Save.record(id, diff, st);
-    Board.submit(id, diff, st);
+    const res = { st, mode: this.mode, songId: id, diff, pc: this.pc };
+    if (this.endless) { res.bars = this.endless.bars; Prog.endless(res); UI.showResults(res); return; }
+    if (this.practice) { UI.showResults(res); return; }
+    res.prev = Save.best(id, diff);
+    res.isBest = !res.prev || st.score > res.prev.score;
+    if (this.boss) res.boss = { won: this.boss.dead, hp: this.boss.hp };
+    if (this.tour) { res.tour = this.tour; res.won = st.acc >= this.tour.target; }
+    Prog.song(res);
     if (this.mode === 'story') {
       const s = this.story;
       s.score += st.score; s.misses += st.misses;
       const wk = WEEKS[s.week];
-      if (s.idx + 1 < wk.songs.length) { UI.showResults(st, isBest, prev, { next: true }); return; }
-      Save.weekDone(s.week, diff, s.score);
-      UI.showResults(st, isBest, prev, { weekDone: true, weekScore: s.score });
+      if (this.boss && !this.boss.dead) { res.bossLost = true; UI.showResults(res); return; }
+      if (s.idx + 1 < wk.songs.length) { res.next = true; UI.showResults(res); return; }
+      Prog.week(s.week, diff, s.score, res);
+      res.weekDone = true; res.weekScore = s.score;
+      UI.showResults(res);
       return;
     }
-    UI.showResults(st, isBest, prev, {});
+    if (this.tour) Prog.tourRound(res);
+    UI.showResults(res);
   },
   nextStorySong() {
     const s = this.story;
     s.idx++;
-    this.start({ songId: WEEKS[s.week].songs[s.idx], diff: this.diff, mode: 'story', story: s });
+    this.start({ songId: WEEKS[s.week].songs[s.idx], diff: this.diff, mode: 'story', story: s, pc: this.pc });
   },
 };
+// an endless track: one key, rising density, every rival takes a turn
+function endlessSpec(seed) {
+  const r = new RNG(seed);
+  const keys = [[52, 'minor'], [55, 'minor'], [57, 'dorian'], [60, 'major']], [root, mode] = keys[r.int(0, 3)];
+  const cycle = ' O4A P4A O4B P4B X4A';
+  let form = 'I2';
+  for (let i = 0; i < 16; i++) form += cycle;
+  return { id: 'endless-' + seed, name: 'Endless Rhythm', opp: ['metro', 'vex', 'roxy', 'glitch', 'maestro'][r.int(0, 4)], bpm: 122, root, mode,
+    prog: [[0, mode === 'major' ? 'M' : 'm'], [8, 'M'], [3, 'M'], [10, 'M']], progB: [[5, 'm'], [3, 'M'], [10, 'M'], [7, 'M']],
+    style: { drums: ['four', 'break', 'rock', 'disco'][r.int(0, 3)], bass: ['808', 'octave', 'rock'][r.int(0, 2)], keys: ['stab', 'power', 'arp'][r.int(0, 2)], lead: true },
+    form: form + ' E2', seed, stage: 'arena', ramp: true,
+    mech: [{ kind: 'mines', from: 100, to: 400, rate: 0.12 }, { kind: 'speed', from: 140, to: 400, k: 1.25 }] };
+}
 
 // ---------------------------------------------------------------- input.js (keyboard lanes, touch zones)
 const Input = {
@@ -2379,7 +3061,7 @@ const UI = {
     else if (e.code === 'Escape' || e.code === 'Backspace') { const b = $('[data-a="back"]', this.ov); if (b) { e.preventDefault(); b.click(); } }
   },
   cycleDiff(d) {
-    const i = (DIFFS.indexOf(this.diff) + d + 3) % 3;
+    const i = (DIFFS.indexOf(this.diff) + d + DIFFS.length) % DIFFS.length;
     this.diff = DIFFS[i]; Save.data.lastDiff = this.diff;
     this.sfx(0);
     if (this.refresh) this.refresh();
@@ -2401,15 +3083,84 @@ const UI = {
     Render.menuOpp = null; this.dlgKey = null;
     if (Game.state !== 'play') Stage.setSong(null);
     App.menuMusic(true);
-    const rk = Board.rankOf('total');
-    this.open('<div class="mm"><div class="logo sm"><span>MIC</span><span>CLASH</span></div>' +
-      '<button class="mbtn" data-a="story" data-nav>Story Mode<small>beat the rivals, week by week</small></button>' +
-      '<button class="mbtn" data-a="free" data-nav>Freeplay<small>any song, any difficulty</small></button>' +
-      '<button class="mbtn hot" data-a="vs" data-nav>Versus<small>2 players · one keyboard or tablet</small></button>' +
-      '<button class="mbtn" data-a="board" data-nav>Leaderboard<small>' + (rk ? 'you’re #' + rk.pos + ' of ' + rk.of : 'scores of everyone on this link') + '</small></button>' +
-      '<button class="mbtn" data-a="opt" data-nav>Options<small>keys, timing, scroll</small></button></div>', {
-      story: () => this.showStory(), free: () => this.showFree(), vs: () => this.showVersus(), board: () => this.showBoard(), opt: () => this.showOptions(() => this.showMain()),
+    const f = Prog.fame(), lv = Prog.level(f), nx = FAME[lv + 1], pc = Save.data.pc || 'player';
+    const tile = (a, name, sub, cls) => '<button class="mbtn ' + (cls || '') + '" data-a="' + a + '" data-nav>' + name + '<small>' + sub + '</small></button>';
+    const bossN = Object.keys(Save.data.bosses).length;
+    this.open('<div class="mm wide"><div class="mmhead"><div class="logo sm"><span>MIC</span><span>CLASH</span></div>' +
+      '<button class="fame" data-a="profile"><span class="ic" style="--c:' + CHARS[pc].color + '">' + CHARS[pc].name[0] + '</span><span><b>' + FAME[lv].name.toUpperCase() + '</b><small>' + f + ' fame' + (nx ? ' · ' + (nx.at - f) + ' to ' + nx.name : ' · max') + '</small><i style="--f:' + (nx ? (f - FAME[lv].at) / (nx.at - FAME[lv].at) : 1) + '"></i></span></button></div>' +
+      '<div class="mgrid">' +
+      tile('story', 'Story Mode', 'four weeks of rivals', 'hot') +
+      tile('boss', 'Boss Battles', bossN + ' of ' + BOSSES.length + ' beaten · special twists') +
+      tile('tour', 'Tournament', 'three rounds, one trophy') +
+      tile('endless', 'Endless', 'best ' + Save.data.endless.bars + ' bars · it keeps speeding up') +
+      tile('free', 'Freeplay', 'any song, any stage') +
+      tile('practice', 'Practice', 'slow down, loop a part') +
+      tile('vs', 'Versus', '2 players · one keyboard or tablet') +
+      tile('profile', 'Singers & Awards', Object.keys(Save.data.ach).length + '/' + ACHIEVEMENTS.length + ' awards · ranks') +
+      tile('board', 'Leaderboard', 'scores of everyone on this link') +
+      tile('opt', 'Options', 'keys, timing, scroll') +
+      '</div></div>', {
+      story: () => this.showStory(), boss: () => this.showBosses(), tour: () => this.showTour(), endless: () => this.showEndless(),
+      free: () => this.showFree(), practice: () => this.showFree(false, true), vs: () => this.showVersus(), profile: () => this.showProfile(),
+      board: () => this.showBoard(), opt: () => this.showOptions(() => this.showMain()),
     }, 'menuov');
+  },
+  // start a song with the current singer
+  play(opts) {
+    this.close(); this.atMenu = false; App.menuMusic(false);
+    Game.start(Object.assign({ pc: Save.data.pc || 'player' }, opts));
+  },
+  showBosses() {
+    this.refresh = () => this.showBosses();
+    const rows = BOSSES.map((b, i) => {
+      const open = Prog.bossOpen(b), won = Save.data.bosses[b.id], best = Save.best(b.song, this.diff);
+      return '<button class="week ' + (open ? '' : 'locked') + '" data-a="go" data-i="' + i + '" data-nav ' + (open ? '' : 'disabled') + ' style="--c:' + CHARS[b.opp].color + '">' + this.icon(b.opp) +
+        '<span class="wt"><b>' + b.name + ' · ' + SONG[b.song].name + '</b><small>' + (open ? b.twist : 'Finish ' + (WEEKS.find((w) => w.id === b.week) || {}).name + ' in Story to unlock') + '</small></span>' +
+        '<span class="ws">' + (won ? '★ ' + String(won).toUpperCase() : open ? (best ? best.rank : 'FIGHT') : '🔒') + '</span></button>';
+    }).join('');
+    this.open('<div class="panel"><h2>Boss Battles</h2><p class="note center">Empty the boss bar before the song ends. Every hit lands damage; misses heal the boss.</p>' + this.diffPicker() + '<div class="list">' + rows + '</div><button class="btn" data-a="back" data-nav>Back</button></div>',
+      Object.assign(this.diffActs(), { go: (b) => { const B = BOSSES[+b.dataset.i]; this.play({ songId: B.song, diff: this.diff, mode: 'boss' }); }, back: () => this.showMain() }));
+  },
+  // ---------- tournament
+  showTour() {
+    this.refresh = () => this.showTour();
+    const won = Save.data.tours;
+    this.open('<div class="panel"><h2>Tournament</h2><p class="note center">Three rounds against random rivals on random songs. In each round, finish with a higher accuracy than your rival. Lose once and you are out.</p>' + this.diffPicker() +
+      '<div class="cups">' + DIFFS.map((d) => '<div class="cup' + (won[d] ? ' got' : '') + '"><b>🏆</b><small>' + d.toUpperCase() + '</small><span>' + (won[d] ? '×' + won[d] : '—') + '</span></div>').join('') + '</div>' +
+      '<button class="btn hot" data-a="go" data-nav>Enter the tournament</button><button class="btn" data-a="back" data-nav>Back</button></div>',
+      Object.assign(this.diffActs(), { go: () => this.tourNew(), back: () => this.showMain() }));
+  },
+  tourNew() {
+    const r = new RNG((Math.random() * 1e9) | 0), pc = Save.data.pc || 'player';
+    const pool = TOUR_POOL.filter((id) => id !== pc);
+    const opps = []; while (opps.length < 3) { const o = r.pick(pool); if (opps.indexOf(o) < 0) opps.push(o); }
+    const songs = opps.map((o) => { const list = MAIN_SONGS.filter((sp) => sp.opp === o && !sp.boss); return list.length ? r.pick(list).id : r.pick(MAIN_SONGS.filter((sp) => !sp.boss && sp.id !== 'mic-check')).id; });
+    const field = TOUR_POOL.filter((id) => opps.indexOf(id) < 0 && id !== pc).concat(['metro', 'kai', 'mira']);
+    this.tourState = { diff: this.diff, round: 0, opps, songs, targets: opps.map((o, i) => Math.min(97, TOUR_BASE[this.diff] + i * 4 + r.range(-2, 2))), field };
+    this.showBracket();
+  },
+  showBracket() {
+    const T = this.tourState, pc = Save.data.pc || 'player';
+    const node = (id, on, out) => '<span class="bn' + (on ? ' on' : '') + (out ? ' out' : '') + '" style="--c:' + CHARS[id].color + '">' + CHARS[id].name + '</span>';
+    let html = '';
+    for (let i = 0; i < 3; i++) {
+      const done = i < T.round, cur = i === T.round;
+      html += '<div class="bround' + (cur ? ' cur' : '') + '"><small>' + TOUR_ROUNDS[i].toUpperCase() + '</small><div>' + node(pc, true, false) + '<em>vs</em>' + node(T.opps[i], false, done) + '</div><span>' + (done ? 'WON' : cur ? SONG[T.songs[i]].name + ' · beat ' + T.targets[i].toFixed(0) + '%' : 'later') + '</span></div>';
+    }
+    this.open('<div class="panel"><h2>Tournament · ' + T.diff.toUpperCase() + '</h2><div class="bracket">' + html + '</div>' +
+      '<button class="btn hot" data-a="go" data-nav>Play the ' + TOUR_ROUNDS[T.round].toLowerCase() + '</button><button class="btn" data-a="quit" data-nav>Give up</button></div>', {
+      go: () => this.play({ songId: T.songs[T.round], diff: T.diff, mode: 'tour', tour: { round: T.round, target: T.targets[T.round], opp: T.opps[T.round] } }),
+      quit: () => { this.tourState = null; this.showMain(); },
+    });
+  },
+  showEndless() {
+    const E = Save.data.endless;
+    this.open('<div class="panel"><h2>Endless</h2><p class="note center">One track that never ends. Every few phrases the rhythm gets busier; later on spikes appear and the notes speed up. How many bars can you last?</p>' +
+      '<div class="rs"><div><small>Best bars</small><b>' + E.bars + '</b></div><div><small>Best score</small><b>' + E.score.toLocaleString() + '</b></div></div>' +
+      '<button class="btn hot" data-a="go" data-nav>Start</button><button class="btn" data-a="back" data-nav>Back</button></div>', {
+      go: () => this.play({ spec: endlessSpec((Math.random() * 1e9) | 0), diff: 'normal', mode: 'endless' }),
+      back: () => this.showMain(),
+    });
   },
   showStory() {
     this.refresh = () => this.showStory();
@@ -2421,25 +3172,75 @@ const UI = {
     }).join('');
     this.open('<div class="panel"><h2>Story Mode</h2>' + this.diffPicker() + '<div class="list">' + rows + '</div><button class="btn" data-a="back" data-nav>Back</button></div>',
       Object.assign(this.diffActs(), {
-        week: (b) => { const w = +b.dataset.i; this.dialog(WEEKS[w], () => { this.close(); this.atMenu = false; App.menuMusic(false); Game.start({ songId: WEEKS[w].songs[0], diff: this.diff, mode: 'story', story: { week: w, idx: 0, score: 0, misses: 0 } }); }); },
+        week: (b) => { const w = +b.dataset.i; this.dialog(WEEKS[w], () => this.play({ songId: WEEKS[w].songs[0], diff: this.diff, mode: 'story', story: { week: w, idx: 0, score: 0, misses: 0 } })); },
         back: () => this.showMain(),
       }));
   },
-  showFree(versus) {
-    this.refresh = () => this.showFree(versus);
-    const rows = SONGS.map((s, i) => {
-      const b = Save.best(s.id, this.diff);
-      return '<button class="song" data-a="song" data-i="' + i + '" data-nav style="--c:' + CHARS[s.opp].color + '">' + this.icon(s.opp) +
-        '<span class="st"><b>' + s.name + '</b><small>vs ' + CHARS[s.opp].name + ' · ' + s.bpm + ' BPM</small></span>' +
-        '<span class="sb">' + (b ? '<b class="rk r-' + b.rank.replace('+', 'p') + '">' + b.rank + '</b>' + b.score.toLocaleString() + (b.fc ? ' <i>FC</i>' : '') : '') + '</span></button>';
-    }).join('');
-    this.open('<div class="panel"><h2>' + (versus ? 'Versus · pick a song' : 'Freeplay') + '</h2>' + this.diffPicker() +
-      (versus ? '<p class="note">P1 plays the right side with the <b>arrow keys</b> (or the right half of a touch screen). P2 plays the left side with <b>W A S D</b> (or the left half). Highest score wins — or push the health bar all the way for a KO.</p>' : '') +
+  showFree(versus, practice) {
+    this.refresh = () => this.showFree(versus, practice);
+    const packs = [['Starter', ['mic-check']]].concat(WEEKS.slice(1).map((w) => [w.name, w.songs])).concat([['Boss Tracks', BOSSES.filter((b) => b.song !== 'grand-finale').map((b) => b.song)]]);
+    let rows = '';
+    for (const [name, ids] of packs) {
+      rows += '<div class="pack">' + name.toUpperCase() + '</div>';
+      for (const id of ids) {
+        const sp = SONG[id], open = Prog.songOpen(sp), b = Save.best(id, this.diff);
+        rows += '<button class="song' + (open ? '' : ' locked') + '" data-a="song" data-id="' + id + '" data-nav ' + (open ? '' : 'disabled') + ' style="--c:' + CHARS[sp.opp].color + '">' + this.icon(sp.opp) +
+          '<span class="st"><b>' + (open ? '' : '🔒 ') + sp.name + '</b><small>vs ' + CHARS[sp.opp].name + ' · ' + sp.bpm + ' BPM' + (sp.boss ? ' · boss twist' : '') + '</small></span>' +
+          '<span class="sb">' + (b ? '<b class="rk r-' + b.rank.replace('+', 'p') + '">' + b.rank + '</b>' + b.score.toLocaleString() + (b.fc ? ' <i>FC</i>' : '') : '') + '</span></button>';
+      }
+    }
+    const st = Save.data.stage || 'auto';
+    const chips = '<div class="chips">' + [{ id: 'auto', name: 'Song stage' }].concat(STAGES).map((x) => { const open = x.id === 'auto' || Prog.stageOpen(x); return '<button class="chip' + (st === x.id ? ' on' : '') + '" data-a="stage" data-id="' + x.id + '"' + (open ? '' : ' disabled') + '>' + (open ? '' : '🔒 ') + x.name + '</button>'; }).join('') + '</div>';
+    this.open('<div class="panel"><h2>' + (versus ? 'Versus · pick a song' : practice ? 'Practice · pick a song' : 'Freeplay') + '</h2>' + this.diffPicker() +
+      (versus ? '<p class="note">P1 plays the right side with the <b>arrow keys</b> (or the right half of a touch screen). P2 plays the left side with <b>W A S D</b> (or the left half). Highest score wins, or push the health bar all the way for a KO.</p>' : '') +
+      (!versus ? chips : '') +
       '<div class="list">' + rows + '</div><button class="btn" data-a="back" data-nav>Back</button></div>',
       Object.assign(this.diffActs(), {
-        song: (b) => { const s = SONGS[+b.dataset.i]; this.close(); this.atMenu = false; App.menuMusic(false); Game.start({ songId: s.id, diff: this.diff, mode: versus ? 'versus' : 'free' }); },
+        song: (b) => { const id = b.dataset.id; if (practice) this.showPracticeSetup(id); else this.play({ songId: id, diff: this.diff, mode: versus ? 'versus' : 'free', stage: versus ? 'auto' : Save.data.stage }); },
+        stage: (b) => { Save.data.stage = b.dataset.id; Save.persist(); this.showFree(versus, practice); },
         back: () => this.showMain(),
       }));
+  },
+  showPracticeSetup(id) {
+    const P = this.prac || (this.prac = { rate: 0.75, from: 0 });
+    const song = Composer.build(SONG[id], this.diff, Save.data.pc || 'player');
+    const names = { I: 'Intro', O: 'Rival', P: 'Your part', X: 'Together', E: 'Ending' };
+    const secs = song.sections.map((sec, i) => [i, names[sec.kind] + ' · bar ' + (sec.bar0 + 1)]).filter((x, i) => song.sections[i].kind !== 'E' && song.sections[i].kind !== 'O');
+    if (!secs.some((x) => x[0] === P.from)) P.from = 0;
+    const rates = [0.5, 0.75, 1];
+    this.open('<div class="panel"><h2>Practice</h2><p class="note center"><b>' + SONG[id].name + '</b> · ' + this.diff.toUpperCase() + ' · no fail</p>' +
+      '<div class="pack">SPEED</div><div class="chips">' + rates.map((r) => '<button class="chip' + (P.rate === r ? ' on' : '') + '" data-a="rate" data-r="' + r + '">' + Math.round(r * 100) + '%</button>').join('') + '</div>' +
+      '<div class="pack">START FROM</div><div class="chips">' + [[0, 'The start']].concat(secs.filter((x) => x[0] > 0)).map(([i, n]) => '<button class="chip' + (P.from === i ? ' on' : '') + '" data-a="from" data-i="' + i + '">' + n + '</button>').join('') + '</div>' +
+      '<button class="btn hot" data-a="go" data-nav>Start practice</button><button class="btn" data-a="back" data-nav>Back</button></div>', {
+      rate: (b) => { P.rate = +b.dataset.r; this.showPracticeSetup(id); },
+      from: (b) => { P.from = +b.dataset.i; this.showPracticeSetup(id); },
+      go: () => this.play({ songId: id, diff: this.diff, mode: 'practice', practice: { rate: P.rate, from: P.from }, stage: Save.data.stage }),
+      back: () => this.showFree(false, true),
+    });
+  },
+  showProfile(tab) {
+    tab = tab || this.ptab || 'singers'; this.ptab = tab;
+    const D = Save.data, f = Prog.fame(), lv = Prog.level(f);
+    let body = '';
+    if (tab === 'singers') {
+      body = '<div class="sgrid">' + SINGERS.map((sg) => {
+        const open = Prog.singerOpen(sg), c = CHARS[sg.id], on = (D.pc || 'player') === sg.id;
+        return '<button class="sgr' + (on ? ' on' : '') + (open ? '' : ' locked') + '" data-a="pick" data-id="' + sg.id + '"' + (open ? '' : ' disabled') + ' style="--c:' + c.color + '"><canvas data-char="' + sg.id + '" width="200" height="220"></canvas><b>' + c.name + '</b><small>' + (open ? (on ? 'SINGING' : 'tap to choose') : '🔒 ' + sg.how) + '</small></button>';
+      }).join('') + '</div><p class="note center small">Each singer has their own voice and range, so the melodies you answer with change too.</p>';
+    } else if (tab === 'awards') {
+      body = '<div class="list">' + ACHIEVEMENTS.map((a) => '<div class="ach' + (D.ach[a.id] ? ' got' : '') + '"><b>' + (D.ach[a.id] ? '★ ' : '') + a.name + '</b><small>' + a.text + '</small></div>').join('') + '</div>';
+    } else {
+      body = '<table class="ranks"><tr><th></th>' + DIFFS.map((d) => '<th>' + d[0].toUpperCase() + '</th>').join('') + '</tr>' + MAIN_SONGS.concat(BOSSES.filter((b) => b.song !== 'grand-finale').map((b) => SONG[b.song])).map((sp) => '<tr><td>' + sp.name + '</td>' + DIFFS.map((d) => { const b = Save.best(sp.id, d); return '<td>' + (b ? '<b class="rk r-' + b.rank.replace('+', 'p') + '">' + b.rank + '</b>' : '·') + '</td>'; }).join('') + '</tr>').join('') + '</table>';
+    }
+    const nx = FAME[lv + 1];
+    this.open('<div class="panel wide"><h2>' + FAME[lv].name + '</h2><p class="note center">' + f + ' fame' + (nx ? ' · ' + (nx.at - f) + ' more for ' + nx.name : '') + '. Fame comes from song grades, boss wins, tournament trophies and awards.</p>' +
+      '<div class="tabs">' + [['singers', 'Singers'], ['awards', 'Awards'], ['ranks', 'Ranks']].map(([k, n]) => '<button data-a="tab" data-k="' + k + '" class="' + (k === tab ? 'on' : '') + '">' + n + '</button>').join('') + '</div>' + body +
+      '<button class="btn" data-a="back" data-nav>Back</button></div>', {
+      tab: (b) => this.showProfile(b.dataset.k),
+      pick: (b) => { D.pc = b.dataset.id; Save.persist(); this.showProfile('singers'); },
+      back: () => this.showMain(),
+    });
+    $$('canvas[data-char]', this.ov).forEach((cv) => { const g = cv.getContext('2d'); g.scale(2, 2); Chars.draw(g, cv.dataset.char, 50, 104, 0.29, -1, { pose: -1, k: 0, bop: 0, t: 1, beat: 0 }); });
   },
   showVersus() { this.showFree(true); },
   showBoard() {
@@ -2553,16 +3354,16 @@ const UI = {
     Render.menuOpp = week.opp;
     const show = () => {
       if (i >= lines.length) { this.dlgKey = null; Render.menuOpp = null; done(); return; }
-      const [who, text] = lines[i];
+      const [w0, text] = lines[i], who = w0 === 'player' ? (Save.data.pc || 'player') : w0;
       const c = CHARS[who];
-      this.open('<div class="dlg ' + (who === 'player' ? 'right' : '') + '" data-a="next" style="--c:' + c.color + '"><span class="ic">' + c.name[0] + '</span><div class="bub"><b>' + c.name + '</b><p id="dlgT"></p><small>' + (App.touch ? 'tap' : 'Enter') + ' to continue</small></div></div><button class="skip" data-a="skip">Skip</button>', {
+      this.open('<div class="dlg ' + (w0 === 'player' ? 'right' : '') + '" data-a="next" style="--c:' + c.color + '"><span class="ic">' + c.name[0] + '</span><div class="bub"><b>' + c.name + '</b><p id="dlgT"></p><small>' + (App.touch ? 'tap' : 'Enter') + ' to continue</small></div></div><button class="skip" data-a="skip">Skip</button>', {
         next: () => { if (typing) { finish(); return; } i++; show(); },
         skip: () => { i = lines.length; show(); },
       }, 'dlgov');
       // typewriter
       const el = $('#dlgT'); let k = 0, typing = true;
       const finish = () => { typing = false; clearInterval(tm); el.textContent = text; };
-      const tm = setInterval(() => { k++; el.textContent = text.slice(0, k); if (Game.mx && k % 2 === 0 && text[k] !== ' ') Game.mx.osc(Game.mx.ac.currentTime, 'square', who === 'player' ? 880 : who === 'metro' ? 440 : who === 'glitch' ? 330 : 600, 0.03, 0.05, 0.001, Game.mx.sfx); if (k >= text.length) finish(); }, 28);
+      const tm = setInterval(() => { k++; el.textContent = text.slice(0, k); if (Game.mx && k % 2 === 0 && text[k] !== ' ') Game.mx.osc(Game.mx.ac.currentTime, 'square', w0 === 'player' ? 880 : who === 'metro' ? 440 : who === 'glitch' ? 330 : 600, 0.03, 0.05, 0.001, Game.mx.sfx); if (k >= text.length) finish(); }, 28);
       this.dlgKey = (e) => { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); if (typing) finish(); else { i++; show(); } } else if (e.code === 'Escape') { i = lines.length; show(); } };
     };
     show();
@@ -2578,33 +3379,60 @@ const UI = {
   showDead() {
     setTimeout(() => {
       if (Game.state !== 'dead') return;
-      this.open('<div class="panel dead"><h2 class="big">MIC DROPPED</h2><p class="note center">' + CHARS[Game.song.spec.opp].name + ' wins this round.</p><button class="btn hot" data-a="retry" data-nav>Retry</button><button class="btn" data-a="quit" data-nav>Exit to menu</button></div>', {
+      const T = Game.tour;
+      const msg = T ? 'Knocked out of the tournament in the ' + TOUR_ROUNDS[T.round].toLowerCase() + '.' : Game.boss ? (BOSSES.find((b) => b.song === Game.song.spec.id) || {}).name + ' is too strong this time.' : CHARS[Game.song.spec.opp].name + ' wins this round.';
+      this.open('<div class="panel dead"><h2 class="big">MIC DROPPED</h2><p class="note center">' + msg + '</p>' + (T ? '' : '<button class="btn hot" data-a="retry" data-nav>Retry</button>') + '<button class="btn" data-a="quit" data-nav>Exit to menu</button></div>', {
         retry: () => { this.close(); Game.restart(); },
-        quit: () => { Game.stop(); this.showMain(); },
+        quit: () => { Game.stop(); this.tourState = null; this.showMain(); },
       }, 'dim');
     }, 900);
   },
-  resultLine(st) {
-    return SONG[Game.song.spec.id].name + ' (' + Game.diff + ') — ' + st.score.toLocaleString() + ' pts · ' + st.rank + ' · ' + st.acc.toFixed(2) + '%' + (st.fc ? ' · FULL COMBO' : '') + ' — Mic Clash';
+  resultLine(res) {
+    const st = res.st, name = Game.song.spec.name;
+    if (res.mode === 'endless') return 'Mic Clash · Endless — survived ' + res.bars + ' bars · ' + st.score.toLocaleString() + ' pts';
+    return name + ' (' + res.diff + ') — ' + st.score.toLocaleString() + ' pts · ' + st.rank + ' · ' + st.acc.toFixed(2) + '%' + (st.fc ? ' · FULL COMBO' : '') + ' — Mic Clash';
   },
-  showResults(st, isBest, prev, o) {
-    const G = Game, spec = G.song.spec, key = spec.id + ':' + G.diff;
-    const names = ['Perfect', 'Great', 'Good', 'Bad'];
-    const rows = names.map((n, i) => '<tr><th style="color:' + JUDGE[i].color + '">' + n + '</th><td>' + st.counts[i] + '</td></tr>').join('') + '<tr><th style="color:' + MISS.color + '">Miss</th><td>' + (st.misses + st.drops) + '</td></tr>';
-    const rk = Board.rankOf(key);
-    this.open('<div class="panel res"><div class="rbig r-' + st.rank.replace('+', 'p') + '">' + st.rank + '</div><h2>' + spec.name + '</h2><p class="note center">' + G.diff.toUpperCase() + (st.fc ? ' · <b class="fc">FULL COMBO</b>' : '') + '</p>' +
-      '<div class="rs"><div><small>Score</small><b>' + st.score.toLocaleString() + '</b>' + (isBest ? '<em>NEW BEST</em>' : prev ? '<i>best ' + prev.score.toLocaleString() + '</i>' : '') + '</div><div><small>Accuracy</small><b>' + st.acc.toFixed(2) + '%</b></div><div><small>Max combo</small><b>' + st.maxCombo + '</b></div></div>' +
-      '<table class="jt">' + rows + '</table>' +
-      (o.weekDone ? '<p class="note center"><b>Week complete!</b> Week score ' + o.weekScore.toLocaleString() + (G.story && WEEKS[G.story.week + 1] ? ' · <b>' + WEEKS[G.story.week + 1].name + '</b> unlocked' : '') + '</p>' : '') +
+  showResults(res) {
+    const G = Game, spec = G.song.spec, st = res.st, key = spec.id + ':' + res.diff;
+    const rows = JUDGE.map((J, i) => '<tr><th style="color:' + J.color + '">' + J.name[0] + J.name.slice(1).toLowerCase() + '</th><td>' + st.counts[i] + '</td></tr>').join('') +
+      '<tr><th style="color:' + MISS.color + '">Miss</th><td>' + (st.misses + st.drops) + '</td></tr>' + (st.mines ? '<tr><th style="color:#ff4d6d">Spikes hit</th><td>' + st.mines + '</td></tr>' : '');
+    // timing: early / on the beat / late
+    const hits = Math.max(1, st.counts.reduce((a, b) => a + b, 0)), on = Math.max(0, hits - st.early - st.late);
+    const avg = st.deltas.length ? st.deltas.reduce((a, b) => a + b, 0) / st.deltas.length * 1000 : 0;
+    const pct = (v) => Math.round(v / hits * 100);
+    const tip = Math.abs(avg) < 12 ? 'Your timing is spot on.' : avg < 0 ? 'You tend to hit early. Wait for the arrow to touch the target.' : 'You tend to hit late. Try pressing a little sooner.';
+    const timing = '<div class="timing"><small>TIMING</small><div class="tbar"><i class="e" style="--f:' + (st.early / hits) + '"></i><i class="o" style="--f:' + (on / hits) + '"></i><i class="l" style="--f:' + (st.late / hits) + '"></i></div><span>' + pct(st.early) + '% early · ' + pct(on) + '% on the beat · ' + pct(st.late) + '% late (avg ' + (avg >= 0 ? '+' : '') + avg.toFixed(0) + ' ms)</span>' + (res.mode !== 'endless' && hits > 8 ? '<em>' + tip + '</em>' : '') + '</div>';
+    let head = '', sub = res.diff.toUpperCase() + (st.fc ? ' · <b class="fc">FULL COMBO</b>' : ''), acts = {}, btns = '';
+    acts.menu = () => { Game.stop(); this.tourState = null; this.showMain(); };
+    acts.retry = () => { this.close(); Game.restart(); };
+    acts.copy = (b) => this.copy(this.resultLine(res), b);
+    if (res.mode === 'endless') {
+      head = '<div class="rbig">' + res.bars + '</div><h2>bars survived</h2>';
+      sub = (res.bars > (res.prevBars || 0) ? '<b class="fc">NEW RECORD</b>' : 'record ' + res.prevBars + ' bars');
+      btns = '<button class="btn hot" data-a="again" data-nav>Go again</button><button class="btn" data-a="menu" data-nav>Menu</button>';
+      acts.again = () => this.play({ spec: endlessSpec((Math.random() * 1e9) | 0), diff: 'normal', mode: 'endless' });
+    } else if (res.mode === 'tour') {
+      const T = this.tourState;
+      head = '<div class="rbig r-' + st.rank.replace('+', 'p') + '">' + st.rank + '</div><h2>' + (res.champion ? 'CHAMPION!' : res.won ? TOUR_ROUNDS[res.tour.round] + ' won' : 'Eliminated') + '</h2>';
+      sub = 'You ' + st.acc.toFixed(1) + '% · ' + CHARS[res.tour.opp].name + ' ' + res.tour.target.toFixed(1) + '%';
+      if (res.won && !res.champion && T) { T.round++; btns = '<button class="btn hot" data-a="bracket" data-nav>Next round</button><button class="btn" data-a="menu" data-nav>Menu</button>'; acts.bracket = () => { Game.stop(); this.showBracket(); }; }
+      else { btns = '<button class="btn hot" data-a="tour" data-nav>New tournament</button><button class="btn" data-a="menu" data-nav>Menu</button>'; acts.tour = () => { Game.stop(); this.tourState = null; this.showTour(); }; }
+    } else {
+      head = '<div class="rbig r-' + st.rank.replace('+', 'p') + '">' + st.rank + '</div><h2>' + spec.name + '</h2>';
+      if (res.boss) sub = (res.boss.won ? '<b class="fc">BOSS DEFEATED</b>' : 'The boss survived with ' + Math.round(res.boss.hp * 100) + '% left') + ' · ' + sub;
+      if (res.mode === 'practice') sub = 'PRACTICE · ' + Math.round(G.practice.rate * 100) + '% speed';
+      if (res.next) { btns = '<button class="btn hot" data-a="next" data-nav>Next song</button><button class="btn" data-a="menu" data-nav>Menu</button>'; acts.next = () => { this.close(); Game.nextStorySong(); }; }
+      else if (res.weekDone) { btns = '<button class="btn hot" data-a="story" data-nav>Story</button><button class="btn" data-a="menu" data-nav>Menu</button>'; acts.story = () => { Game.stop(); this.showStory(); }; }
+      else btns = '<button class="btn hot" data-a="retry" data-nav>' + (res.bossLost || (res.boss && !res.boss.won) ? 'Fight again' : 'Play again') + '</button><button class="btn" data-a="menu" data-nav>Menu</button>';
+    }
+    const rk = res.mode === 'free' || res.mode === 'story' ? Board.rankOf(key) : null;
+    const fresh = Prog.fresh, notes = (res.weekDone ? '<div class="newi">Week complete! Week score ' + res.weekScore.toLocaleString() + (G.story && WEEKS[G.story.week + 1] ? ' · ' + WEEKS[G.story.week + 1].name + ' unlocked' : '') + '</div>' : '') +
+      fresh.unlocks.map((u) => '<div class="newi gold">🔓 ' + u + '</div>').join('') + (fresh.ach.length ? '<div class="achs">' + fresh.ach.map((a) => '<span title="' + a.text + '">★ ' + a.name + '</span>').join('') + '</div>' : '');
+    this.open('<div class="panel res">' + head + '<p class="note center">' + sub + '</p>' +
+      '<div class="rs"><div><small>Score</small><b>' + st.score.toLocaleString() + '</b>' + (res.isBest && res.mode !== 'practice' ? '<em>NEW BEST</em>' : res.prev ? '<i>best ' + res.prev.score.toLocaleString() + '</i>' : '') + '</div><div><small>Accuracy</small><b>' + st.acc.toFixed(2) + '%</b></div><div><small>Max combo</small><b>' + st.maxCombo + '</b></div><div><small>Crowd</small><b style="color:' + CROWD[st.peak].color + '">' + CROWD[st.peak].name + '</b></div></div>' +
+      '<table class="jt">' + rows + '</table>' + timing + notes +
       (rk ? '<p class="note center">Leaderboard: <b>#' + rk.pos + '</b> of ' + rk.of + ' on this song</p>' : '') +
-      '<div class="row">' + (o.next ? '<button class="btn hot" data-a="next" data-nav>Next song</button>' : o.weekDone ? '<button class="btn hot" data-a="story" data-nav>Story</button>' : '<button class="btn hot" data-a="retry" data-nav>Play again</button>') + '<button class="btn" data-a="menu" data-nav>Menu</button></div>' +
-      '<button class="btn ghost" data-a="copy">Copy result to share</button></div>', {
-      next: () => { this.close(); Game.nextStorySong(); },
-      story: () => { Game.stop(); this.showStory(); },
-      retry: () => { this.close(); Game.restart(); },
-      menu: () => { Game.stop(); this.showMain(); },
-      copy: (b) => this.copy(this.resultLine(st), b),
-    }, 'dim');
+      '<div class="row">' + btns + '</div><button class="btn ghost" data-a="copy">Copy result to share</button></div>', acts, 'dim');
   },
   showVersusResults(r) {
     const a = r.p1, b = r.p2;
