@@ -954,7 +954,7 @@ class Jelly {
     this.sx = 1; this.sy = 1; this.svx = 0; this.svy = 0; this.blink = rand(1, 4); this.wob = rand(TAU); this.afterT = 0;
     this.run = 0; this.flip = 0; this.flipDir = 1; this.lookX = this.facing; this.lookY = 0; this.castT = 9; this.castDir = { x: 1, y: 0 }; this.spin = 0; this.lastFacing = this.facing;
     this.inp = { mx: 0, my: 0, jump: false, jumpP: false, a: [false, false, false], aP: [false, false, false], aR: [false, false, false], downP: false, aimX: null, aimY: null };
-    this.bot = null; this.emote = 0;
+    this.bot = null; this.emote = 0; this.aimSlot = -1; this.aimDir = { x: this.facing, y: 0 }; this.aimTouched = false;
   }
   setSize(s) { const ohh = this.hh; this.size = s; this.hw = PHYS.hw * s; this.hh = PHYS.hh * s; this.y += ohh - this.hh; }
   squash(sx, sy) { this.sx = sx; this.sy = sy; this.svx = 0; this.svy = 0; }
@@ -1058,9 +1058,13 @@ class World {
     }
     const playing = this.phase === 'play' || this.phase === 'ending';
     const canAct = playing && j.stun <= 0;
-    if (inp.aimX !== null && inp.aimX !== undefined) { const n = norm(inp.aimX, inp.aimY); if (n.x || n.y) j.aim = n; }
+    // holding an ability button aims it: the direction input steers the aim instead of moving
+    const aiming = j.aimSlot >= 0 || j.abil.some((s) => s.hold);
+    if (aiming) this.steerAim(j, dt);
+    else if (inp.aimX !== null && inp.aimX !== undefined) { const n = norm(inp.aimX, inp.aimY); if (n.x || n.y) j.aim = n; }
     else { const am = Math.hypot(inp.mx, inp.my); j.aim = am > 0.3 ? { x: inp.mx / am, y: inp.my / am } : { x: j.facing, y: 0 }; }
-    if (Math.abs(inp.mx) > 0.25 && canAct && (!j.state || j.state.k === 'roll' || j.state.k === 'rock')) j.facing = sign(inp.mx);
+    if (aiming) { if (Math.abs(j.aim.x) > 0.2) j.facing = sign(j.aim.x); }
+    else if (Math.abs(inp.mx) > 0.25 && canAct && (!j.state || j.state.k === 'roll' || j.state.k === 'rock')) j.facing = sign(inp.mx);
     if (j.facing !== j.lastFacing) { j.lastFacing = j.facing; if (j.onGround && !j.state) j.squash(0.86, 1.08); }
     const wasGround = j.onGround, vyBefore = j.vy;
 
@@ -1073,14 +1077,14 @@ class World {
       this.stepState(j, dt, canAct);
     } else {
       let mx = clamp(inp.mx, -1, 1);
-      if (!playing || j.stun > 0) mx = 0;
+      if (!playing || j.stun > 0 || aiming) mx = 0;
       if (Math.abs(mx) < 0.22) mx = 0;
       const target = mx * P.run * j.slow * (j.invis > 0 ? 1.35 : 1);
       const acc = j.onGround ? (target ? P.accG : P.fricG) : (target ? P.accA : P.fricA);
       if (Math.abs(j.vx) > P.run * 1.05 && Math.sign(target) === Math.sign(j.vx)) j.vx = approach(j.vx, target, acc * 0.25 * dt);
       else j.vx = approach(j.vx, target, acc * dt);
       if (j.onGround) { j.coyote = P.coyote; j.airJumps = 1; }
-      if (inp.jumpP && canAct) j.jumpBuf = P.buffer;
+      if (inp.jumpP && canAct && !aiming) j.jumpBuf = P.buffer;
       if (j.jumpBuf > 0 && canAct) {
         if (j.coyote > 0) {
           j.vy = -P.jumpV; j.coyote = 0; j.jumpBuf = 0; j.jumping = true; j.onGround = false;
@@ -1093,9 +1097,9 @@ class World {
       }
       if (j.jumping && !inp.jump && j.vy < 0) { j.vy *= P.cut; j.jumping = false; }
       if (j.vy >= 0) j.jumping = false;
-      if (inp.downP && canAct && j.onGround && j.ground && j.ground.thin) { j.dropPlat = j.ground; j.dropT = 0.28; j.y += 3; j.onGround = false; }
+      if (inp.downP && canAct && !aiming && j.onGround && j.ground && j.ground.thin) { j.dropPlat = j.ground; j.dropT = 0.28; j.y += 3; j.onGround = false; }
       let g = P.g, mf = P.maxFall;
-      if (inp.my > 0.6 && !j.onGround && canAct) { g *= 1.25; mf *= 1.18; }
+      if (inp.my > 0.6 && !j.onGround && canAct && !aiming) { g *= 1.25; mf *= 1.18; }
       j.vy = Math.min(j.vy + g * dt, Math.max(mf, j.vy));
       if (j.vy > mf) j.vy = approach(j.vy, mf, 3000 * dt);
     }
@@ -1106,7 +1110,12 @@ class World {
         if (inp.aP[i]) this.useAbility(j, i);
         if (s.hold) { s.t += dt; this.holdAbility(j, i, dt); if (s.hold && !inp.a[i]) this.releaseAbility(j, i); }
       }
-    } else for (let i = 0; i < 3; i++) if (j.abil[i].hold && j.abil[i].id !== 'grenade') this.releaseAbility(j, i, true);
+      if (j.aimSlot >= 0) {
+        const s = j.abil[j.aimSlot]; s.aimT = (s.aimT || 0) + dt;
+        if (j.state && j.state.k !== 'hook') j.aimSlot = -1;
+        else if (!inp.a[j.aimSlot] || s.aimT > 3) { const k = j.aimSlot; j.aimSlot = -1; this.fireAbility(j, k, !j.aimTouched); }
+      }
+    } else { j.aimSlot = -1; for (let i = 0; i < 3; i++) if (j.abil[i].hold && j.abil[i].id !== 'grenade') this.releaseAbility(j, i, true); }
     j.slow = j.abil.some((s) => s.hold && (s.id === 'bow' || s.id === 'beam' || s.id === 'magnet')) ? 0.55 : 1;
     if (j.ground && j.onGround && (j.ground.dx || j.ground.dy)) { j.x += j.ground.dx; j.y += j.ground.dy; }
     const form = j.form();
@@ -1162,7 +1171,7 @@ class World {
     return null;
   }
   dropAll(o) {
-    o.state = null; o.engine = null;
+    o.state = null; o.engine = null; o.aimSlot = -1;
     for (const s of o.abil) s.hold = false;
     if (o.carry) { const c = o.carry; o.carry = null; if (c.kind === 'jelly') c.ref.carriedBy = null; else c.ref.carried = null; }
     if (o.carriedBy) { o.carriedBy.carry = null; o.carriedBy = null; }
@@ -1344,15 +1353,17 @@ Object.assign(SFX, {
   fuse: (s, v) => s.tone({ type: 'square', f0: 1600, dur: 0.03, vol: 0.04 * v, lp: 4000 }),
 });
 
+const AIMED = new Set(['missile', 'mine', 'tesla', 'drill', 'teleport', 'blink', 'hook', 'engine', 'grow', 'shrink', 'dupe', 'blackhole', 'platform', 'spike', 'smoke', 'gust']);
 const RAYABLE = new Set(['grenade', 'mine', 'coil', 'missile', 'smokebomb', 'hole', 'cloud']);
 const MOVABLE = new Set(['grenade', 'mine', 'coil', 'missile', 'smokebomb', 'arrow', 'blink', 'engineShot']);
 const GRABBABLE = new Set(['grenade', 'mine', 'coil', 'smokebomb']);
 
 Object.assign(World.prototype, {
   // ---------------------------------------------------------------- using an ability
+  // the button went down: instant abilities fire now, aimed ones start aiming, held ones start drawing/cooking
   useAbility(j, i) {
     const s = j.abil[i], id = s.id;
-    if (s.cd > 0 || s.hold) return;
+    if (s.cd > 0 || s.hold || j.aimSlot >= 0) return;
     const st = j.form();
     if (st) {
       if (st === 'rock' && id === 'rock') { this.endRock(j); return; }
@@ -1360,8 +1371,52 @@ Object.assign(World.prototype, {
       return;
     }
     if (j.carry && id !== 'throw') return;
-    const a = j.aim, inp = j.inp;
+    const inp = j.inp;
     const neutral = inp.aimX === null || inp.aimX === undefined ? Math.hypot(inp.mx, inp.my) < 0.3 : false;
+    j.aimDir = { x: j.aim.x, y: j.aim.y }; j.aimTouched = !neutral;
+    if (AIMED.has(id)) { j.aimSlot = i; s.aimT = 0; return; }
+    this.fireAbility(j, i, neutral);
+  },
+  steerAim(j, dt) {
+    const inp = j.inp;
+    if (inp.aimX !== null && inp.aimX !== undefined) { const n = norm(inp.aimX, inp.aimY); if (n.x || n.y) j.aimDir = n; j.aim = j.aimDir; return; }
+    const m = Math.hypot(inp.mx, inp.my);
+    const s = j.aimSlot >= 0 ? j.abil[j.aimSlot] : j.abil.find((q) => q.hold);
+    const early = s && (j.aimSlot >= 0 ? s.aimT || 0 : s.t || 0) < 0.12;
+    if (m > 0.3) {
+      const tx = inp.mx / m, ty = inp.my / m;
+      if (!j.aimTouched || inp.analog || early) j.aimDir = { x: tx, y: ty };
+      else {
+        const cur = Math.atan2(j.aimDir.y, j.aimDir.x), tgt = Math.atan2(ty, tx);
+        let d = tgt - cur; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU;
+        const step = 4.2 * dt, na = Math.abs(d) <= step ? tgt : cur + sign(d) * step;
+        j.aimDir = { x: Math.cos(na), y: Math.sin(na) };
+      }
+      j.aimTouched = true;
+    }
+    j.aim = { x: j.aimDir.x, y: j.aimDir.y };
+  },
+  teleportDest(j, a) {
+    const dist = 210;
+    for (let k = 20; k >= 0; k--) {
+      const x = j.x + a.x * dist * (k / 20), y = j.y + a.y * dist * (k / 20);
+      if (!this.plats.some((p) => !p.thin && !p.dead && overlapBP({ x, y, hw: j.hw, hh: j.hh }, p))) return { x, y };
+    }
+    return { x: j.x, y: j.y };
+  },
+  platformRect(j, a, neutral) {
+    const horiz = neutral ? !j.onGround : Math.abs(a.y) > 0.62 && !(a.y > 0 && j.onGround);
+    if (horiz || (neutral && !j.onGround)) {
+      const rw = 130, rh = 18;
+      return { x: j.x + (neutral ? 0 : a.x * 50) - rw / 2, y: !neutral && a.y < 0 ? j.y - j.hh - 80 : j.y + j.hh + 4, w: rw, h: rh };
+    }
+    const d = neutral ? j.facing : sign(a.x || j.facing);
+    return { x: j.x + d * 54 - 10, y: j.y - 70 + (neutral ? 0 : a.y * 30), w: 20, h: 112 };
+  },
+  fireAbility(j, i, neutral) {
+    const s = j.abil[i], id = s.id;
+    if (s.cd > 0) return;
+    const a = j.aim;
     if (AB[id].kind === 'attack' && j.invis > 0) { j.invis = 0; this.poof(j.x, j.y, j.col.light); }
     let used = true;
     j.castT = 0; j.castDir = { x: a.x, y: a.y };
@@ -1410,12 +1465,7 @@ Object.assign(World.prototype, {
         break;
       }
       case 'teleport': {
-        const dist = 210;
-        let tx = j.x, ty = j.y;
-        for (let k = 20; k >= 0; k--) {
-          const x = j.x + a.x * dist * (k / 20), y = j.y + a.y * dist * (k / 20);
-          if (!this.plats.some((p) => !p.thin && !p.dead && overlapBP({ x, y, hw: j.hw, hh: j.hh }, p))) { tx = x; ty = y; break; }
-        }
+        const dd = this.teleportDest(j, a), tx = dd.x, ty = dd.y;
         this.warpFx(j.x, j.y, tx, ty, j.col);
         j.x = tx; j.y = ty; j.px = tx; j.py = ty; j.vx *= 0.4; j.vy = Math.min(j.vy, 0) * 0.3 - (a.y < -0.3 ? 120 : 0);
         j.invuln = Math.max(j.invuln, 0.12); j.squash(0.6, 1.4); j.jumping = false; j.onGround = false;
@@ -1445,15 +1495,7 @@ Object.assign(World.prototype, {
       case 'platform': {
         const mine = this.plats.filter((p) => p.kind === 'wafer' && p.owner === j && !p.dead);
         if (mine.length >= 2) this.breakWafer(mine[0], true);
-        let rx, ry, rw, rh;
-        const horiz = neutral ? !j.onGround : Math.abs(a.y) > 0.62 && !(a.y > 0 && j.onGround);
-        if (horiz || (neutral && !j.onGround)) {
-          rw = 130; rh = 18; rx = j.x + (neutral ? 0 : a.x * 50) - rw / 2;
-          ry = !neutral && a.y < 0 ? j.y - j.hh - 80 : j.y + j.hh + 4;
-        } else {
-          const d = neutral ? j.facing : sign(a.x || j.facing);
-          rw = 20; rh = 112; rx = j.x + d * 54 - rw / 2; ry = j.y - 70 + (neutral ? 0 : a.y * 30);
-        }
+        const pr = this.platformRect(j, a, neutral), rx = pr.x, ry = pr.y, rw = pr.w, rh = pr.h;
         const p = new Plat(rx, ry, rw, rh, '', null);
         p.kind = 'wafer'; p.ttl = 6; p.owner = j; p.born = this.t; p.vert = rh > rw;
         this.plats.push(p);
@@ -2588,66 +2630,232 @@ function card(ctx, x, y, w, h, opt = {}) {
   if (opt.stroke) { rr(ctx, x, y, w, h, r); ctx.lineWidth = opt.lw || 1.5; ctx.strokeStyle = opt.stroke; ctx.stroke(); }
 }
 
-// ---------- ability icons: white line glyphs on a dark tile with a kind-colour bar
+// ---------- ability icons: small illustrations on a glossy tile coloured by kind
+const ICON_KIND_FALLBACK = { c: '#5b8fd6' };
 function drawIcon(ctx, id, x, y, size, opt = {}) {
-  const kind = AB[id] ? KINDS[AB[id].kind] : { c: '#8a93a3' }, s = size / 2;
+  const kind = AB[id] ? KINDS[AB[id].kind] : ICON_KIND_FALLBACK, s = size / 2;
+  const base = opt.dim ? '#aab0bb' : opt.tile || kind.c;
   ctx.save(); ctx.translate(x, y);
   if (!opt.bare) {
-    rr(ctx, -s, -s, size, size, size * 0.24); ctx.fillStyle = opt.dim ? '#3b4150' : '#252a35'; ctx.fill();
-    ctx.save(); rr(ctx, -s, -s, size, size, size * 0.24); ctx.clip(); ctx.globalAlpha *= opt.dim ? 0.45 : 1; ctx.fillStyle = kind.c; ctx.fillRect(-s, s - Math.max(2, size * 0.1), size, Math.max(2, size * 0.1)); ctx.restore();
+    const r = size * 0.27, lip = Math.max(1.5, size * 0.07);
+    rr(ctx, -s, -s + lip, size, size - lip, r); ctx.fillStyle = mix(base, '#1a1d26', 0.38); ctx.fill();
+    rr(ctx, -s, -s, size, size - lip, r);
+    const g = ctx.createLinearGradient(0, -s, 0, s); g.addColorStop(0, mix(base, '#ffffff', 0.3)); g.addColorStop(1, base);
+    ctx.fillStyle = g; ctx.fill();
+    ctx.save(); rr(ctx, -s, -s, size, size - lip, r); ctx.clip();
+    ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.beginPath(); ctx.ellipse(-s * 0.15, -s * 0.85, s * 1.15, s * 0.6, -0.15, 0, TAU); ctx.fill();
+    ctx.restore();
+    ctx.translate(0, -lip / 2);
   }
-  const u = s * 0.62;
-  ctx.scale(u, u); if (!opt.bare) ctx.translate(0, -0.08);
-  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-  const c = opt.color || (opt.dim ? '#8d95a6' : '#ffffff');
-  ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = Math.max(0.15, 1.5 / u);
-  const S = () => ctx.stroke(), F = () => ctx.fill(), B = () => ctx.beginPath();
-  B();
-  switch (id) {
-    case 'bow': ctx.arc(-0.55, 0, 1.05, -0.95, 0.95); S(); B(); ctx.moveTo(-0.55 + Math.cos(-0.95) * 1.05, Math.sin(-0.95) * 1.05); ctx.lineTo(-0.2, 0); ctx.lineTo(-0.55 + Math.cos(0.95) * 1.05, Math.sin(0.95) * 1.05); ctx.globalAlpha *= 0.7; S(); ctx.globalAlpha /= 0.7; B(); ctx.moveTo(-0.2, 0); ctx.lineTo(0.85, 0); S(); B(); ctx.moveTo(0.95, 0); ctx.lineTo(0.62, -0.2); ctx.lineTo(0.62, 0.2); ctx.closePath(); F(); break;
-    case 'grenade': ctx.arc(0, 0.2, 0.6, 0, TAU); S(); B(); ctx.moveTo(-0.2, -0.38); ctx.lineTo(-0.2, -0.62); ctx.lineTo(0.35, -0.62); ctx.lineTo(0.55, -0.35); S(); B(); ctx.arc(0.62, -0.78, 0.18, 0, TAU); S(); break;
-    case 'missile': ctx.save(); ctx.rotate(-Math.PI / 4); rr(ctx, -0.65, -0.22, 1.1, 0.44, 0.2); S(); B(); ctx.moveTo(0.45, -0.22); ctx.lineTo(0.9, 0); ctx.lineTo(0.45, 0.22); S(); B(); ctx.moveTo(-0.65, -0.22); ctx.lineTo(-0.88, -0.45); ctx.moveTo(-0.65, 0.22); ctx.lineTo(-0.88, 0.45); S(); ctx.restore(); break;
-    case 'mine': ctx.moveTo(-0.85, 0.5); ctx.lineTo(0.85, 0.5); S(); B(); ctx.arc(0, 0.5, 0.55, Math.PI, 0); S(); B(); ctx.arc(0, -0.25, 0.13, 0, TAU); F(); B(); ctx.moveTo(-0.45, -0.55); ctx.lineTo(-0.6, -0.75); ctx.moveTo(0.45, -0.55); ctx.lineTo(0.6, -0.75); S(); break;
-    case 'meteor': ctx.arc(0.25, 0.25, 0.48, 0, TAU); F(); B(); ctx.moveTo(-0.15, -0.15); ctx.lineTo(-0.8, -0.8); ctx.moveTo(0.05, -0.35); ctx.lineTo(-0.35, -0.85); ctx.moveTo(-0.35, 0.05); ctx.lineTo(-0.85, -0.35); S(); break;
-    case 'beam': ctx.arc(-0.65, 0, 0.25, 0, TAU); F(); B(); ctx.moveTo(-0.3, 0); ctx.lineTo(0.88, 0); ctx.lineWidth *= 2.2; S(); ctx.lineWidth /= 2.2; B(); ctx.moveTo(0.88, -0.45); ctx.lineTo(0.88, 0.45); S(); break;
-    case 'tesla': ctx.moveTo(-0.55, 0.85); ctx.lineTo(0.05, 0.85); S(); B(); ctx.moveTo(-0.25, 0.85); ctx.lineTo(-0.25, -0.2); S(); for (const yy of [0.5, 0.2, -0.1]) { B(); ctx.ellipse(-0.25, yy, 0.28, 0.08, 0, 0, TAU); S(); } B(); ctx.arc(-0.25, -0.45, 0.2, 0, TAU); F(); B(); ctx.moveTo(0.2, -0.75); ctx.lineTo(0.45, -0.3); ctx.lineTo(0.3, -0.25); ctx.lineTo(0.7, 0.3); S(); break;
-    case 'rock': ctx.moveTo(-0.7, 0.55); ctx.lineTo(-0.8, -0.05); ctx.lineTo(-0.35, -0.6); ctx.lineTo(0.3, -0.7); ctx.lineTo(0.8, -0.2); ctx.lineTo(0.7, 0.5); ctx.closePath(); S(); B(); ctx.moveTo(-0.1, -0.65); ctx.lineTo(0.05, -0.1); ctx.lineTo(-0.2, 0.2); S(); break;
-    case 'roll': ctx.arc(0.25, 0, 0.6, 0, TAU); S(); B(); ctx.arc(0.25, 0, 0.6, 0.6, 1.6); ctx.lineWidth *= 1.8; S(); ctx.lineWidth /= 1.8; B(); ctx.moveTo(-0.9, -0.3); ctx.lineTo(-0.5, -0.3); ctx.moveTo(-0.95, 0.1); ctx.lineTo(-0.55, 0.1); S(); break;
-    case 'drill': ctx.moveTo(-0.6, -0.5); ctx.lineTo(0.9, 0); ctx.lineTo(-0.6, 0.5); ctx.closePath(); S(); B(); ctx.moveTo(-0.2, -0.36); ctx.lineTo(0, 0.3); ctx.moveTo(0.25, -0.2); ctx.lineTo(0.4, 0.14); S(); B(); ctx.moveTo(-0.6, -0.5); ctx.lineTo(-0.85, -0.5); ctx.lineTo(-0.85, 0.5); ctx.lineTo(-0.6, 0.5); S(); break;
-    case 'dash': for (const o of [-0.38, 0.22]) { ctx.moveTo(o - 0.25, -0.55); ctx.lineTo(o + 0.25, 0); ctx.lineTo(o - 0.25, 0.55); } S(); break;
-    case 'teleport': ctx.setLineDash([0.22, 0.2]); ctx.arc(0, 0, 0.72, 0, TAU); S(); ctx.setLineDash([]); B(); ctx.arc(0, 0, 0.24, 0, TAU); F(); break;
-    case 'blink': ctx.arc(0.3, 0, 0.42, 0, TAU); S(); B(); ctx.arc(0.3, 0, 0.14, 0, TAU); F(); B(); ctx.moveTo(-0.85, 0); ctx.lineTo(-0.3, 0); ctx.moveTo(-0.7, -0.35); ctx.lineTo(-0.4, -0.35); ctx.moveTo(-0.7, 0.35); ctx.lineTo(-0.4, 0.35); S(); break;
-    case 'hook': ctx.moveTo(-0.8, 0.8); ctx.lineTo(0.15, -0.15); S(); B(); ctx.moveTo(0.15, -0.15); ctx.lineTo(0.15, -0.6); ctx.arc(0.45, -0.6, 0.3, Math.PI, 0); ctx.lineTo(0.75, -0.4); S(); break;
-    case 'engine': rr(ctx, -0.25, -0.75, 0.5, 1.1, 0.25); S(); B(); ctx.moveTo(-0.25, 0.15); ctx.lineTo(-0.5, 0.45); ctx.moveTo(0.25, 0.15); ctx.lineTo(0.5, 0.45); S(); B(); ctx.moveTo(-0.15, 0.45); ctx.lineTo(0, 0.9); ctx.lineTo(0.15, 0.45); S(); break;
-    case 'grow': rr(ctx, -0.25, -0.25, 0.5, 0.5, 0.06); S(); B(); for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { ctx.moveTo(sx * 0.45, sy * 0.45); ctx.lineTo(sx * 0.85, sy * 0.85); ctx.moveTo(sx * 0.85, sy * 0.5); ctx.lineTo(sx * 0.85, sy * 0.85); ctx.lineTo(sx * 0.5, sy * 0.85); } S(); break;
-    case 'shrink': rr(ctx, -0.22, -0.22, 0.44, 0.44, 0.06); S(); B(); for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { ctx.moveTo(sx * 0.88, sy * 0.88); ctx.lineTo(sx * 0.42, sy * 0.42); ctx.moveTo(sx * 0.42, sy * 0.75); ctx.lineTo(sx * 0.42, sy * 0.42); ctx.lineTo(sx * 0.75, sy * 0.42); } S(); break;
-    case 'blackhole': ctx.arc(0, 0, 0.36, 0, TAU); F(); B(); ctx.ellipse(0, 0, 0.88, 0.32, -0.35, 0, TAU); S(); break;
-    case 'platform': rr(ctx, -0.85, -0.18, 1.7, 0.36, 0.12); S(); B(); ctx.moveTo(0, 0.4); ctx.lineTo(0, 0.85); ctx.moveTo(-0.25, 0.62); ctx.lineTo(0, 0.4); ctx.lineTo(0.25, 0.62); S(); break;
-    case 'spike': ctx.moveTo(-0.9, 0.6); ctx.lineTo(0.9, 0.6); S(); B(); for (const xx of [-0.55, 0, 0.55]) { ctx.moveTo(xx - 0.27, 0.6); ctx.lineTo(xx, -0.55); ctx.lineTo(xx + 0.27, 0.6); } S(); break;
-    case 'smoke': ctx.arc(-0.35, 0.15, 0.38, 0, TAU); ctx.moveTo(0.73, 0.1); ctx.arc(0.35, 0.1, 0.38, 0, TAU); ctx.moveTo(0.4, -0.3); ctx.arc(0, -0.3, 0.4, 0, TAU); S(); break;
-    case 'dupe': rr(ctx, -0.75, -0.55, 0.95, 0.95, 0.15); S(); B(); rr(ctx, -0.2, -0.05, 0.95, 0.95, 0.15); S(); break;
-    case 'magnet': ctx.moveTo(-0.55, -0.7); ctx.lineTo(-0.55, 0.1); ctx.arc(0, 0.1, 0.55, Math.PI, 0, true); ctx.lineTo(0.55, -0.7); ctx.lineWidth *= 1.9; S(); ctx.lineWidth /= 1.9; B(); ctx.moveTo(-0.75, -0.55); ctx.lineTo(-0.35, -0.55); ctx.moveTo(0.35, -0.55); ctx.lineTo(0.75, -0.55); S(); break;
-    case 'push': ctx.arc(0, 0, 0.2, 0, TAU); F(); for (const r of [0.5, 0.82]) { B(); ctx.arc(0, 0, r, -0.6, 0.6); S(); B(); ctx.arc(0, 0, r, Math.PI - 0.6, Math.PI + 0.6); S(); } break;
-    case 'gust': for (const [yy, l] of [[-0.45, 0.6], [0, 0.85], [0.45, 0.5]]) { ctx.moveTo(-0.85, yy); ctx.lineTo(l - 0.2, yy); ctx.arc(l - 0.2, yy - 0.18, 0.18, Math.PI / 2, -Math.PI / 2, true); } S(); break;
-    case 'throw': ctx.arc(-0.55, 0.5, 0.28, 0, TAU); F(); B(); ctx.moveTo(-0.3, 0.25); ctx.quadraticCurveTo(0.2, -0.6, 0.8, -0.35); S(); B(); ctx.moveTo(0.85, -0.35); ctx.lineTo(0.5, -0.6); ctx.moveTo(0.85, -0.35); ctx.lineTo(0.55, -0.05); S(); break;
-    case 'timestop': ctx.arc(0, 0, 0.75, 0, TAU); S(); B(); ctx.moveTo(0, 0); ctx.lineTo(0, -0.48); ctx.moveTo(0, 0); ctx.lineTo(0.35, 0.2); S(); break;
-    case 'invis': ctx.moveTo(-0.85, 0); ctx.quadraticCurveTo(0, -0.75, 0.85, 0); ctx.quadraticCurveTo(0, 0.75, -0.85, 0); S(); B(); ctx.arc(0, 0, 0.22, 0, TAU); F(); B(); ctx.moveTo(-0.7, 0.7); ctx.lineTo(0.7, -0.7); S(); break;
-    case 'revive': ctx.arc(0, 0, 0.78, 0, TAU); S(); B(); ctx.moveTo(0, -0.42); ctx.lineTo(0, 0.42); ctx.moveTo(-0.42, 0); ctx.lineTo(0.42, 0); ctx.lineWidth *= 1.5; S(); break;
-    case 'random': rr(ctx, -0.72, -0.72, 1.44, 1.44, 0.25); S(); for (const [xx, yy] of [[-0.35, -0.35], [0.35, 0.35], [0, 0], [0.35, -0.35], [-0.35, 0.35]]) { B(); ctx.arc(xx, yy, 0.11, 0, TAU); F(); } break;
-    case 'fall': for (const yy of [-0.3, 0.3]) { ctx.moveTo(-0.85, yy); for (let xx = -0.85; xx <= 0.85; xx += 0.1) ctx.lineTo(xx, yy + Math.sin(xx * 7) * 0.12); } S(); break;
-  }
+  const u = s * (opt.bare ? 0.9 : 0.64);
+  ctx.scale(u, u);
+  if (opt.dim) ctx.globalAlpha *= 0.7;
+  ctx.save(); ctx.translate(0.07, 0.11); drawGlyph(ctx, id, true); ctx.restore();
+  drawGlyph(ctx, id, false);
   ctx.restore();
-  if (opt.rnd) { // a small dice badge on randomly rolled abilities
-    const bx = x + s - size * 0.16, by = y - s + size * 0.16, br = Math.max(4, size * 0.17);
-    ctx.fillStyle = '#efb43f'; ctx.beginPath(); ctx.arc(bx, by, br, 0, TAU); ctx.fill();
-    ctx.fillStyle = '#252a35'; ctx.beginPath(); ctx.arc(bx, by, br * 0.28, 0, TAU); ctx.fill();
+  if (opt.rnd) { // a small die on randomly rolled abilities
+    const bx = x + s - size * 0.12, by = y - s + size * 0.12, br = Math.max(4, size * 0.18);
+    ctx.fillStyle = '#ffffff'; rr(ctx, bx - br, by - br, br * 2, br * 2, br * 0.5); ctx.fill();
+    ctx.fillStyle = '#2b303b'; for (const [dx, dy] of [[-0.4, -0.4], [0.4, 0.4], [0, 0]]) { ctx.beginPath(); ctx.arc(bx + dx * br, by + dy * br, br * 0.2, 0, TAU); ctx.fill(); }
+  }
+}
+// the drawings themselves, in a -1..1 box; sh draws the same shapes as a soft shadow
+function drawGlyph(c, id, sh) {
+  const SH = 'rgba(12,16,26,0.28)';
+  const P = () => c.beginPath();
+  const F = (col) => { c.fillStyle = sh ? SH : col; c.fill(); };
+  const S = (col, lw) => { c.strokeStyle = sh ? SH : col; c.lineWidth = lw; c.stroke(); };
+  const W = '#ffffff', D = '#2b303b', Y = '#ffd36b', O = '#ff9f4a', G = '#d9dee6';
+  c.lineCap = 'round'; c.lineJoin = 'round';
+  switch (id) {
+    case 'bow': {
+      P(); c.arc(-0.6, 0, 1.0, -1.0, 1.0); S('#7a4d2b', 0.26);
+      const ex = -0.6 + Math.cos(1) * 1.0, ey = Math.sin(1) * 1.0;
+      P(); c.moveTo(ex, -ey); c.lineTo(-0.3, 0); c.lineTo(ex, ey); S(W, 0.07);
+      P(); c.moveTo(-0.3, 0); c.lineTo(0.62, 0); S(W, 0.13);
+      P(); c.moveTo(0.98, 0); c.lineTo(0.58, -0.24); c.lineTo(0.58, 0.24); c.closePath(); F(G);
+      P(); c.moveTo(-0.2, 0); c.lineTo(-0.42, -0.22); c.lineTo(-0.12, 0); c.lineTo(-0.42, 0.22); c.closePath(); F(Y);
+      break;
+    }
+    case 'grenade':
+      P(); c.arc(-0.05, 0.22, 0.62, 0, TAU); F('#3f4a33');
+      if (!sh) { P(); c.arc(-0.25, 0.02, 0.2, 0, TAU); F('#64744f'); P(); c.moveTo(-0.65, 0.22); c.lineTo(0.55, 0.22); S('rgba(0,0,0,0.25)', 0.06); }
+      P(); c.moveTo(-0.25, -0.38); c.lineTo(-0.25, -0.6); c.lineTo(0.4, -0.6); c.lineTo(0.62, -0.3); S(G, 0.16);
+      P(); c.arc(0.65, -0.8, 0.17, 0, TAU); S(Y, 0.1);
+      break;
+    case 'missile':
+      c.save(); c.rotate(-Math.PI / 4);
+      P(); c.moveTo(-0.62, -0.1); c.lineTo(-1.05, 0); c.lineTo(-0.62, 0.1); F(Y);
+      P(); c.moveTo(-0.62, -0.22); c.lineTo(-0.85, -0.48); c.lineTo(-0.45, -0.22); c.moveTo(-0.62, 0.22); c.lineTo(-0.85, 0.48); c.lineTo(-0.45, 0.22); F(D);
+      P(); rr(c, -0.65, -0.24, 1.15, 0.48, 0.22); F(W);
+      P(); c.moveTo(0.45, -0.24); c.quadraticCurveTo(0.95, 0, 0.45, 0.24); c.closePath(); F(D);
+      c.restore();
+      break;
+    case 'mine':
+      P(); rr(c, -0.85, 0.38, 1.7, 0.26, 0.1); F(D);
+      P(); c.arc(0, 0.4, 0.58, Math.PI, 0); c.closePath(); F('#454b58');
+      P(); c.arc(0, -0.05, 0.16, 0, TAU); F(Y);
+      P(); c.moveTo(-0.5, -0.45); c.lineTo(-0.7, -0.7); c.moveTo(0.5, -0.45); c.lineTo(0.7, -0.7); c.moveTo(0, -0.55); c.lineTo(0, -0.85); S(W, 0.11);
+      break;
+    case 'meteor':
+      P(); c.moveTo(-0.95, -0.55); c.quadraticCurveTo(-0.3, -0.1, 0.05, -0.35); c.lineTo(0.55, 0.05); c.quadraticCurveTo(0.25, 0.45, -0.55, 0.95); c.quadraticCurveTo(-0.25, 0.1, -0.95, -0.55); F(Y);
+      P(); c.arc(0.22, 0.22, 0.48, 0, TAU); F(W);
+      P(); c.arc(0.25, 0.25, 0.32, 0, TAU); F('#6b4a3a');
+      break;
+    case 'beam':
+      P(); rr(c, -0.35, -0.24, 1.3, 0.48, 0.24); F(Y);
+      P(); rr(c, -0.35, -0.1, 1.3, 0.2, 0.1); F(W);
+      P(); rr(c, -0.95, -0.38, 0.6, 0.76, 0.18); F(D);
+      P(); c.arc(-0.65, 0, 0.14, 0, TAU); F(Y);
+      break;
+    case 'tesla':
+      P(); rr(c, -0.7, 0.7, 0.8, 0.2, 0.08); F(D);
+      P(); c.rect(-0.38, -0.25, 0.16, 0.98); F('#5d6370');
+      for (const yy of [0.5, 0.25, 0.0]) { P(); rr(c, -0.58, yy - 0.07, 0.56, 0.14, 0.07); F('#e6a464'); }
+      P(); c.arc(-0.3, -0.42, 0.24, 0, TAU); F(W);
+      P(); c.moveTo(0.35, -0.9); c.lineTo(0.12, -0.15); c.lineTo(0.42, -0.15); c.lineTo(0.2, 0.75); c.lineTo(0.85, -0.3); c.lineTo(0.52, -0.3); c.lineTo(0.75, -0.9); c.closePath(); F(Y);
+      break;
+    case 'rock':
+      P(); c.moveTo(-0.78, 0.62); c.lineTo(-0.88, -0.02); c.lineTo(-0.4, -0.64); c.lineTo(0.32, -0.74); c.lineTo(0.86, -0.18); c.lineTo(0.76, 0.6); c.closePath(); F('#8f96a2');
+      if (!sh) { P(); c.moveTo(-0.88, -0.02); c.lineTo(-0.4, -0.64); c.lineTo(0.32, -0.74); c.lineTo(0.05, -0.1); c.closePath(); F('#c3c8d1'); P(); c.moveTo(-0.78, 0.62); c.lineTo(0.76, 0.6); c.lineTo(0.7, 0.3); c.lineTo(-0.8, 0.32); c.closePath(); F('#6f7581'); }
+      break;
+    case 'roll':
+      P(); c.moveTo(-0.95, -0.3); c.lineTo(-0.5, -0.3); c.moveTo(-0.98, 0.1); c.lineTo(-0.55, 0.1); c.moveTo(-0.85, 0.48); c.lineTo(-0.5, 0.48); S(W, 0.12);
+      P(); c.arc(0.25, 0.05, 0.62, 0, TAU); F(W);
+      P(); c.arc(0.25, 0.05, 0.62, -0.5, 0.9); c.arc(0.25, 0.05, 0.3, 0.9, -0.5, true); c.closePath(); F(D);
+      break;
+    case 'drill':
+      P(); rr(c, -0.95, -0.36, 0.42, 0.72, 0.12); F(Y);
+      P(); c.moveTo(-0.55, -0.48); c.lineTo(0.98, 0); c.lineTo(-0.55, 0.48); c.closePath(); F(G);
+      if (!sh) { P(); c.moveTo(-0.2, -0.38); c.lineTo(0.0, 0.32); c.moveTo(0.22, -0.24); c.lineTo(0.38, 0.18); c.moveTo(0.6, -0.11); c.lineTo(0.68, 0.06); S('#8a919d', 0.08); }
+      break;
+    case 'dash':
+      P(); c.moveTo(-0.95, -0.35); c.lineTo(-0.6, -0.35); c.moveTo(-1.0, 0.35); c.lineTo(-0.65, 0.35); S(W, 0.11);
+      P(); for (const o of [-0.25, 0.3]) { c.moveTo(o - 0.25, -0.58); c.lineTo(o + 0.25, 0); c.lineTo(o - 0.25, 0.58); } S(W, 0.26);
+      break;
+    case 'teleport':
+      P(); c.ellipse(0, 0.15, 0.78, 0.42, 0, 0, TAU); F('#1f3e75');
+      P(); c.ellipse(0, 0.15, 0.78, 0.42, 0, 0, TAU); S(W, 0.13);
+      P(); c.ellipse(0, 0.15, 0.42, 0.2, 0, 0, TAU); S('#9fd0ff', 0.09);
+      P(); c.moveTo(0, -0.95); c.lineTo(0.12, -0.6); c.lineTo(0.45, -0.5); c.lineTo(0.12, -0.4); c.lineTo(0, -0.05); c.lineTo(-0.12, -0.4); c.lineTo(-0.45, -0.5); c.lineTo(-0.12, -0.6); c.closePath(); F(Y);
+      break;
+    case 'blink':
+      P(); for (const [xx, r] of [[-0.85, 0.07], [-0.6, 0.1], [-0.3, 0.13]]) c.arc(xx, 0, r, 0, TAU); F(W);
+      P(); c.arc(0.35, 0, 0.5, 0, TAU); F(W);
+      P(); c.arc(0.35, 0, 0.28, 0, TAU); F('#1f3e75');
+      P(); c.arc(0.35, 0, 0.12, 0, TAU); F(Y);
+      break;
+    case 'hook':
+      P(); c.moveTo(-0.85, 0.85); c.quadraticCurveTo(-0.5, 0.1, 0.05, -0.05); S('#8a5a33', 0.16);
+      P(); c.moveTo(0.05, -0.05); c.lineTo(0.05, -0.55); c.arc(0.42, -0.55, 0.37, Math.PI, 0); c.lineTo(0.79, -0.25); S(W, 0.2);
+      P(); c.moveTo(0.79, -0.25); c.lineTo(0.6, -0.38); S(W, 0.16);
+      break;
+    case 'engine':
+      P(); c.moveTo(-0.2, 0.45); c.quadraticCurveTo(0, 1.05, 0.2, 0.45); F(Y);
+      P(); c.moveTo(-0.1, 0.45); c.quadraticCurveTo(0, 0.78, 0.1, 0.45); F(W);
+      P(); rr(c, -0.32, -0.8, 0.64, 1.25, 0.3); F(G);
+      P(); c.moveTo(-0.32, 0.05); c.lineTo(-0.62, 0.45); c.lineTo(-0.32, 0.35); c.moveTo(0.32, 0.05); c.lineTo(0.62, 0.45); c.lineTo(0.32, 0.35); F(D);
+      P(); c.arc(0, -0.32, 0.15, 0, TAU); F('#1f3e75');
+      break;
+    case 'grow':
+      P(); rr(c, -0.3, -0.3, 0.6, 0.6, 0.1); F('#b9f5c9');
+      P(); for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { c.moveTo(sx * 0.48, sy * 0.48); c.lineTo(sx * 0.88, sy * 0.88); c.moveTo(sx * 0.88, sy * 0.52); c.lineTo(sx * 0.88, sy * 0.88); c.lineTo(sx * 0.52, sy * 0.88); } S(W, 0.15);
+      break;
+    case 'shrink':
+      P(); rr(c, -0.2, -0.2, 0.4, 0.4, 0.07); F(Y);
+      P(); for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { c.moveTo(sx * 0.9, sy * 0.9); c.lineTo(sx * 0.42, sy * 0.42); c.moveTo(sx * 0.42, sy * 0.76); c.lineTo(sx * 0.42, sy * 0.42); c.lineTo(sx * 0.76, sy * 0.42); } S(W, 0.15);
+      break;
+    case 'blackhole':
+      P(); c.ellipse(0, 0, 0.95, 0.36, -0.35, 0, TAU); S(sh ? SH : '#ffc2ec', 0.14);
+      P(); c.arc(0, 0, 0.46, 0, TAU); F('#0d0f15');
+      if (!sh) { P(); c.ellipse(0, 0, 0.95, 0.36, -0.35, Math.PI * 1.05, Math.PI * 1.95); S(W, 0.14); }
+      break;
+    case 'platform':
+      P(); rr(c, -0.9, -0.1, 1.8, 0.42, 0.14); F(D);
+      P(); rr(c, -0.9, -0.1, 1.8, 0.16, 0.08); F(W);
+      P(); c.moveTo(0, -0.95); c.lineTo(0.1, -0.62); c.lineTo(0.4, -0.52); c.lineTo(0.1, -0.42); c.lineTo(0, -0.2); c.lineTo(-0.1, -0.42); c.lineTo(-0.4, -0.52); c.lineTo(-0.1, -0.62); c.closePath(); F(Y);
+      break;
+    case 'spike':
+      P(); rr(c, -0.95, 0.5, 1.9, 0.3, 0.1); F(D);
+      P(); for (const xx of [-0.6, 0, 0.6]) { c.moveTo(xx - 0.3, 0.52); c.lineTo(xx, -0.7); c.lineTo(xx + 0.3, 0.52); } c.closePath(); F(W);
+      if (!sh) { P(); for (const xx of [-0.6, 0, 0.6]) { c.moveTo(xx, -0.7); c.lineTo(xx + 0.3, 0.52); c.lineTo(xx, 0.52); c.closePath(); } F('#c3c8d1'); }
+      break;
+    case 'smoke':
+      P(); c.arc(-0.42, 0.22, 0.42, 0, TAU); c.arc(0.38, 0.2, 0.45, 0, TAU); c.arc(0, -0.25, 0.48, 0, TAU); c.rect(-0.42, 0.1, 0.8, 0.54); F('#eef0f4');
+      if (!sh) { P(); c.arc(0.38, 0.28, 0.3, 0, TAU); F('#c3c8d1'); }
+      break;
+    case 'dupe': {
+      const cube = (x0, y0, col) => { P(); rr(c, x0 - 0.42, y0 - 0.38, 0.84, 0.76, 0.3); F(col); if (!sh) { c.fillStyle = D; P(); rr(c, x0 - 0.18, y0 - 0.12, 0.1, 0.24, 0.05); c.fill(); P(); rr(c, x0 + 0.08, y0 - 0.12, 0.1, 0.24, 0.05); c.fill(); } };
+      cube(-0.32, -0.25, 'rgba(255,255,255,0.65)'); cube(0.32, 0.28, W);
+      break;
+    }
+    case 'magnet':
+      P(); c.moveTo(-0.55, -0.75); c.lineTo(-0.55, 0.05); c.arc(0, 0.05, 0.55, Math.PI, 0, true); c.lineTo(0.55, -0.75); S('#e5484d', 0.36);
+      P(); c.moveTo(-0.55, -0.62); c.lineTo(-0.55, -0.85); c.moveTo(0.55, -0.62); c.lineTo(0.55, -0.85); S(W, 0.36);
+      break;
+    case 'push':
+      P(); c.arc(0, 0, 0.22, 0, TAU); F(W);
+      for (const r of [0.5, 0.82]) { P(); c.arc(0, 0, r, -0.65, 0.65); S(W, 0.14); P(); c.arc(0, 0, r, Math.PI - 0.65, Math.PI + 0.65); S(W, 0.14); }
+      break;
+    case 'gust':
+      P(); for (const [yy, l] of [[-0.48, 0.6], [0, 0.88], [0.48, 0.45]]) { c.moveTo(-0.9, yy); c.lineTo(l - 0.2, yy); c.arc(l - 0.2, yy - 0.2, 0.2, Math.PI / 2, -Math.PI / 2, true); } S(W, 0.15);
+      break;
+    case 'throw':
+      P(); c.moveTo(-0.45, 0.35); c.quadraticCurveTo(0.05, -0.65, 0.78, -0.35); S(W, 0.14);
+      P(); c.moveTo(0.9, -0.3); c.lineTo(0.5, -0.62); c.moveTo(0.9, -0.3); c.lineTo(0.55, 0.02); S(W, 0.14);
+      P(); c.arc(-0.55, 0.55, 0.32, 0, TAU); F(D);
+      if (!sh) { P(); c.arc(-0.63, 0.47, 0.09, 0, TAU); F('#5d6370'); }
+      break;
+    case 'timestop':
+      P(); c.arc(0, 0.05, 0.78, 0, TAU); F(W);
+      P(); c.arc(0, 0.05, 0.78, 0, TAU); S(D, 0.1);
+      P(); c.moveTo(0, 0.05); c.lineTo(0, -0.42); c.moveTo(0, 0.05); c.lineTo(0.34, 0.25); S(D, 0.13);
+      P(); rr(c, -0.16, -0.98, 0.32, 0.16, 0.06); F(D);
+      break;
+    case 'invis':
+      P(); rr(c, -0.62, -0.55, 1.24, 1.1, 0.42); c.setLineDash([0.22, 0.16]); S(W, 0.12); c.setLineDash([]);
+      P(); rr(c, -0.28, -0.18, 0.14, 0.34, 0.07); rr(c, 0.14, -0.18, 0.14, 0.34, 0.07); F(W);
+      break;
+    case 'revive':
+      P(); c.moveTo(0, 0.85); c.bezierCurveTo(-1.1, 0.1, -0.75, -0.85, 0, -0.38); c.bezierCurveTo(0.75, -0.85, 1.1, 0.1, 0, 0.85); F('#ef5b5b');
+      P(); c.moveTo(0, -0.12); c.lineTo(0, 0.42); c.moveTo(-0.27, 0.15); c.lineTo(0.27, 0.15); S(W, 0.14);
+      break;
+    case 'random':
+      c.save(); c.rotate(-0.2);
+      P(); rr(c, -0.7, -0.7, 1.4, 1.4, 0.3); F(W);
+      if (!sh) for (const [xx, yy] of [[-0.35, -0.35], [0.35, 0.35], [0, 0], [0.35, -0.35], [-0.35, 0.35]]) { P(); c.arc(xx, yy, 0.12, 0, TAU); F(D); }
+      c.restore();
+      break;
+    case 'fall':
+      for (const yy of [-0.3, 0.3]) { P(); c.moveTo(-0.85, yy); for (let xx = -0.85; xx <= 0.85; xx += 0.1) c.lineTo(xx, yy + Math.sin(xx * 7) * 0.13); S(W, 0.13); }
+      break;
+    // menu glyphs
+    case 'm_versus':
+      for (const [xx, col] of [[-0.42, '#ffffff'], [0.42, '#ffd36b']]) { P(); rr(c, xx - 0.36, -0.4, 0.72, 0.68, 0.28); F(col); if (!sh) { c.fillStyle = D; P(); rr(c, xx - 0.16, -0.18, 0.09, 0.22, 0.045); rr(c, xx + 0.07, -0.18, 0.09, 0.22, 0.045); c.fill(); } }
+      break;
+    case 'm_gauntlet':
+      P(); c.moveTo(-0.5, -0.7); c.lineTo(0.5, -0.7); c.lineTo(0.42, -0.1); c.quadraticCurveTo(0, 0.25, -0.42, -0.1); c.closePath(); F(Y);
+      P(); c.rect(-0.08, 0.1, 0.16, 0.35); F(Y); P(); rr(c, -0.4, 0.45, 0.8, 0.2, 0.06); F(Y);
+      P(); c.arc(-0.55, -0.45, 0.22, Math.PI * 0.5, Math.PI * 1.5); S(Y, 0.1); P(); c.arc(0.55, -0.45, 0.22, -Math.PI * 0.5, Math.PI * 0.5); S(Y, 0.1);
+      break;
+    case 'm_how':
+      P(); c.arc(0, -0.25, 0.36, Math.PI * 1.05, Math.PI * 0.35); c.lineTo(0, 0.25); S(W, 0.2);
+      P(); c.arc(0, 0.62, 0.11, 0, TAU); F(W);
+      break;
+    case 'm_coll':
+      P(); c.moveTo(-0.7, 0.45); c.lineTo(-0.8, -0.45); c.lineTo(-0.35, -0.05); c.lineTo(0, -0.65); c.lineTo(0.35, -0.05); c.lineTo(0.8, -0.45); c.lineTo(0.7, 0.45); c.closePath(); F('#efb43f');
+      break;
+    case 'm_settings':
+      P(); for (let k = 0; k < 8; k++) { const a = (k / 8) * TAU; c.moveTo(Math.cos(a) * 0.55, Math.sin(a) * 0.55); c.lineTo(Math.cos(a) * 0.85, Math.sin(a) * 0.85); } S(W, 0.26);
+      P(); c.arc(0, 0, 0.5, 0, TAU); S(W, 0.2);
+      break;
   }
 }
 
 function drawCooldown(ctx, x, y, size, frac) {
   if (frac <= 0) return;
   const s = size / 2;
-  ctx.save(); rr(ctx, x - s, y - s, size, size, size * 0.24); ctx.clip();
+  ctx.save(); rr(ctx, x - s, y - s, size, size, size * 0.27); ctx.clip();
   ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, size, -Math.PI / 2, -Math.PI / 2 + TAU * frac); ctx.closePath();
   ctx.fillStyle = 'rgba(12,14,20,0.62)'; ctx.fill(); ctx.restore();
 }
@@ -2980,11 +3188,10 @@ function renderWorld(ctx, w, opt = {}) {
     if (!j.alive || !j.beamSeg || !j.abil.some((s) => s.hold && s.id === 'beam')) continue;
     drawChannel(ctx, j, w.t);
   }
-  // aim guide for a human drawing a bow
+  // aim previews for people (CPUs aim in a single frame)
   for (const j of w.jellies) {
-    if (!j.alive || j.bot || j.clone || !opt.guides || !Save.data.settings.guide) continue;
-    const s = j.abil.find((a) => a.hold && a.id === 'bow');
-    if (s) { const ds = w.dartSpeed(s); let x = j.x + j.aim.x * 16, y = j.y + j.aim.y * 16 - 2, vx = j.aim.x * ds.sp, vy = j.aim.y * ds.sp - ds.lift; ctx.fillStyle = rgba(j.col.c, 0.7); for (let k = 0; k < 24; k++) { for (let q = 0; q < 3; q++) { vy += ds.g / 90; x += vx / 90; y += vy / 90; } if (k % 2 === 0) { ctx.beginPath(); ctx.arc(x, y, 2.4 - k * 0.07, 0, TAU); ctx.fill(); } } }
+    if (!j.alive || j.bot || j.clone || !opt.guides || j.invis > 0 || !Save.data.settings.guide) continue;
+    if (j.aimSlot >= 0 || j.abil.some((q) => q.hold)) { const [x, y] = ip(j); drawAimPreview(ctx, w, j, x, y); }
   }
   for (const p of w.projs) if (p.k === 'hook') { const [ox, oy] = ip(p.owner); drawRope(ctx, ox, oy, p.x, p.y); }
   for (const f of w.fx) if (f.k === 'after') { ctx.save(); drawJelly(ctx, { x: f.x, y: f.y + f.j.hh, col: f.j.col, size: f.j.size, sx: f.sx, sy: f.sy, alpha: 0.26 * (f.life / f.max), t: w.t, look: f.aim, shadow: false, still: true }); ctx.restore(); }
@@ -3240,36 +3447,131 @@ function drawFx(ctx, w) {
   ctx.globalAlpha = 1;
 }
 
+// ---------- aim previews: what will happen when you let go
+function aimRay(w, ox, oy, a, maxL, thin) {
+  let best = maxL;
+  for (const p of w.plats) { if (p.dead || (p.thin && !thin)) continue; const h = rayRect(ox, oy, a.x, a.y, p, best); if (h && h.t > 0.5 && h.t < best) best = h.t; }
+  return best;
+}
+function trajDots(ctx, w, x, y, vx, vy, g, col, maxT) {
+  const dt = 1 / 60, n = Math.round(maxT * 60);
+  let px = x, py = y, end = null;
+  ctx.fillStyle = col;
+  for (let k = 1; k < n; k++) {
+    vy += g * dt; px += vx * dt; py += vy * dt;
+    if (py > w.jamY) { end = [px, w.jamY]; break; }
+    let hit = false;
+    for (const p of w.plats) if (!p.dead && !p.thin && px > p.x && px < p.x + p.w && py > p.y && py < p.y + p.h) { hit = true; break; }
+    if (hit) { end = [px, py]; break; }
+    if (k % 4 === 0) { ctx.globalAlpha = 0.9 - (k / n) * 0.5; ctx.beginPath(); ctx.arc(px, py, 3.2 - (k / n) * 1.4, 0, TAU); ctx.fill(); }
+  }
+  ctx.globalAlpha = 1;
+  if (end) { ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(end[0], end[1], 7, 0, TAU); ctx.stroke(); }
+}
+function drawAimPreview(ctx, w, j, x, y) {
+  let s = j.aimSlot >= 0 ? j.abil[j.aimSlot] : j.abil.find((q) => q.hold);
+  if (!s) return;
+  const id = s.id, a = j.aim, c = j.col.c, sz = j.size, neutral = !j.aimTouched;
+  const ox = x + a.x * 16 * sz, oy = y + a.y * 16 * sz;
+  ctx.save();
+  // a pointer that circles the player
+  ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(a.y, a.x));
+  ctx.strokeStyle = rgba(c, 0.35); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 30 * sz, -0.5, 0.5); ctx.stroke();
+  ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(30 * sz + 11, 0); ctx.lineTo(30 * sz - 1, -7); ctx.lineTo(30 * sz + 2, 0); ctx.lineTo(30 * sz - 1, 7); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  ctx.lineCap = 'round'; ctx.setLineDash([9, 8]); ctx.lineDashOffset = -w.t * 70; ctx.lineWidth = 2.5; ctx.strokeStyle = rgba(c, 0.85);
+  const line = (L, mark) => {
+    ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox + a.x * L, oy + a.y * L); ctx.stroke();
+    if (mark) { ctx.save(); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(ox + a.x * L, oy + a.y * L, 7, 0, TAU); ctx.stroke(); ctx.restore(); }
+  };
+  switch (id) {
+    case 'bow': { const ds = w.dartSpeed(s); trajDots(ctx, w, ox, oy - 2, a.x * ds.sp, a.y * ds.sp - ds.lift, ds.g, c, 1.4); break; }
+    case 'grenade': trajDots(ctx, w, x + a.x * 16, y - 6 + a.y * 10, a.x * 660 + j.vx * 0.35, a.y * 660 - 220, 1500, c, 1.3); break;
+    case 'mine': case 'tesla':
+      if (neutral && j.onGround) { ctx.setLineDash([]); ctx.beginPath(); ctx.arc(x, y + j.hh - 4, 12, 0, TAU); ctx.stroke(); }
+      else trajDots(ctx, w, x, y - 6, a.x * 480 + j.vx * 0.3, a.y * 480 - 160, 1300, c, 1.3);
+      break;
+    case 'blackhole': trajDots(ctx, w, x + a.x * 14, y - 4, a.x * 560 + j.vx * 0.3, a.y * 560 - 240, 1300, c, 0.6); break;
+    case 'smoke': trajDots(ctx, w, x + a.x * 14, y - 4, a.x * 620 + j.vx * 0.3, a.y * 620 - 230, 1400, c, 0.8); break;
+    case 'throw': trajDots(ctx, w, x, y - j.hh - 16, a.x * 1150, a.y * 1150 - 160, PHYS.g, c, 0.9); break;
+    case 'missile': line(aimRay(w, ox, oy, a, 1100, false), true); break;
+    case 'blink': line(aimRay(w, ox, oy, a, 875, false), true); break;
+    case 'engine': line(aimRay(w, ox, oy, a, 790, false), true); break;
+    case 'hook': line(aimRay(w, ox, oy, a, 480, true), true); break;
+    case 'drill': line(600, false); break;
+    case 'grow': case 'shrink': case 'dupe': line(aimRay(w, ox, oy, a, 1000, true), true); break;
+    case 'gust': {
+      const an = Math.atan2(a.y, a.x);
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, 580, an - 0.6, an + 0.6); ctx.closePath(); ctx.stroke();
+      ctx.fillStyle = rgba(c, 0.06); ctx.fill();
+      break;
+    }
+    case 'teleport': {
+      const d = w.teleportDest(j, a);
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(d.x, d.y); ctx.stroke();
+      drawJelly(ctx, { x: d.x, y: d.y + j.hh, col: j.col, size: j.size, alpha: 0.38, shadow: false, still: true, t: w.t, look: a });
+      break;
+    }
+    case 'platform': {
+      const r = w.platformRect(j, a, neutral);
+      ctx.fillStyle = rgba('#ffffff', 0.25); rr(ctx, r.x, r.y, r.w, r.h, 4); ctx.fill(); ctx.stroke();
+      break;
+    }
+    case 'spike': {
+      const dirs = neutral ? [{ x: 0, y: 1 }] : [a, { x: 0, y: 1 }];
+      let hit = null;
+      for (const d of dirs) {
+        let bt = 340;
+        for (const p of w.plats) { if (p.dead || p.kind === 'wafer') continue; const h = rayRect(j.x, j.y, d.x, d.y, p, bt); if (h && h.t > 0.5 && h.t < bt) { bt = h.t; hit = { x: j.x + d.x * h.t, y: j.y + d.y * h.t, nx: h.nx, ny: h.ny }; } }
+        if (hit) break;
+      }
+      if (hit) {
+        ctx.save(); ctx.translate(hit.x, hit.y); ctx.rotate(Math.atan2(hit.nx, -hit.ny)); ctx.setLineDash([]);
+        ctx.beginPath(); for (let k = 0; k < 8; k++) { const x0 = -60 + k * 15; ctx.moveTo(x0, 0); ctx.lineTo(x0 + 7.5, -14); ctx.lineTo(x0 + 15, 0); } ctx.stroke();
+        ctx.restore();
+      } else line(340, true);
+      break;
+    }
+  }
+  ctx.restore();
+}
+
 // ---------- touch controls (screen space)
 function drawTouch(ctx, j) {
   const L = TouchPad.layout; if (!L) return;
   Gfx.screen(ctx);
   const st = TouchPad.stick;
   if (st) {
-    ctx.fillStyle = 'rgba(22,26,36,0.16)'; ctx.beginPath(); ctx.arc(st.ox, st.oy, L.stickR, 0, TAU); ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = 'rgba(22,26,36,0.18)'; ctx.beginPath(); ctx.arc(st.ox, st.oy, L.stickR, 0, TAU); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 2.5; ctx.stroke();
     const dx = st.x - st.ox, dy = st.y - st.oy, d = Math.hypot(dx, dy), m = Math.min(1, L.stickR / Math.max(1, d));
-    ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.beginPath(); ctx.arc(st.ox + dx * m, st.oy + dy * m, L.stickR * 0.4, 0, TAU); ctx.fill();
+    const kx = st.ox + dx * m, ky = st.oy + dy * m;
+    ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.beginPath(); ctx.arc(kx, ky, L.stickR * 0.42, 0, TAU); ctx.fill();
+    if (j) { ctx.fillStyle = j.col.c; ctx.beginPath(); ctx.arc(kx, ky, L.stickR * 0.2, 0, TAU); ctx.fill(); }
   } else {
     const x = 90 * L.s + (Input.safe.l || 0), y = Gfx.ch - 90 * L.s;
-    ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 2; ctx.setLineDash([5, 7]);
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 2; ctx.setLineDash([5, 7]);
     ctx.beginPath(); ctx.arc(x, y, L.stickR, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
-    txt(ctx, 'MOVE', x, y, 11 * L.s, 'rgba(255,255,255,0.85)', 'center', { ls: 1.5, shadow: 'rgba(0,0,0,0.25)', sh: 1 });
+    txt(ctx, 'MOVE', x, y, 11 * L.s, 'rgba(255,255,255,0.9)', 'center', { ls: 1.5, shadow: 'rgba(0,0,0,0.25)', sh: 1 });
   }
   L.btns.forEach((b, i) => {
-    const held = TouchPad.btn[i] !== null;
-    ctx.globalAlpha = held ? 1 : 0.85;
-    ctx.fillStyle = held ? 'rgba(22,26,36,0.55)' : 'rgba(22,26,36,0.32)';
-    ctx.beginPath(); ctx.arc(b.x, b.y, b.r * (held ? 0.95 : 1), 0, TAU); ctx.fill();
-    ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.stroke();
-    if (i === 0) txt(ctx, 'JUMP', b.x, b.y + 1, b.r * 0.32, '#ffffff', 'center', { ls: 1.5 });
-    else if (j) {
-      const s = j.abil[i - 1], sz = b.r * 1.1;
-      drawIcon(ctx, s.id, b.x, b.y, sz, { dim: s.cd > 0, rnd: s.rnd });
-      drawCooldown(ctx, b.x, b.y, sz, s.cd / AB[s.id].cd);
+    const held = TouchPad.btn[i] !== null, r = b.r * (held ? 0.94 : 1);
+    if (i === 0) {
+      ctx.fillStyle = 'rgba(22,26,36,0.18)'; ctx.beginPath(); ctx.arc(b.x, b.y + 4, r, 0, TAU); ctx.fill();
+      const g = ctx.createLinearGradient(0, b.y - r, 0, b.y + r); g.addColorStop(0, 'rgba(255,255,255,0.95)'); g.addColorStop(1, 'rgba(226,231,239,0.95)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y + (held ? 3 : 0), r, 0, TAU); ctx.fill();
+      ctx.save(); ctx.translate(b.x, b.y - r * 0.12 + (held ? 3 : 0)); ctx.rotate(-Math.PI / 2); chevron(ctx, 0, 0, r * 0.5, 1, j ? j.col.c : UIC.ink, Math.max(3, r * 0.12)); ctx.restore();
+      txt(ctx, 'JUMP', b.x, b.y + r * 0.45 + (held ? 3 : 0), r * 0.2, UIC.sub, 'center', { ls: 1 });
+    } else if (j) {
+      const s = j.abil[i - 1], sz = r * 1.62;
+      ctx.globalAlpha = held ? 1 : 0.94;
+      drawIcon(ctx, s.id, b.x, b.y + (held ? 3 : 0), sz, { dim: s.cd > 0, rnd: s.rnd });
+      drawCooldown(ctx, b.x, b.y + (held ? 3 : 0), sz, s.cd / AB[s.id].cd);
+      if (s.cd > 0) txt(ctx, Math.ceil(s.cd) + '', b.x, b.y + 1, r * 0.55, '#ffffff', 'center', { shadow: 'rgba(0,0,0,0.35)', sh: 1.5 });
+      if (s.hold || j.aimSlot === i - 1) { rr(ctx, b.x - sz / 2 - 3, b.y - sz / 2 - 3, sz + 6, sz + 6, sz * 0.3); ctx.lineWidth = 3; ctx.strokeStyle = '#ffffff'; ctx.stroke(); }
+      ctx.globalAlpha = 1;
     }
   });
-  ctx.globalAlpha = 1;
   const p = L.pause;
   ctx.fillStyle = 'rgba(22,26,36,0.4)'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill();
   ctx.fillStyle = '#fff'; ctx.fillRect(p.x - p.r * 0.3, p.y - p.r * 0.34, p.r * 0.2, p.r * 0.68); ctx.fillRect(p.x + p.r * 0.1, p.y - p.r * 0.34, p.r * 0.2, p.r * 0.68);
@@ -3288,31 +3590,38 @@ const UI = {
     const foc = o.focused !== undefined ? o.focused : (b.focusable && this.showFocus() && fi === this.focus);
     const hov = this.hover === id && !o.disabled;
     const press = this.downBtn === id && Input.ptr.down;
-    const kind = o.kind || 'ghost', r = o.r === undefined ? 10 : o.r;
-    let fill, fg, border = null;
-    if (o.disabled) { fill = '#d7dbe2'; fg = '#ffffff'; }
-    else if (kind === 'primary') { fill = hov ? '#2e3442' : UIC.ink; fg = '#ffffff'; }
-    else if (kind === 'accent') { fill = hov ? mix(o.color, '#000000', 0.08) : o.color; fg = '#ffffff'; }
-    else if (kind === 'danger') { fill = hov ? '#fff4f4' : '#ffffff'; fg = UIC.danger; border = UIC.line; }
-    else { fill = hov ? '#f6f7f9' : '#ffffff'; fg = UIC.ink; border = UIC.line; }
-    ctx.save(); ctx.translate(x + w / 2, y + h / 2); if (press) ctx.scale(0.98, 0.98);
-    ctx.save(); ctx.shadowColor = 'rgba(20,26,40,0.10)'; ctx.shadowBlur = Gfx.px(8); ctx.shadowOffsetY = Gfx.px(2);
-    rr(ctx, -w / 2, -h / 2, w, h, r); ctx.fillStyle = fill; ctx.fill(); ctx.restore();
-    if (border) { rr(ctx, -w / 2, -h / 2, w, h, r); ctx.lineWidth = 1.5; ctx.strokeStyle = border; ctx.stroke(); }
-    if (foc) { rr(ctx, -w / 2 - 4, -h / 2 - 4, w + 8, h + 8, r + 4); ctx.lineWidth = 2.5; ctx.strokeStyle = UIC.focus; ctx.stroke(); }
-    const size = o.size || Math.round(h * 0.34);
+    const kind = o.kind || 'ghost', r = o.r === undefined ? 12 : o.r;
+    const light = kind === 'ghost' || kind === 'danger';
+    let face = '#ffffff', fg = UIC.ink;
+    if (o.disabled) { face = '#e3e6ec'; fg = '#a3a9b4'; }
+    else if (kind === 'primary') { face = '#3d7bf0'; fg = '#ffffff'; }
+    else if (kind === 'go') { face = '#2fb36e'; fg = '#ffffff'; }
+    else if (kind === 'accent') { face = o.color; fg = '#ffffff'; }
+    else if (kind === 'danger') fg = UIC.danger;
+    if (hov) face = light ? '#f6f8fb' : mix(face, '#ffffff', 0.1);
+    const lipC = light || o.disabled ? '#cdd3dd' : mix(face, '#141821', 0.32);
+    const lip = Math.max(4, Math.round(h * 0.1)), down = press ? lip * 0.7 : 0, fh = h - lip, fy = -h / 2 + down;
+    ctx.save(); ctx.translate(x + w / 2, y + h / 2);
+    ctx.save(); ctx.shadowColor = 'rgba(20,26,40,0.14)'; ctx.shadowBlur = Gfx.px(10); ctx.shadowOffsetY = Gfx.px(3);
+    rr(ctx, -w / 2, -h / 2 + lip, w, fh, r); ctx.fillStyle = lipC; ctx.fill(); ctx.restore();
+    rr(ctx, -w / 2, fy, w, fh, r);
+    const g = ctx.createLinearGradient(0, fy, 0, fy + fh); g.addColorStop(0, light ? '#ffffff' : mix(face, '#ffffff', 0.16)); g.addColorStop(1, light ? '#f3f5f9' : face);
+    ctx.fillStyle = g; ctx.fill();
+    if (!light && !o.disabled) { ctx.save(); rr(ctx, -w / 2, fy, w, fh, r); ctx.clip(); ctx.fillStyle = 'rgba(255,255,255,0.14)'; ctx.fillRect(-w / 2, fy, w, fh * 0.45); ctx.restore(); }
+    if (foc) { rr(ctx, -w / 2 - 4, -h / 2 - 4, w + 8, h + 8, r + 4); ctx.lineWidth = 3; ctx.strokeStyle = UIC.focus; ctx.stroke(); }
+    const cy = fy + fh / 2 + 1, size = o.size || Math.round(h * 0.34);
     let lx = 0, align = 'center';
     if (o.align === 'left') { lx = -w / 2 + 18; align = 'left'; }
-    if (o.icon) { drawIcon(ctx, o.icon, -w / 2 + h * 0.55, 0, h * 0.6); if (o.align === 'left') lx += h * 0.75; }
-    const maxW = w - 36 - (o.value ? textW(ctx, o.value, size, 500) + 44 : 0) - (o.icon ? h : 0);
+    if (o.icon) { const isz = fh * 0.68; drawIcon(ctx, o.icon, -w / 2 + 10 + isz / 2, cy - 1, isz, { tile: o.iconTile }); if (o.align === 'left') lx = -w / 2 + 20 + isz; }
+    const maxW = w - 36 - (o.value ? textW(ctx, o.value, size, 500) + 44 : 0) - (o.icon ? fh : 0);
     const sz = fitText(ctx, label, maxW, size, { w: 700 });
-    txt(ctx, label, lx, 1, sz, fg, align, { w: o.w || 700 });
+    txt(ctx, label, lx, cy, sz, fg, align, { w: o.w || 700 });
     if (o.value !== undefined) {
       const vx = w / 2 - 18 - (o.chev ? 14 : 0);
-      txt(ctx, o.value, vx, 1, size, UIC.sub, 'right', { w: 500 });
-      if (o.chev) { const vw = textW(ctx, o.value, size, 500); chevron(ctx, vx - vw - 14, 1, 9, -1, UIC.faint, 2); chevron(ctx, w / 2 - 18, 1, 9, 1, UIC.faint, 2); }
+      txt(ctx, o.value, vx, cy, size, light ? UIC.sub : 'rgba(255,255,255,0.85)', 'right', { w: 500 });
+      if (o.chev) { const vw = textW(ctx, o.value, size, 500); chevron(ctx, vx - vw - 14, cy, 9, -1, UIC.faint, 2); chevron(ctx, w / 2 - 18, cy, 9, 1, UIC.faint, 2); }
     }
-    if (o.chevRight) chevron(ctx, w / 2 - 20, 1, 10, 1, foc || hov ? fg : UIC.faint, 2.2);
+    if (o.chevRight) chevron(ctx, w / 2 - 20, cy, 10, 1, foc || hov ? fg : UIC.faint, 2.4);
     ctx.restore();
     return b;
   },
@@ -3545,7 +3854,7 @@ function drawLobby(ctx) {
   items.forEach((it, i) => {
     const w = bw[i];
     const canStart = it.big ? lobbyCanStart(L) : true;
-    UI.btn(ctx, 'bar' + i, it.label, bx, by, w, 52, { focusable: false, focused: readyAny && L.barFocus === i, kind: it.big && canStart ? 'primary' : 'ghost', size: 15, value: it.value, chev: !!it.cycle, align: it.value ? 'left' : 'center', act: (e) => { it.act(e); } });
+    UI.btn(ctx, 'bar' + i, it.label, bx, by, w, 52, { focusable: false, focused: readyAny && L.barFocus === i, kind: it.big && canStart ? 'go' : 'ghost', size: 15, value: it.value, chev: !!it.cycle, align: it.value ? 'left' : 'center', act: (e) => { it.act(e); } });
     if (it.cycle) UI.area('barL' + i, bx + w - 26 - textW(ctx, it.value, 15, 500) - 40, by, 40, 52, () => { it.cycle(-1); Sound.play('tick'); });
     bx += w + 12;
   });
@@ -3577,7 +3886,10 @@ function drawCard(ctx, L, c, x, y, w, h) {
   if (L.mode === 'versus') { cross(ctx, x + w - 24, y + 30, 5, UIC.faint, 2); UI.area('x' + c.i, x + w - 42, y + 12, 36, 36, () => { c.kind = 'empty'; c.dev = null; c.ready = false; Sound.play('back'); }); }
   const touchish = !c.dev || c.dev === 'touch';
   const info = human && !c.ready && c.row >= 2 && c.row <= 4 && !touchish ? c.cfg.abil[c.row - 2] : null;
-  rr(ctx, x + 14, y + 48, w - 28, 140, 12); ctx.fillStyle = rgba(col.c, 0.1); ctx.fill();
+  rr(ctx, x + 14, y + 48, w - 28, 140, 12);
+  if (info) ctx.fillStyle = rgba(col.c, 0.1);
+  else { const pg = ctx.createLinearGradient(0, y + 48, 0, y + 188); pg.addColorStop(0, mix(col.c, '#ffffff', 0.62)); pg.addColorStop(1, mix(col.c, '#ffffff', 0.3)); ctx.fillStyle = pg; }
+  ctx.fill();
   if (info) {
     drawIcon(ctx, info, x + 50, y + 84, 44);
     txt(ctx, AB[info].name, x + 84, y + 76, 17, UIC.ink, 'left');
@@ -3587,6 +3899,8 @@ function drawCard(ctx, L, c, x, y, w, h) {
   } else {
     const bob = c.ready ? Math.abs(Math.sin(t * 3 + c.bob)) * 8 : 0;
     const sq = 1 + Math.sin(t * 4 + c.bob) * 0.025;
+    rr(ctx, x + w / 2 - 58, y + 168, 116, 13, 6.5); ctx.fillStyle = mix(col.c, '#1a1d26', 0.5); ctx.fill();
+    ctx.fillStyle = mix(col.c, '#ffffff', 0.15); rr(ctx, x + w / 2 - 58, y + 168, 116, 4, 2); ctx.fill();
     drawJelly(ctx, { x: x + w / 2, y: y + 168 - bob, col, hat: c.cfg.hat, scale: 2.7, sx: 1 / sq, sy: sq, t: t + c.i, look: { x: Math.sin(t * 0.8 + c.i) * 0.6, y: 0.1 }, blink: Math.sin(t * 1.3 + c.i * 2) > 0.97 ? -1 : 1, mood: c.ready ? 'win' : '' });
     if (c.ready && human) pill(ctx, 'READY', x + 24, y + 64, UIC.ok, '#ffffff');
   }
@@ -3595,8 +3909,8 @@ function drawCard(ctx, L, c, x, y, w, h) {
     const ry = rowY(r), focused = human && !c.ready && !touchish && c.row === r;
     if (r === 5) {
       if (human) {
-        UI.btn(ctx, 'rd' + c.i, c.ready ? 'Ready' : L.mode === 'gauntlet' ? 'Start run' : 'Ready up', x + 14, ry, w - 28, 40, { focusable: false, focused, kind: c.ready ? 'accent' : 'primary', color: UIC.ok, size: 15, act: () => { if (L.mode === 'gauntlet') { lobbyStart(L, true); return; } c.ready = !c.ready; Sound.play(c.ready ? 'ok' : 'back'); } });
-        if (c.ready) check(ctx, x + w / 2 - 40, ry + 20, 5.5, '#ffffff', 2.4);
+        UI.btn(ctx, 'rd' + c.i, c.ready ? 'Ready' : L.mode === 'gauntlet' ? 'Start run' : 'Ready up', x + 14, ry - 2, w - 28, 44, { focusable: false, focused, kind: c.ready ? 'go' : 'primary', size: 15, act: () => { if (L.mode === 'gauntlet') { lobbyStart(L, true); return; } c.ready = !c.ready; Sound.play(c.ready ? 'ok' : 'back'); } });
+        if (c.ready) check(ctx, x + w / 2 - 40, ry + 18, 5.5, '#ffffff', 2.4);
       } else {
         drawRow(ctx, x + 14, ry, w - 28, LEVELS[c.cpu].name, null, false, null, false, col, 'Level');
         UI.area('lv' + c.i + 'L', x + 14, ry, 50, 40, () => lobbyCycle(c, 5, -1)); UI.area('lv' + c.i + 'R', x + w - 64, ry, 50, 40, () => lobbyCycle(c, 5, 1));
@@ -3693,7 +4007,7 @@ function feedHumans(M) {
     if (j.bot || !j.part.dev || j.clone) continue;
     const d = Input.dev(j.part.dev), inp = j.inp;
     if (!d) continue;
-    inp.mx = d.mx; inp.my = d.my; inp.jump = d.jump; inp.aimX = null; inp.aimY = null;
+    inp.mx = d.mx; inp.my = d.my; inp.jump = d.jump; inp.aimX = null; inp.aimY = null; inp.analog = d.kind !== 'kb';
     inp.jumpP = inp.jumpP || d.jumpP; inp.downP = inp.downP || d.downP;
     for (let i = 0; i < 3; i++) { inp.a[i] = d.a[i]; inp.aP[i] = inp.aP[i] || d.aP[i]; inp.aR[i] = inp.aR[i] || d.aR[i]; }
   }
@@ -3870,7 +4184,7 @@ function resultButtons() {
   if (M.mode === 'gauntlet') {
     const G = M.gauntlet;
     if (G.cleared && G.stage === LADDER.length - 1) return [menu];
-    if (G.cleared) return [['Next stage', () => gauntletStage(G, G.stage + 1), 'primary'], menu];
+    if (G.cleared) return [['Next stage', () => gauntletStage(G, G.stage + 1), 'go'], menu];
     if (G.lives > 0) return [['Retry stage', () => gauntletStage(G, G.stage), 'primary'], menu];
     return [['New run', () => openLobby('gauntlet', M.parts[0].dev), 'primary'], menu];
   }
@@ -3984,7 +4298,7 @@ function drawHud(ctx) {
       const ix = x + pw - 88 + i * 30, iy = y + 23;
       drawIcon(ctx, s.id, ix, iy, 26, { dim: s.cd > 0 || dead || (s.id === 'revive' && !M.teams), rnd: s.rnd });
       if (!dead) drawCooldown(ctx, ix, iy, 26, s.cd / AB[s.id].cd);
-      if (s.hold) { rr(ctx, ix - 14, iy - 14, 28, 28, 7); ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+      if (s.hold || (j.aimSlot === i)) { rr(ctx, ix - 15, iy - 15, 30, 30, 8); ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke(); }
     });
     ctx.globalAlpha = 1;
   });
@@ -4026,27 +4340,30 @@ function drawHud(ctx) {
 
 // ---------------------------------------------------------------- title, how-to, settings, collection
 function drawMenuBg(ctx) {
+  if (App.attract) renderWorld(ctx, App.attract);
   Gfx.screen(ctx);
-  const g = ctx.createLinearGradient(0, 0, 0, Gfx.ch); g.addColorStop(0, '#f2f3f7'); g.addColorStop(1, '#e4e7ee');
+  const g = ctx.createLinearGradient(0, 0, 0, Gfx.ch); g.addColorStop(0, 'rgba(244,246,250,0.9)'); g.addColorStop(1, 'rgba(236,239,245,0.84)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, Gfx.cw, Gfx.ch);
   Gfx.world(ctx);
 }
+function stepAttract(dt) {
+  if (!App.attract) App.newAttract();
+  const w = App.attract;
+  for (const j of w.jellies) if (j.bot) j.bot.update(w, dt);
+  stepWorld(w, dt, false); w.events.length = 0;
+  if (w.phase === 'over') { App.attractT += dt; if (App.attractT > 2) App.newAttract(); }
+}
 function titleItems() {
   return [
-    ['Versus', () => openLobby('versus', App.menuDev || defaultDev()), '1–4 players, any mix of people and CPUs'],
-    ['Gauntlet', () => openLobby('gauntlet', App.menuDev || defaultDev()), 'Solo: eight stages against the CPU'],
-    ['How to play', () => { App.howPage = 0; App.go('how'); }, 'Controls and all thirty abilities'],
-    ['Collection', () => App.go('wardrobe'), 'Accessories to unlock and your records'],
-    ['Settings', () => App.go('settings'), 'Sound, music and screen shake'],
+    ['Versus', () => openLobby('versus', App.menuDev || defaultDev()), '1–4 players or 2v2 teams, with friends or CPUs', 'm_versus', '#3d7bf0'],
+    ['Gauntlet', () => openLobby('gauntlet', App.menuDev || defaultDev()), 'Solo: eight stages against the CPU', 'm_gauntlet', '#f5914a'],
+    ['How to play', () => { App.howPage = 0; App.go('how'); }, 'Controls, aiming and all thirty abilities', 'm_how', '#31b3aa'],
+    ['Collection', () => App.go('wardrobe'), 'Accessories to unlock and your records', 'm_coll', '#9b7bf0'],
+    ['Settings', () => App.go('settings'), 'Sound, music and screen shake', 'm_settings', '#8a93a3'],
   ];
 }
 function updateTitle(dt) {
-  const w = App.attract;
-  if (w) {
-    for (const j of w.jellies) if (j.bot) j.bot.update(w, dt);
-    stepWorld(w, dt, false); w.events.length = 0;
-    if (w.phase === 'over') { App.attractT += dt; if (App.attractT > 2) App.newAttract(); }
-  }
+  stepAttract(dt);
   for (const d of Input.devs) if (d.kind !== 'touch' && (d.okP || d.nav.u || d.nav.d)) App.menuDev = d.id;
   UI.navMenu(Input.menu());
 }
@@ -4063,10 +4380,10 @@ function drawTitle(ctx) {
   const items = titleItems();
   let desc = '';
   items.forEach((it, i) => {
-    const b2 = UI.btn(ctx, 'tm' + i, it[0], 70, 290 + i * 62, 330, 52, { kind: i === 0 ? 'primary' : 'ghost', size: 16, align: 'left', chevRight: true, act: () => { it[1](); } });
+    const b2 = UI.btn(ctx, 'tm' + i, it[0], 70, 284 + i * 64, 340, 58, { kind: 'ghost', size: 17, align: 'left', chevRight: true, icon: it[3], iconTile: it[4], act: () => { it[1](); } });
     if ((UI.showFocus() && UI.focus === i) || UI.hover === b2.id) desc = it[2];
   });
-  if (desc) txt(ctx, desc, 72, 290 + items.length * 62 + 12, 13, UIC.sub, 'left', { w: 500 });
+  if (desc) txt(ctx, desc, 72, 284 + items.length * 64 + 10, 13, UIC.sub, 'left', { w: 500 });
   txt(ctx, 'Keyboard · Gamepad · Touch', 72, H - 34, 12, UIC.faint, 'left', { w: 500, ls: 0.5 });
 }
 function drawLogo(ctx, x, y, s, t) {
@@ -4126,7 +4443,7 @@ function drawHow(ctx) {
         txt(ctx, row[1], x + 266 - kw / 2, ry + 0.5, 12.5, UIC.ink, 'center');
       });
     });
-    txt(ctx, 'Abilities fire in the direction you hold, or the way you face. You can jump a second time in mid-air.', W / 2, 608, 14, UIC.sub, 'center', { w: 500 });
+    txt(ctx, 'Tap an ability to use it toward where you hold. Hold the button to aim with a preview, then let go. You can jump twice.', W / 2, 608, 14, UIC.sub, 'center', { w: 500 });
     UI.btn(ctx, 'hw1', 'See abilities', W / 2 - 110, 634, 220, 46, { kind: 'primary', size: 15, act: () => { App.howPage = 1; } });
   } else {
     AB_ORDER.slice(App.howPage === 1 ? 0 : 15, App.howPage === 1 ? 15 : 30).forEach((id, i) => {
@@ -4152,7 +4469,7 @@ function drawSettings(ctx) {
     ['Music volume', String(Math.round(s.music * 10)), () => { s.music = step(s.music); Sound.applyVolumes(); }],
     ['Sound volume', String(Math.round(s.sfx * 10)), () => { s.sfx = step(s.sfx); Sound.applyVolumes(); Sound.play('blip'); }],
     ['Screen shake', s.shake ? 'On' : 'Off', () => { s.shake = !s.shake; }],
-    ['Javelin aim guide', s.guide ? 'On' : 'Off', () => { s.guide = !s.guide; }],
+    ['Aim previews', s.guide ? 'On' : 'Off', () => { s.guide = !s.guide; }],
   ];
   card(ctx, W / 2 - 280, 120, 560, 360);
   items.forEach((it, i) => UI.btn(ctx, 'st' + i, it[0], W / 2 - 250, 148 + i * 78, 500, 56, { size: 16, align: 'left', value: it[1], chev: true, act: () => { it[2](); Save.persist(); } }));
@@ -4265,9 +4582,9 @@ function update(dt) {
   App.fade = Math.max(0, App.fade - dt * 4);
   switch (App.screen) {
     case 'title': updateTitle(dt); break;
-    case 'lobby': updateLobby(dt); break;
+    case 'lobby': stepAttract(dt); updateLobby(dt); break;
     case 'game': updateGame(dt); break;
-    case 'how': case 'settings': case 'wardrobe': updateSimple(dt); break;
+    case 'how': case 'settings': case 'wardrobe': stepAttract(dt); updateSimple(dt); break;
   }
 }
 function draw() {
