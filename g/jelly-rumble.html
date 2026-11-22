@@ -5055,8 +5055,50 @@ const Net = {
   online(code) { return !!this.status[code]; },
   myCfg() { return JSON.parse(JSON.stringify(Save.data.slots[0])); },
 
+  // ------------------------------------------------ inside Pocket Arcade: one arcade profile and friends list for every game
+  hubApi() { try { const P = window.parent; if (P && P !== window && P.__ASAF_ARCADE__ && P.__ASAF_ARCADE__.acct) return P.__ASAF_ARCADE__.acct; } catch (e) { /* not the arcade */ } return null; },
+  syncHub() {
+    const H = this.hubApi(); if (!H) return false;
+    let a = null;
+    try { a = JSON.parse(H.account()); } catch (e) { a = null; }
+    if (!a && this.me.code && this.me.nick && H.adopt) { try { H.adopt(JSON.stringify({ code: this.me.code, nick: this.me.nick, friends: this.friends().map((f) => ({ code: f.code, nick: f.nick, color: f.color })) })); a = JSON.parse(H.account()); } catch (e) { a = null; } }
+    this.hub = true; this.hubSt = {};
+    if (!a) return true;
+    const me = this.me, old = {};
+    for (const f of me.friends) old[f.code] = f;
+    if (me.code !== a.code && this.peer) { this.stop(); me.code = a.code; this.start(); }
+    me.code = a.code; me.nick = cleanNick(a.nick) || me.nick; me.online = true;
+    me.friends = (a.friends || []).map((f) => {
+      const o = old[f.code];
+      this.hubSt[f.code] = { on: !!f.on, game: f.game || null };
+      return { code: f.code, nick: cleanNick(f.nick) || 'Friend', color: o ? o.color : 5, hat: o ? o.hat : 'none', st: 'friend', at: o ? o.at : Date.now() };
+    });
+    return true;
+  },
+  hubOn(code) { return !!(this.hubSt && this.hubSt[code] && this.hubSt[code].on); },
+  takePending() {
+    const H = this.hubApi(); if (!H || !H.take) return null;
+    try { return JSON.parse(H.take('jelly-rumble')); } catch (e) { return null; }
+  },
+  runPending() {
+    const p = this.pend; if (!p || this.state !== 'on') return;
+    this.pend = null;
+    if (p.host) { if (!this.role) this.host(); else this.show('party'); return; }
+    if (p.join) {
+      const code = parseCode(p.join); let tries = 0;
+      this.show('friends');
+      const tick = () => {
+        if (this.role === 'guest' || tries++ > 10) { if (this.role !== 'guest') this.toast('Couldn’t join', 'Your friend’s party isn’t open yet. Ask them to invite you again.'); return; }
+        if (this.conns[code] && this.conns[code].open) { this.joining = code; this.sendTo(code, { t: 'join', cfg: this.myCfg() }); } else this.dial(code);
+        setTimeout(tick, 2000);
+      };
+      tick();
+    }
+  },
+
   // ------------------------------------------------ connection to the signalling server
   boot() {
+    if (this.syncHub()) { this.pend = this.takePending(); setInterval(() => { this.syncHub(); this.refresh(); }, 5000); }
     this.buildDom();
     // pages that forbid outside connections (some embeds) can't play online: say so instead of retrying forever
     document.addEventListener('securitypolicyviolation', (e) => {
@@ -5065,10 +5107,13 @@ const Net = {
       if (this.peer) { try { this.peer.destroy(); } catch (x) { /* gone */ } this.peer = null; }
       this.refresh();
     });
-    if (this.me.code && this.me.nick && this.me.online) setTimeout(() => this.start(), 1500);
+    if (this.me.code && this.me.nick && this.me.online) setTimeout(() => this.start(), this.pend ? 200 : 1500);
+    if (this.pend) setTimeout(() => this.openOnline(), 300);
   },
   opts() {
-    const q = new URLSearchParams(location.search), o = { debug: 0 };
+    let q = new URLSearchParams(location.search);
+    try { if (!q.get('peerhost') && window.parent !== window) q = new URLSearchParams(window.parent.location.search); } catch (e) { /* other origin */ }
+    const o = { debug: 0 };
     if (q.get('peerhost')) { o.host = q.get('peerhost'); o.port = +(q.get('peerport') || 9000); o.path = q.get('peerpath') || '/'; o.secure = q.get('peersecure') === '1'; o.config = { iceServers: [] }; }
     return o;
   },
@@ -5079,7 +5124,7 @@ const Net = {
     let p;
     try { p = new Peer(this.pid(this.me.code), this.opts()); } catch (e) { this.state = 'error'; this.why = 'blocked'; this.refresh(); return; }
     this.peer = p;
-    p.on('open', () => { if (this.peer !== p) return; this.state = 'on'; this.why = ''; this.dialAll(); this.refresh(); });
+    p.on('open', () => { if (this.peer !== p) return; this.state = 'on'; this.why = ''; this.dialAll(); this.refresh(); this.runPending(); });
     p.on('connection', (c) => this.incoming(c));
     p.on('call', (call) => this.incomingCall(call));
     p.on('disconnected', () => {
@@ -5170,6 +5215,7 @@ const Net = {
   },
   sayHello() { for (const code in this.conns) this.sendTo(code, this.hello()); },
   onMsg(code, m, c) {
+    if (this.hub && !this.friend(code)) this.syncHub();
     const f = this.friend(code);
     const nick = cleanNick(m.nick) || 'Someone';
     if (m.t === 'hi') {
@@ -5178,7 +5224,7 @@ const Net = {
         if (typeof m.hat === 'string' && HAT_IDX[m.hat] !== undefined) f.hat = m.hat;
         if (f.st === 'out' && m.want) { /* they have us too, or they will answer the request */ }
         if (f.st === 'friend') this.sendTo(code, { t: 'ok' });
-      } else if (m.want) {
+      } else if (m.want && !this.hub) {
         if (this.me.friends.filter((x) => x.st === 'in').length >= 8) { c.close(); return; }
         this.me.friends.push({ code, nick: nickOk(nick) ? nick : 'Player', color: clamp((m.color | 0), 0, COLORS.length - 1), hat: 'none', st: 'in', at: Date.now() });
         Save.persist();
@@ -5623,6 +5669,10 @@ const Net = {
   refresh() { if (this.open) this.render(); },
   openOnline() {
     Sound.init();
+    if (this.hub) {
+      this.syncHub();
+      if (!this.me.code || !this.me.nick) { const H = this.hubApi(); if (H) H.openFriends(); return; }
+    }
     if (!this.me.code || !this.me.nick) { this.show('setup'); return; }
     if (!this.me.online) { this.me.online = true; Save.persist(); }
     if (!this.peer) this.start();
@@ -5688,16 +5738,25 @@ const Net = {
     list += '<div class="jrlbl">Friends' + (friends.length ? ' · ' + friends.filter((f) => this.online(f.code)).length + ' online' : '') + '</div>';
     if (!friends.length && !outs.length) list += '<p class="jrempty">No friends yet. Share your code, or type a friend’s code below.</p>';
     list += friends.map((f) => {
-      const st = this.status[f.code];
-      const sub = !st ? '<span class="dot off"></span>Offline' : st.host ? '<span class="dot party"></span>Hosting a party' : st.busy === 'match' ? '<span class="dot busy"></span>In a match' : st.busy === 'party' ? '<span class="dot busy"></span>In a party' : '<span class="dot on"></span>Online';
+      const st = this.status[f.code], hs = this.hub && this.hubSt ? this.hubSt[f.code] : null;
+      const sub = !st && hs && hs.on ? '<span class="dot wait"></span>In the arcade' : !st ? '<span class="dot off"></span>Offline' : st.host ? '<span class="dot party"></span>Hosting a party' : st.busy === 'match' ? '<span class="dot busy"></span>In a match' : st.busy === 'party' ? '<span class="dot busy"></span>In a party' : '<span class="dot on"></span>Online';
       let b = '';
       if (st && st.host && this.role !== 'host') b += '<button class="jrbtn sm go" data-a="join" data-c="' + f.code + '">Join</button>';
       else if (st && st.busy === 'menu' && this.role !== 'guest') b += '<button class="jrbtn sm primary" data-a="inv" data-c="' + f.code + '">Invite</button>';
+      else if (!st && hs && hs.on && this.role !== 'guest') b += '<button class="jrbtn sm primary" data-a="hinv" data-c="' + f.code + '">Invite</button>';
       b += '<button class="jrbtn sm ghost" data-a="rm" data-c="' + f.code + '" aria-label="Remove friend">✕</button>';
       return row(f, b, sub);
     }).join('');
     list += outs.map((f) => row(f, '<button class="jrbtn sm ghost" data-a="rm" data-c="' + f.code + '">Cancel</button>', 'Request sent · they need to open Jelly Rumble and accept', 'out')).join('');
     if (this.addDraft === undefined) this.addDraft = '';
+    if (this.hub) {
+      return this.head('Friends') +
+        '<div class="jrme">' + this.jellyCanvas(Save.data.slots[0], 46) + '<div><small>You are</small><b>' + escH(me.nick) + '</b></div><div class="jrcode"><small>Your friend code</small><b>' + fmtCode(me.code) + '</b></div></div>' +
+        '<div class="jrlist">' + list + '</div>' +
+        '<p class="jrsmall">Your friends come from your Pocket Arcade profile. Add friends, chat and accept requests with the <b>👥 Friends</b> button.</p>' +
+        (this.state === 'error' && (this.why === 'blocked' || (this.why === 'network' && !this.onSite())) ? '<p class="jrerr">Online play couldn’t connect from this page. Open Pocket Arcade on its website (asafdror2013-cloud.github.io/asafs-arcade) to play online.</p>' : '') +
+        '<div class="jrbtns"><button class="jrbtn" data-a="hubfr">👥 Friends & chat</button><button class="jrbtn go big" data-a="host"' + (this.state === 'on' ? '' : ' disabled') + '>Host a party</button></div>';
+    }
     return this.head('Friends') +
       '<div class="jrme">' + this.jellyCanvas(Save.data.slots[0], 46) + '<div><small>You are</small><b>' + escH(me.nick) + '</b></div><div class="jrcode"><small>Your friend code</small><b>' + fmtCode(me.code) + '</b></div><button class="jrbtn sm" data-a="copy">' + (this.copied ? 'Copied!' : 'Copy') + '</button></div>' +
       '<div class="jrlist">' + list + '</div>' +
@@ -5750,8 +5809,8 @@ const Net = {
       return '<div class="jrsub"><div class="jrsubc"><h3>Colour & hat</h3><div class="jrcols">' + COLORS.map((c, k) => '<button class="jrcol' + (cfg.color === k ? ' on' : '') + '" data-a="setcol" data-v="' + k + '" style="--c:' + c.c + '"' + (used.includes(k) ? ' disabled' : '') + ' aria-label="' + c.name + '"></button>').join('') + '</div><div class="jrhats">' + openHats().map((hid) => '<button class="jrhat' + (cfg.hat === hid ? ' on' : '') + '" data-a="sethat" data-v="' + hid + '">' + this.jellyCanvas({ color: cfg.color, hat: hid }, 40) + '<span>' + escH(HATS[HAT_IDX[hid]].name) + '</span></button>').join('') + '</div><div class="jrbtns"><button class="jrbtn" data-a="subx">Done</button></div></div></div>';
     }
     if (S.kind === 'inv') {
-      const fr = this.friends().filter((f) => this.online(f.code) && !this.member(f.code));
-      return '<div class="jrsub"><div class="jrsubc"><h3>Invite a friend</h3>' + (fr.length ? fr.map((f) => '<div class="jrf">' + this.jellyCanvas(f, 40) + '<div class="jrft"><b>' + escH(f.nick) + '</b><small>' + (this.status[f.code].busy === 'menu' ? 'Online' : 'Busy') + '</small></div><div class="jrfb"><button class="jrbtn sm primary" data-a="inv" data-c="' + f.code + '">Invite</button></div></div>').join('') : '<p class="jrempty">None of your friends are online right now. They need to open Jelly Rumble.</p>') + '<div class="jrbtns"><button class="jrbtn" data-a="subx">Close</button></div></div></div>';
+      const fr = this.friends().filter((f) => (this.online(f.code) || this.hubOn(f.code)) && !this.member(f.code));
+      return '<div class="jrsub"><div class="jrsubc"><h3>Invite a friend</h3>' + (fr.length ? fr.map((f) => '<div class="jrf">' + this.jellyCanvas(f, 40) + '<div class="jrft"><b>' + escH(f.nick) + '</b><small>' + (!this.status[f.code] ? 'In the arcade' : this.status[f.code].busy === 'menu' ? 'Online' : 'Busy') + '</small></div><div class="jrfb"><button class="jrbtn sm primary" data-a="' + (this.online(f.code) ? 'inv' : 'hinv') + '" data-c="' + f.code + '">Invite</button></div></div>').join('') : '<p class="jrempty">None of your friends are online right now. They need to open Jelly Rumble.</p>') + '<div class="jrbtns"><button class="jrbtn" data-a="subx">Close</button></div></div></div>';
     }
     if (S.kind === 'menu') {
       return '<div class="jrsub"><div class="jrsubc"><h3>Menu</h3><div class="jrbtns col"><button class="jrbtn primary big" data-a="subx">Keep playing</button><button class="jrbtn danger" data-a="leave">Leave the party</button></div></div></div>';
@@ -5800,6 +5859,8 @@ const Net = {
       case 'dec': this.decline(b.dataset.c); Sound.play('back'); break;
       case 'rm': this.removeFriend(b.dataset.c); Sound.play('back'); break;
       case 'inv': this.invite(b.dataset.c); this.sub = null; Sound.play('ok'); this.refresh(); break;
+      case 'hinv': { const H = this.hubApi(); if (this.role !== 'host') this.host(); if (H) H.invite(b.dataset.c, 'jelly-rumble'); this.sub = null; Sound.play('ok'); this.refresh(); break; }
+      case 'hubfr': { const H = this.hubApi(); if (H) H.openFriends(); break; }
       case 'join': this.join(b.dataset.c); Sound.play('ok'); break;
       case 'host': this.host(); Sound.play('ok'); break;
       case 'pickinv': this.sub = { kind: 'inv' }; this.render(); break;
