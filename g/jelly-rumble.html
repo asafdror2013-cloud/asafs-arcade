@@ -952,7 +952,7 @@ class Jelly {
     this.lastHit = null; this.lastHitT = -99; this.swapGlow = 0; this.clone = false;
     this.carry = null; this.carriedBy = null; this.engine = null; this.pushT = 0; this.pushDir = null; this.pinT = 0; this.pushBy = null;
     this.sx = 1; this.sy = 1; this.svx = 0; this.svy = 0; this.blink = rand(1, 4); this.wob = rand(TAU); this.afterT = 0;
-    this.run = 0; this.flip = 0; this.flipDir = 1; this.lookX = this.facing; this.lookY = 0; this.castT = 9; this.castDir = { x: 1, y: 0 }; this.spin = 0; this.lastFacing = this.facing;
+    this.run = 0; this.flip = 0; this.flipDir = 1; this.lookX = this.facing; this.lookY = 0; this.castT = 9; this.castDir = { x: 1, y: 0 }; this.castId = null; this.spin = 0; this.lastFacing = this.facing; this.landT = 9; this.landK = 0; this.jumpT = 9;
     this.inp = { mx: 0, my: 0, jump: false, jumpP: false, a: [false, false, false], aP: [false, false, false], aR: [false, false, false], downP: false, aimX: null, aimY: null };
     this.bot = null; this.emote = 0; this.aimSlot = -1; this.aimDir = { x: this.facing, y: 0 }; this.aimTouched = false;
   }
@@ -1056,7 +1056,7 @@ class World {
   stepJelly(j, dt) {
     if (!j.alive) { j.deadT += dt; return; }
     const P = PHYS, inp = j.inp;
-    j.invuln -= dt; j.stun -= dt; j.hitFlash = (j.hitFlash || 0) - dt; j.vib = (j.vib || 0) - dt; j.coyote -= dt; j.jumpBuf -= dt; j.dropT -= dt; j.swapGlow -= dt; j.castT += dt; j.pushT -= dt;
+    j.invuln -= dt; j.stun -= dt; j.hitFlash = (j.hitFlash || 0) - dt; j.vib = (j.vib || 0) - dt; j.coyote -= dt; j.jumpBuf -= dt; j.dropT -= dt; j.swapGlow -= dt; j.castT += dt; j.pushT -= dt; j.landT += dt; j.jumpT += dt;
     if (j.invis > 0) { j.invis -= dt; if (j.invis <= 0) { this.poof(j.x, j.y, j.col.light); } }
     if (j.dropT <= 0) j.dropPlat = null;
     for (const s of j.abil) if (s.cd > 0 && !s.hold) s.cd -= dt;
@@ -1096,10 +1096,10 @@ class World {
       if (j.jumpBuf > 0 && canAct) {
         if (j.coyote > 0) {
           j.vy = -P.jumpV; j.coyote = 0; j.jumpBuf = 0; j.jumping = true; j.onGround = false;
-          j.squash(0.6, 1.5); this.dust(j.x, j.y + j.hh, 5); this.snd('jump');
+          j.jumpT = 0; j.landT = 9; this.dust(j.x, j.y + j.hh, 5); this.snd('jump');
         } else if (inp.jumpP && j.airJumps > 0) {
           j.vy = -P.airJumpV; j.airJumps--; j.jumpBuf = 0; j.jumping = true;
-          j.squash(0.7, 1.4); j.flip = 1; j.flipDir = j.vx < -40 ? -1 : j.vx > 40 ? 1 : j.facing;
+          j.jumpT = 0; j.flip = 1; j.flipDir = j.vx < -40 ? -1 : j.vx > 40 ? 1 : j.facing;
           this.ring(j.x, j.y + j.hh, 22, j.col.light, 0.25); this.burst(j.x, j.y + j.hh, 6, j.col.light, 120, 'dot'); this.snd('air');
         }
       }
@@ -1139,7 +1139,7 @@ class World {
     } else j.pinT = 0;
     if (!wasGround && j.onGround) {
       const impact = clamp(vyBefore / 900, 0, 1.3);
-      if (impact > 0.15) { j.squash(1 + impact * 0.7, Math.max(0.42, 1 - impact * 0.55)); this.dust(j.x, j.y + j.hh, 3 + Math.round(impact * 5)); this.snd('land', 0.4 + impact * 0.6); }
+      if (impact > 0.15) { j.landT = 0; j.landK = Math.min(1.2, impact); this.dust(j.x, j.y + j.hh, 3 + Math.round(impact * 5)); this.snd('land', 0.4 + impact * 0.6); }
       j.flip = 0;
       this.onLand(j, vyBefore);
     }
@@ -1153,7 +1153,6 @@ class World {
   animJelly(j, dt) {
     j.svx += ((1 - j.sx) * 520 - j.svx * 15) * dt; j.svy += ((1 - j.sy) * 520 - j.svy * 15) * dt;
     j.sx += j.svx * dt; j.sy += j.svy * dt;
-    if (!j.onGround && !j.state && !j.carriedBy) { const st = clamp(Math.abs(j.vy) / 2200, 0, 0.24); j.sx = lerp(j.sx, 1 - st, 0.18); j.sy = lerp(j.sy, 1 + st, 0.18); }
     if (j.onGround && Math.abs(j.vx) > 30) j.run += Math.abs(j.vx) * dt * 0.042; else j.run = lerp(j.run, Math.round(j.run / Math.PI) * Math.PI, 0.2);
     if (j.flip > 0) j.flip = Math.max(0, j.flip - dt / 0.32);
     j.lookX = lerp(j.lookX, j.aim.x, Math.min(1, dt * 14)); j.lookY = lerp(j.lookY, j.aim.y, Math.min(1, dt * 14));
@@ -1428,7 +1427,7 @@ Object.assign(World.prototype, {
     const a = j.aim;
     if (AB[id].kind === 'attack' && j.invis > 0) { j.invis = 0; this.poof(j.x, j.y, j.col.light); }
     let used = true;
-    j.castT = 0; j.castDir = { x: a.x, y: a.y };
+    j.castT = 0; j.castDir = { x: a.x, y: a.y }; j.castId = id;
     switch (id) {
       case 'bow': s.hold = true; s.t = 0; used = false; this.snd('dartDraw'); break;
       case 'grenade': s.hold = true; s.t = 0; used = false; this.snd('grab'); break;
@@ -3137,6 +3136,42 @@ function drawHat(ctx, id, w, t, face, col) {
   }
 }
 
+// ---------- hand-keyed locomotion poses: [scaleX, scaleY, lift, tilt], sampled 15 times a second
+const LOCO_STAND = [1, 1, 0, 0];
+const LOCO_IDLE = [[1, 1], [0.985, 1.02], [0.97, 1.035], [0.985, 1.02]];
+const LOCO_RUN = [[1.15, 0.86, 0, 0], [0.93, 1.09, -2, 0.05], [0.9, 1.12, -6, 0.07], [0.99, 1.01, -8, 0.04], [0.97, 1.04, -5, 0], [1.04, 0.97, -1, -0.02]];
+const LOCO_LAND = [[0.52, -0.44], [-0.12, 0.16], [0.05, -0.05]];
+function locoPose(j, t) {
+  if (j.state || j.engine || j.carriedBy) return LOCO_STAND;
+  if (j.onGround) {
+    if (j.landT < 3 / ANIM_FPS) { const k = Math.min(1, j.landK), d = LOCO_LAND[Math.min(2, Math.floor(j.landT * ANIM_FPS))]; return [1 + d[0] * k, 1 + d[1] * k, 0, 0]; }
+    const sp = Math.abs(j.vx);
+    if (sp > 60) {
+      const amt = clamp(sp / 335, 0.4, 1), ph = ((j.run / TAU) % 1 + 1) % 1, K = LOCO_RUN[Math.floor(ph * 6) % 6];
+      return [1 + (K[0] - 1) * amt, 1 + (K[1] - 1) * amt, K[2] * amt, K[3] * sign(j.vx) * amt];
+    }
+    const K = LOCO_IDLE[Math.floor(t * 5 + (j.wob || 0)) % 4];
+    return [K[0], K[1], 0, 0];
+  }
+  const tl = clamp(j.vx / 2600, -0.13, 0.13);
+  if (j.jumpT < 2 / ANIM_FPS && j.vy < 0) return j.jumpT < 1 / ANIM_FPS ? [0.72, 1.36, 0, tl] : [0.8, 1.24, 0, tl];
+  if (j.vy < -330) return [0.88, 1.13, 0, tl];
+  if (j.vy < 250) return [1.05, 0.96, 0, tl];
+  return Math.floor(t * ANIM_FPS / 2) % 2 ? [1.09, 0.93, 0, tl] : [1.03, 0.99, 0, tl];
+}
+function blobPath(ctx, w, h, pk) {
+  const a = w / 2, top = -h;
+  ctx.beginPath();
+  ctx.moveTo(-a * 0.74, 0);
+  ctx.quadraticCurveTo(0, 2, a * 0.74, 0);
+  ctx.bezierCurveTo(a * 1.02, 0, a * 1.06, -h * 0.2, a, -h * 0.42);
+  ctx.bezierCurveTo(a * 0.92, -h * 0.84, a * 0.5 + pk, top, pk, top);
+  ctx.bezierCurveTo(-a * 0.5 + pk, top, -a * 0.92, -h * 0.84, -a, -h * 0.42);
+  ctx.bezierCurveTo(-a * 1.06, -h * 0.2, -a * 1.02, 0, -a * 0.74, 0);
+  ctx.closePath();
+}
+const _shade = {};
+function shadeOf(c) { return _shade[c] || (_shade[c] = mix(c, '#1b1f2e', 0.22)); }
 // ---------- a character; (x, y) is the middle of its feet
 function drawJelly(ctx, o) {
   const col = o.col, t = o.t || 0, sc = (o.scale || 1) * (o.size || 1);
@@ -3150,36 +3185,44 @@ function drawJelly(ctx, o) {
   if (form === 'roll') { drawRollForm(ctx, o, fillC); ctx.restore(); return; }
   if (form === 'meteorUp' || form === 'meteorDown') { drawMeteorForm(ctx, o); ctx.restore(); return; }
   if (form === 'drill') { drawDrillForm(ctx, o, fillC); ctx.restore(); return; }
-  const runAmt = o.ground ? clamp(Math.abs(o.vx || 0) / 335, 0, 1) : 0;
-  const bob = Math.abs(Math.sin(o.run || 0)) * 5 * runAmt;
-  const step = Math.cos((o.run || 0) * 2) * 0.1 * runAmt;
-  let sx = (o.sx || 1) * (1 + step), sy = (o.sy || 1) * (1 - step);
-  if (o.ground && runAmt < 0.1 && !o.still) { const br = Math.sin(t * 2.6 + (o.wob || 0)) * 0.03; sx *= 1 - br; sy *= 1 + br; }
+  // the locomotion key pose comes from the world (see locoPose); menus get a plain standing pose
+  const L = o.loco || LOCO_STAND;
+  let sx = (o.sx || 1) * L[0], sy = (o.sy || 1) * L[1];
   // anticipation while aiming or charging; on release, stretch toward the aim and wobble back
-  let ox = 0, oy = 0;
-  if (o.charge) { sx *= 1.16; sy *= 0.84; if (o.castDir) { ox -= o.castDir.x * 3; } }
+  let ox = 0, oy = L[2];
+  if (o.charge) { sx *= 1.14; sy *= 0.86; if (o.castDir) { ox -= o.castDir.x * 3; } }
   if (o.cast !== undefined && o.cast < 0.3 && o.castDir) {
     const cd = o.castDir;
     if (o.cast < 0.075) { ox += cd.x * 7; oy += cd.y * 4; if (Math.abs(cd.x) >= Math.abs(cd.y)) { sx *= 1.34; sy *= 0.8; } else { sy *= 1.34; sx *= 0.8; } }
     else { const k = (o.cast - 0.075) / 0.225, wv = Math.sin(k * Math.PI * 3) * (1 - k) * 0.16; sx *= 1 - wv; sy *= 1 + wv; }
   }
-  const w = 31 * sx, h = 26 * sy;
-  if (o.shadow !== false && o.ground !== false) { ctx.fillStyle = 'rgba(20,24,33,0.18)'; ctx.beginPath(); ctx.ellipse(0, 1.5, w * 0.48, 3, 0, 0, TAU); ctx.fill(); }
-  ctx.translate(ox, oy - bob);
-  if (o.stretch) { const a = o.stretch.a, k = o.stretch.k; ctx.translate(0, -h / 2); ctx.rotate(a); ctx.scale(1 + k, 1 / (1 + k * 0.7)); ctx.rotate(-a); ctx.translate(0, h / 2); }
-  const lean = clamp((o.vx || 0) / 1400, -0.16, 0.16) + (runAmt ? sign(o.vx) * 0.07 * runAmt : 0);
-  if (o.flip > 0) { const a = (1 - ease.inOut(o.flip)) * TAU * (o.flipDir || 1); ctx.translate(0, -h / 2); ctx.rotate(a); ctx.translate(0, h / 2); }
-  if (o.rot !== undefined) { ctx.translate(0, -h / 2); ctx.rotate(o.rot); ctx.translate(0, h / 2); }
-  ctx.transform(1, 0, -lean, 1, 0, 0);
-  const rT = Math.min(w, h) * 0.52, rB = Math.min(w, h) * 0.22, top = -h;
-  ctx.beginPath(); ctx.moveTo(-w / 2 + rB, 0); ctx.lineTo(w / 2 - rB, 0); ctx.arcTo(w / 2, 0, w / 2, -rB, rB);
-  ctx.lineTo(w / 2, top + rT); ctx.arcTo(w / 2, top, w / 2 - rT, top, rT); ctx.lineTo(-w / 2 + rT, top); ctx.arcTo(-w / 2, top, -w / 2, top + rT, rT);
-  ctx.lineTo(-w / 2, -rB); ctx.arcTo(-w / 2, 0, -w / 2 + rB, 0, rB); ctx.closePath();
-  ctx.fillStyle = fillC; ctx.fill();
-  ctx.lineWidth = 3; ctx.strokeStyle = OUT; ctx.stroke();
-  // eyes: white with a pupil that trails behind the aim
+  const w = 32 * sx, h = 28 * sy;
   const look = o.look || { x: 0, y: 0 };
   const face = look.x < -0.1 ? -1 : 1;
+  if (o.shadow !== false && o.ground !== false) { ctx.fillStyle = 'rgba(20,24,33,0.18)'; ctx.beginPath(); ctx.ellipse(0, 1.5, w * 0.46 * (1 + oy / 36), 3, 0, 0, TAU); ctx.fill(); }
+  ctx.translate(ox, oy);
+  if (o.stretch) { const a = o.stretch.a, k = o.stretch.k; ctx.translate(0, -h / 2); ctx.rotate(a); ctx.scale(1 + k, 1 / (1 + k * 0.7)); ctx.rotate(-a); ctx.translate(0, h / 2); }
+  const lean = clamp((o.vx || 0) / 2000, -0.12, 0.12);
+  if (o.flip > 0) { const a = (1 - ease.inOut(o.flip)) * TAU * (o.flipDir || 1); ctx.translate(0, -h / 2); ctx.rotate(a); ctx.translate(0, h / 2); }
+  if (o.rot !== undefined) { ctx.translate(0, -h / 2); ctx.rotate(o.rot); ctx.translate(0, h / 2); }
+  if (L[3]) { ctx.translate(0, -h * 0.3); ctx.rotate(L[3]); ctx.translate(0, h * 0.3); }
+  ctx.transform(1, 0, -lean, 1, 0, 0);
+  // a soft gumdrop: wide at the hips, the crown leaning a little toward where it looks
+  const pk = face * w * 0.06, top = -h;
+  blobPath(ctx, w, h, pk);
+  ctx.fillStyle = fillC; ctx.fill();
+  if (!o.white) {
+    // one flat shade tone (light from the upper left), cut by an offset copy of the body
+    ctx.save(); ctx.clip();
+    ctx.beginPath(); ctx.rect(-w, -h * 1.5, w * 2, h * 2);
+    ctx.ellipse(-w * 0.09, -h * 0.56, w * 0.6, h * 0.6, 0, 0, TAU);
+    ctx.fillStyle = shadeOf(fillC); ctx.fill('evenodd');
+    ctx.beginPath(); ctx.ellipse(-w * 0.24 + pk * 0.5, -h * 0.79, 3.4, 2, -0.5, 0, TAU); ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fill();
+    ctx.restore();
+    blobPath(ctx, w, h, pk);
+  }
+  ctx.lineWidth = 3; ctx.strokeStyle = OUT; ctx.stroke();
+  // eyes: white with a pupil that trails behind the aim
   const ex = w * 0.2, ey = top + h * 0.47 + clamp(-(o.vy || 0) / 900, -1, 1) * 1.2, lx = look.x * 2.4;
   for (const s of [-1, 1]) {
     const x = s * ex + lx;
@@ -3194,7 +3237,7 @@ function drawJelly(ctx, o) {
     ctx.fillStyle = OUT; ctx.beginPath(); ctx.arc(x + look.x * 1.7, ey + look.y * 2.2, pr, 0, TAU); ctx.fill();
     if (o.mood === 'angry') { ctx.fillStyle = fillC; ctx.beginPath(); ctx.moveTo(x + s * 6, ey - 7.5); ctx.lineTo(x - s * 5.5, ey - 3); ctx.lineTo(x - s * 6, ey - 8); ctx.closePath(); ctx.fill(); ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(x + s * 5.5, ey - 7); ctx.lineTo(x - s * 5, ey - 2.6); ctx.stroke(); }
   }
-  if (o.hat && o.hat !== 'none') { ctx.save(); ctx.translate(0, top); ctx.rotate(lean * 0.8); drawHat(ctx, o.hat, w, t, face, col); ctx.restore(); }
+  if (o.hat && o.hat !== 'none') { ctx.save(); ctx.translate(pk * 0.8, top + 1.5); ctx.rotate(lean * 0.8 + face * 0.05); drawHat(ctx, o.hat, w * 0.84, t, face, col); ctx.restore(); }
   ctx.restore();
 }
 function drawRockForm(ctx, o, fillC) {
@@ -3339,7 +3382,7 @@ function renderWorld(ctx, w, opt = {}) {
   const drawOne = (j) => {
     const [x, y] = ip(j);
     // the pose only changes 15 times a second, for snappy hand-drawn timing
-    if (j._pf !== frame || !j._pose) { j._pf = frame; j._pose = { sx: j.sx, sy: j.sy, run: j.run, flip: j.flip, lookX: j.lookX, lookY: j.lookY, blink: j.blink, spin: j.spin, cast: j.castT }; }
+    if (j._pf !== frame || !j._pose) { j._pf = frame; j._pose = { loco: locoPose(j, w.t), sx: j.sx, sy: j.sy, run: j.run, flip: j.flip, lookX: j.lookX, lookY: j.lookY, blink: j.blink, spin: j.spin, cast: j.castT }; }
     const P = j._pose, f = j.form();
     const aimingNow = j.aimSlot >= 0 || j.abil.some((a) => a.hold);
     const mood = j.emote ? 'win' : j.carriedBy || j.stun > 0.2 ? 'dizzy' : !j.onGround && j.vy > 650 ? 'ooh' : aimingNow ? 'angry' : '';
@@ -3349,9 +3392,10 @@ function renderWorld(ctx, w, opt = {}) {
     const sp = Math.hypot(j.vx, j.vy), fast = sp > 950 && !f && (j.state && j.state.k === 'dash' || j.stun > 0 || j.engine);
     if (fast) drawSmear(ctx, j, x, y, alpha);
     if (j.engine) drawJetpack(ctx, j, x, y, w.t);
-    drawJelly(ctx, { x, y: y + j.hh, col: j.col, hat: j.hat, size: j.size, sx: P.sx, sy: P.sy, vx: j.vx, vy: j.vy, t: w.t + j.slot, wob: j.wob, look: { x: P.lookX, y: P.lookY }, blink: P.blink, mood, alpha, form: f, run: P.run, ground: j.onGround, flip: P.flip, flipDir: j.flipDir, cast: P.cast, castDir: j.castDir, charge: aimingNow, spin: P.spin, seed: j.slot + 1, dir: j.state && j.state.k === 'drill' ? { x: j.state.dx, y: j.state.dy } : null, white: j.hitFlash > 0, vib: j.vib, stretch: fast ? { a: Math.atan2(j.vy, j.vx), k: clamp((sp - 900) / 900, 0.2, 0.55) } : null });
+    drawJelly(ctx, { x, y: y + j.hh, col: j.col, hat: j.hat, size: j.size, loco: P.loco, sx: P.sx, sy: P.sy, vx: j.vx, vy: j.vy, t: w.t + j.slot, wob: j.wob, look: { x: P.lookX, y: P.lookY }, blink: P.blink, mood, alpha, form: f, run: P.run, ground: j.onGround, flip: P.flip, flipDir: j.flipDir, cast: P.cast, castDir: j.castDir, charge: aimingNow, spin: P.spin, seed: j.slot + 1, dir: j.state && j.state.k === 'drill' ? { x: j.state.dx, y: j.state.dy } : null, white: j.hitFlash > 0, vib: j.vib, stretch: fast ? { a: Math.atan2(j.vy, j.vx), k: clamp((sp - 900) / 900, 0.2, 0.55) } : null });
     if (j.invis > 0) { ctx.strokeStyle = rgba('#ffffff', 0.4); ctx.lineWidth = 1.5; ctx.setLineDash([3, 5]); ctx.beginPath(); ctx.ellipse(x, y - 1, 18 * j.size, 15 * j.size, 0, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
     drawHeld(ctx, j, x, y, w.t);
+    drawProp(ctx, j, x, y, w, alpha);
     if (j.swapGlow > 0) { ctx.strokeStyle = rgba(j.col.c, j.swapGlow * 1.4); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, 24 + (0.5 - j.swapGlow) * 30, 0, TAU); ctx.stroke(); }
     if (j.shrinkHits > 0) for (let k = 0; k < j.shrinkHits; k++) { ctx.fillStyle = UIC.danger; ctx.beginPath(); ctx.arc(x - (j.shrinkHits - 1) * 5 + k * 10, y - j.hh - 10 * j.size, 3, 0, TAU); ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = OUT; ctx.stroke(); }
     if (opt.tags && j.invis <= 0 && !j.clone) drawTag(ctx, j, x, y, w);
@@ -3376,6 +3420,112 @@ function renderWorld(ctx, w, opt = {}) {
   }
   ctx.globalAlpha = 1;
   if (w.flash > 0) { Gfx.screen(ctx); ctx.fillStyle = rgba('#ffffff', w.flash * 0.18); ctx.fillRect(0, 0, Gfx.cw, Gfx.ch); }
+}
+// ---------- props: the gadget an ability uses, held at the body and turned with the aim (360°)
+const PROP_GUNS = new Set(['missile', 'blink', 'engine', 'hook', 'grow', 'shrink', 'dupe', 'magnet', 'beam', 'gust']);
+const PROP_HELD = new Set(['mine', 'tesla', 'smoke', 'blackhole']);
+const RAY_TINT = { grow: '#52bd78', shrink: '#ef6fa8', dupe: '#9b7bf0' };
+function propFor(j) {
+  if (j.aimSlot >= 0) { const id = j.abil[j.aimSlot].id; if (PROP_GUNS.has(id) || PROP_HELD.has(id)) return { id, a: j.aim, k: 9 }; }
+  for (const s of j.abil) if (s.hold && PROP_GUNS.has(s.id)) return { id: s.id, a: j.aim, k: 9, live: s };
+  if (j.castId && PROP_GUNS.has(j.castId) && j.castT < 0.42) return { id: j.castId, a: j.castDir, k: j.castT };
+  return null;
+}
+function drawProp(ctx, j, x, y, w, alpha) {
+  if (j.form() || !j.alive) return;
+  const pr = propFor(j);
+  if (!pr) return;
+  const t = w.t, a = pr.a, sz = j.size, id = pr.id;
+  ctx.save(); ctx.globalAlpha = alpha;
+  if (PROP_HELD.has(id)) {
+    const hx = x + a.x * 17 * sz, hy = y + 2 + a.y * 10 * sz;
+    if (id === 'mine') drawMine(ctx, { state: 'fly', arm: 1, owner: j, scale: 0.85 * sz, nx: 0, ny: -1 }, t, [hx, hy]);
+    else if (id === 'tesla') { ctx.translate(hx, hy + 8 * sz); ctx.scale(0.62 * sz, 0.62 * sz); drawCoil(ctx, { x: 0, y: 0, state: 'set', owner: j, nx: 0, ny: -1 }, t); }
+    else if (id === 'smoke') { ctx.lineWidth = 2.2; ctx.strokeStyle = OUT; ctx.beginPath(); rr(ctx, hx - 3.5, hy - 12, 7, 6, 1.5); ctx.fillStyle = '#4a505e'; ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(hx, hy, 8 * sz, 0, TAU); ctx.fillStyle = '#9aa1ad'; ctx.fill(); ctx.stroke(); }
+    else drawCore(ctx, hx, hy, 0.95 * sz, j.col);
+    ctx.restore(); return;
+  }
+  // recoil: two stepped frames of kick, then it settles; it pops away once the cast is over
+  const fi = Math.floor(pr.k * ANIM_FPS), back = fi === 0 ? 7 : fi === 1 ? 3 : 0, kick = (fi === 0 ? 0.4 : fi === 1 ? 0.16 : 0) * -(a.x < 0 ? -1 : 1);
+  const gone = pr.k < 9 && pr.k > 0.34 ? 0.7 : 1;
+  const ang = Math.atan2(a.y, a.x) + kick, reach = (id === 'magnet' || id === 'beam' ? 17 : 15) * sz;
+  ctx.translate(x + a.x * (reach - back * sz), y + 5 * sz + a.y * (reach - back * sz) * 0.8);
+  ctx.rotate(ang); if (a.x < 0) ctx.scale(1, -1); ctx.scale(sz * gone, sz * gone);
+  if (id === 'magnet' && j.magnetOn > 0) ctx.translate(Math.floor(t * ANIM_FPS) % 2 ? 0.8 : -0.8, 0);
+  ctx.lineWidth = 2.2; ctx.strokeStyle = OUT; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  const shape = (fn, c) => { ctx.beginPath(); fn(); ctx.fillStyle = c; ctx.fill(); ctx.stroke(); };
+  const grip = () => shape(() => rr(ctx, -4, 3, 5.5, 8, 2), '#3a3f4b');
+  let muzzle = 16;
+  switch (id) {
+    case 'missile':
+      shape(() => rr(ctx, -4, 3, 5.5, 7, 2), '#3a3f4b');
+      shape(() => rr(ctx, -15, -6, 31, 12, 3), '#5d6370');
+      shape(() => rr(ctx, -18, -5, 5, 10, 1.5), '#3a3f4b');
+      shape(() => rr(ctx, 12, -7, 6, 14, 2), j.col.c);
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(-9, -3.2, 12, 2.2);
+      muzzle = 19; break;
+    case 'blink':
+      grip();
+      shape(() => rr(ctx, -7, -4.5, 19, 9, 3.5), '#e4e7ed');
+      shape(() => rr(ctx, 11, -2.6, 6, 5.2, 1.5), '#9aa1ad');
+      shape(() => ctx.arc(1, 0, 3.2, 0, TAU), Math.floor(t * ANIM_FPS) % 4 ? j.col.c : '#ffffff');
+      muzzle = 18; break;
+    case 'engine':
+      grip();
+      shape(() => { ctx.moveTo(-8, -4); ctx.lineTo(-13, -10); ctx.lineTo(-2, -4); ctx.closePath(); ctx.moveTo(-8, 4); ctx.lineTo(-13, 10); ctx.lineTo(-2, 4); ctx.closePath(); }, '#4a505e');
+      shape(() => rr(ctx, -10, -5, 21, 10, 4), '#f1f3f6');
+      shape(() => { ctx.moveTo(9, -5); ctx.quadraticCurveTo(19, 0, 9, 5); ctx.closePath(); }, j.col.c);
+      ctx.fillStyle = '#ff9f4a'; ctx.fillRect(-6, -1.5, 9, 3);
+      muzzle = 19; break;
+    case 'hook':
+      grip();
+      shape(() => rr(ctx, -8, -5, 19, 10, 3), '#5d6370');
+      ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(16, -6); ctx.moveTo(10, 0); ctx.lineTo(18, 0); ctx.moveTo(10, 0); ctx.lineTo(16, 6); ctx.lineWidth = 5; ctx.stroke(); ctx.lineWidth = 2.4; ctx.strokeStyle = '#c3c8d1'; ctx.stroke(); ctx.strokeStyle = OUT; ctx.lineWidth = 2.2;
+      shape(() => ctx.arc(-2, 0, 2.6, 0, TAU), j.col.c);
+      muzzle = 19; break;
+    case 'grow': case 'shrink': case 'dupe': {
+      const c = RAY_TINT[id];
+      grip();
+      shape(() => { ctx.moveTo(-10, -3); ctx.lineTo(-14, -7); ctx.lineTo(-6, -4); ctx.closePath(); ctx.moveTo(-10, 3); ctx.lineTo(-14, 7); ctx.lineTo(-6, 4); ctx.closePath(); }, c);
+      shape(() => ctx.ellipse(-1, 0, 10, 5.8, 0, 0, TAU), '#e4e7ed');
+      shape(() => { ctx.moveTo(7, -2); ctx.lineTo(14, -7.5); ctx.lineTo(14, 7.5); ctx.lineTo(7, 2); ctx.closePath(); }, c);
+      shape(() => ctx.arc(16, 0, 2.6, 0, TAU), '#ffffff');
+      ctx.fillStyle = c; ctx.fillRect(-6, -1.4, 8, 2.8);
+      muzzle = 18; break;
+    }
+    case 'magnet':
+      ctx.beginPath(); ctx.moveTo(14, -8); ctx.lineTo(4, -8); ctx.arc(4, 0, 8, -Math.PI / 2, Math.PI / 2, true); ctx.lineTo(14, 8);
+      ctx.lineCap = 'butt'; ctx.lineWidth = 10; ctx.stroke(); ctx.lineWidth = 5.5; ctx.strokeStyle = '#ef5b5b'; ctx.stroke();
+      ctx.strokeStyle = '#e4e7ed'; ctx.beginPath(); ctx.moveTo(9.5, -8); ctx.lineTo(13, -8); ctx.moveTo(9.5, 8); ctx.lineTo(13, 8); ctx.stroke();
+      muzzle = 0; break;
+    case 'beam': {
+      grip();
+      shape(() => rr(ctx, -10, -5.5, 20, 11, 3.5), '#4a505e');
+      const ch = pr.live ? clamp(pr.live.t / 0.25, 0, 1) : 1, on = Math.floor(t * ANIM_FPS) % 2;
+      shape(() => ctx.ellipse(11, 0, 3.5, 7, 0, 0, TAU), j.col.c);
+      ctx.beginPath(); ctx.ellipse(11.5, 0, 1.8, 3.6 + ch * 1.5, 0, 0, TAU); ctx.fillStyle = on ? '#ffffff' : j.col.light; ctx.fill();
+      muzzle = 0; break;
+    }
+    case 'gust': {
+      shape(() => rr(ctx, -12, -2.5, 14, 5, 2), '#5d6370');
+      const sp = Math.floor(t * ANIM_FPS) * (pr.k < 9 ? 1.4 : 0.5);
+      ctx.save(); ctx.translate(6, 0); ctx.scale(0.45, 1);
+      for (let k = 0; k < 3; k++) { ctx.save(); ctx.rotate(sp + (k * TAU) / 3); shape(() => ctx.ellipse(0, -5.5, 3.6, 6, 0, 0, TAU), '#bfe0f5'); ctx.restore(); }
+      ctx.restore();
+      shape(() => ctx.arc(6, 0, 2.4, 0, TAU), j.col.c);
+      muzzle = 0; break;
+    }
+  }
+  if (fi === 0 && muzzle && pr.k < 9) { star(ctx, muzzle + 5, 0, 9, 4, 5, t * 3); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = OUT; ctx.stroke(); }
+  ctx.restore();
+}
+// a tapered smear behind something fast: fat at the object, thin at the tail (one shape, outlined)
+function drawStreak(ctx, x, y, vx, vy, len, r, c) {
+  const d = norm(vx, vy);
+  ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(d.y, d.x));
+  ctx.beginPath(); ctx.moveTo(0, -r); ctx.quadraticCurveTo(-len * 0.45, -r * 0.8, -len, 0); ctx.quadraticCurveTo(-len * 0.45, r * 0.8, 0, r); ctx.closePath();
+  ctx.fillStyle = c; ctx.fill(); ctx.lineWidth = 2.4; ctx.strokeStyle = OUT; ctx.lineJoin = 'round'; ctx.stroke();
+  ctx.restore();
 }
 // a one-frame streak that bridges where a fast player was and where it is now
 function drawSmear(ctx, j, x, y, alpha) {
@@ -3515,6 +3665,7 @@ function drawArrow(ctx, p, pos) {
   const [x, y] = pos;
   const a = p.stuck ? p.rot : (p.rot = Math.atan2(p.vy, p.vx));
   ctx.save(); ctx.translate(x, y); ctx.rotate(a); if (p.stuck && p.life < 0.5) ctx.globalAlpha = Math.floor(p.life * 10) % 2 ? 1 : 0.4;
+  if (!p.stuck) { const sp = Math.hypot(p.vx, p.vy), L = clamp(sp * 0.035, 0, 46); if (L > 12) { ctx.lineCap = 'round'; for (const yy of [-4, 4]) { ctx.beginPath(); ctx.moveTo(-30, yy); ctx.lineTo(-30 - L, yy * 0.6); ctx.lineWidth = 4.5; ctx.strokeStyle = OUT; ctx.stroke(); ctx.lineWidth = 1.8; ctx.strokeStyle = '#ffffff'; ctx.stroke(); } } }
   ctx.lineWidth = 2; ctx.strokeStyle = OUT; ctx.lineJoin = 'round';
   ctx.beginPath(); ctx.moveTo(-19, 0); ctx.lineTo(-28, -6); ctx.lineTo(-25, 0); ctx.lineTo(-28, 6); ctx.closePath(); ctx.fillStyle = p.owner.col.c; ctx.fill(); ctx.stroke();
   ctx.beginPath(); rr(ctx, -26, -1.8, 28, 3.6, 1.8); ctx.fillStyle = '#b98457'; ctx.fill(); ctx.stroke();
@@ -3537,7 +3688,8 @@ function drawProj(ctx, p, w, pos) {
   const t = w.t, [x, y] = pos;
   switch (p.k) {
     case 'arrow': drawArrow(ctx, p, pos); break;
-    case 'grenade': drawGrenade(ctx, x, y, p.r, p.owner.col, t, p.fuse / 2.6, p.spin); break;
+    case 'grenade': { const sp = Math.hypot(p.vx, p.vy); if (sp > 520 && !w.isFrozen(p)) drawStreak(ctx, x, y, p.vx, p.vy, clamp(sp * 0.03, 8, 34), p.r * 0.9, rgba('#ffffff', 0.9)); }
+      drawGrenade(ctx, x, y, p.r, p.owner.col, t, p.fuse / 2.6, p.spin); break;
     case 'mine': drawMine(ctx, p, t, pos); break;
     case 'coil': drawCoil(ctx, Object.assign({}, p, { x, y }), t); break;
     case 'missile': case 'engineShot': {
@@ -3551,6 +3703,7 @@ function drawProj(ctx, p, w, pos) {
       break;
     }
     case 'blink':
+      { const sp = Math.hypot(p.vx, p.vy); if (sp > 200) drawStreak(ctx, x, y, p.vx, p.vy, clamp(sp * 0.05, 10, 54), p.r + 1, '#ffffff'); }
       ctx.beginPath(); ctx.arc(x, y, p.r + 1, 0, TAU); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = OUT; ctx.stroke();
       ctx.beginPath(); ctx.arc(x, y, p.r * 0.55, 0, TAU); ctx.fillStyle = p.owner.col.c; ctx.fill(); ctx.lineWidth = 1.5; ctx.stroke();
       break;
@@ -4683,7 +4836,7 @@ function boot() {
   Save.cloudInit();
 }
 // hooks for automated checks (only with ?jrtest in the address)
-try { if (/[?&]jrtest\b/.test(location.search)) window.__jr = { App, Save, Input, TouchPad, Gfx, startMatch, mkPart, openLobby, newRound, endMatch, openSwap, World, Bot, ARENAS, renderWorld, drawLogo, Sound }; } catch (e) { /* ignore */ }
+try { if (/[?&]jrtest\b/.test(location.search)) window.__jr = { App, Save, Input, TouchPad, Gfx, startMatch, mkPart, openLobby, newRound, endMatch, openSwap, World, Bot, ARENAS, renderWorld, drawLogo, Sound, drawJelly, drawProp, locoPose, LOCO_RUN, LOCO_IDLE, COLORS }; } catch (e) { /* ignore */ }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 
 })();
