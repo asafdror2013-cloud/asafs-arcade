@@ -46,8 +46,6 @@ local READY = {
 	Blade = { 28, 10, 0 },
 	LHand = C(18, 1.35, -0.15),
 	Hilt = 0,
-	RPole = { 0.35, -0.3, 0.9 },
-	LPole = { -0.35, -0.3, 0.9 },
 	LFoot = { -0.18, 0, -0.55 },
 	RFoot = { 0.18, 0, 0.5 },
 }
@@ -142,21 +140,19 @@ raw.Light3 = {
 }
 
 -- Heavy Slam: drop, rise with the blade overhead in both hands, hang, then slam into the floor.
-local OVERHEAD_POLES = { RPole = { 0.8, 0.3, -0.5 }, LPole = { -0.8, 0.3, -0.5 } }
-local FORWARD_POLES = { RPole = { 0.6, -0.2, 0.8 }, LPole = { -0.6, -0.2, 0.8 } }
 raw.Heavy = {
 	length = 0.92,
 	keys = {
-		{ t = 0.0, ease = "outQuad", pose = with(FORWARD_POLES, {
+		{ t = 0.0, ease = "outQuad", pose = {
 			Root = { -10, 0, 0, 0, -0.5, 0.1 }, Waist = { -16, 0, 0 }, Neck = { 10, 0, 0 },
 			RHand = { 0.45, -1.0, -1.0 }, Blade = { -40, -4, 0 }, Hilt = 1,
 			LFoot = { -0.3, 0, -0.5 }, RFoot = { 0.3, 0, 0.5 },
-		}) },
-		{ t = 0.16, ease = "outCubic", pose = with(OVERHEAD_POLES, {
+		} },
+		{ t = 0.16, ease = "outCubic", pose = {
 			Root = { 4, 0, 0, 0, 0.12, 0.15 }, Waist = { 8, 0, 0 }, Neck = { -4, 0, 0 },
 			RHand = { 0.25, 2.35, 0.55 }, Blade = { 128, 0, 0 },
 			LFoot = { -0.25, 0, -0.45 }, RFoot = { 0.25, 0, 0.55 },
-		}) },
+		} },
 		{ t = 0.33, ease = "linear", pose = {
 			Root = { 5, 0, 0, 0, 0.18, 0.2 }, Waist = { 11, 0, 0 },
 			RHand = { 0.25, 2.45, 0.75 }, Blade = { 138, 0, 0 },
@@ -165,11 +161,11 @@ raw.Heavy = {
 			Root = { -4, 0, 0, 0, -0.1, -0.2 }, Waist = { -8, 0, 0 },
 			RHand = { 0.25, 2.1, -1.5 }, Blade = { 70, 0, 0 },
 		} },
-		{ t = 0.4, ease = "linear", pose = with(FORWARD_POLES, {
+		{ t = 0.4, ease = "linear", pose = {
 			Root = { -14, 0, 0, 0, -0.7, -0.6 }, Waist = { -34, 0, 0 }, Neck = { 26, 0, 0 },
 			RHand = { 0.25, -1.45, -2.05 }, Blade = { -20, 0, 0 },
 			LFoot = { -0.3, 0, -1.25 }, RFoot = { 0.3, 0, 0.95 },
-		}) },
+		} },
 		{ t = 0.6, ease = "linear", pose = {
 			Root = { -13, 0, 0, 0, -0.72, -0.6 }, Waist = { -32, 0, 0 },
 		} },

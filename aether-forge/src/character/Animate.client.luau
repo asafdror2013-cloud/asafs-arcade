@@ -1,0 +1,2 @@
+-- Replaces Roblox's default "Animate" script. Aether Forge animates the character procedurally
+-- (see AetherForgeClient.RigAnimator), so the default animation player must not run.

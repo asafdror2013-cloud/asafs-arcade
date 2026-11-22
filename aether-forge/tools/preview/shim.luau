@@ -379,4 +379,8 @@ function Shim.module(path)
 	return proxyRequire(makeProxy(path))
 end
 
+function Shim.proxy(path)
+	return makeProxy(path)
+end
+
 return Shim

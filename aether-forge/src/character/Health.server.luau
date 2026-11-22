@@ -1,0 +1,2 @@
+-- Replaces Roblox's default "Health" regeneration script. Player HP lives in the HP attribute and is
+-- managed by the server's CharacterService.

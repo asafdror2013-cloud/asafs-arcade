@@ -1,0 +1,4 @@
+# Rojo build output (the release place file is committed under build/)
+*.rbxl.lock
+*.rbxlx.lock
+sourcemap.json

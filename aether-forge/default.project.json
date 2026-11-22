@@ -1,0 +1,81 @@
+{
+  "name": "AetherForge",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "AetherForge": {
+        "$path": "src/shared"
+      },
+      "AetherNet": {
+        "$className": "Folder",
+        "Action": { "$className": "RemoteEvent" },
+        "Hit": { "$className": "RemoteEvent" },
+        "StrikeReport": { "$className": "RemoteEvent" },
+        "Debug": { "$className": "RemoteEvent" },
+        "Fx": { "$className": "RemoteEvent" },
+        "Run": { "$className": "RemoteEvent" }
+      }
+    },
+
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "AetherForgeServer": {
+        "$path": "src/server"
+      }
+    },
+
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "$properties": {
+        "LoadCharacterAppearance": false,
+        "CharacterUseJumpPower": true,
+        "CharacterJumpPower": 0,
+        "CharacterWalkSpeed": 21,
+        "EnableMouseLockOption": false
+      },
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "AetherForgeClient": {
+          "$path": "src/client"
+        }
+      },
+      "StarterCharacterScripts": {
+        "$className": "StarterCharacterScripts",
+        "$path": "src/character"
+      }
+    },
+
+    "Players": {
+      "$className": "Players",
+      "$properties": {
+        "CharacterAutoLoads": false
+      }
+    },
+
+    "Workspace": {
+      "$className": "Workspace",
+      "$properties": {
+        "StreamingEnabled": false,
+        "Gravity": 196.2
+      }
+    },
+
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "Technology": "Future",
+        "ClockTime": 0.2,
+        "Brightness": 1.6,
+        "Ambient": [0.11, 0.1, 0.17],
+        "OutdoorAmbient": [0.2, 0.2, 0.32],
+        "GlobalShadows": true
+      }
+    },
+
+    "SoundService": {
+      "$className": "SoundService"
+    }
+  }
+}

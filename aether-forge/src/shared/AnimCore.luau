@@ -280,6 +280,17 @@ end
 
 local HILT_OFFSET = Vector3.new(0, 0, 0.55)
 
+-- Elbow direction that never lines up with the arm: elbows point down-and-out when the hand is
+-- raised or level, and back-and-out when the hand is low. `dir` = shoulder->hand (root-yaw space).
+local function autoPole(dir, side)
+	local down = math.clamp((-dir.Y - 0.3) / 0.6, 0, 1)
+	down = down * down * (3 - 2 * down)
+	local high = Vector3.new(side * 0.5, -1, 0.25)
+	local low = Vector3.new(side * 0.5, -0.2, 1)
+	return high:Lerp(low, down).Unit
+end
+AnimCore.autoPole = autoPole
+
 -- Final transforms for a rig: copies pose.j and fills in IK-driven joints.
 function AnimCore.solve(pose, joints, ik)
 	local out = table.clone(pose.j)
@@ -321,7 +332,13 @@ function AnimCore.solve(pose, joints, ik)
 			end
 			if handLocal then
 				local target = yawC * handLocal
-				local poleLocal = pose.pole[side] or arm.defaultPole
+				local poleLocal = pose.pole[side]
+				if not poleLocal then
+					local shoulderYaw = yawC:PointToObjectSpace(chestInRoot * arm.pivot)
+					local toHand = handLocal - shoulderYaw
+					local dir = if toHand.Magnitude > 1e-4 then toHand.Unit else Vector3.new(0, -1, 0)
+					poleLocal = autoPole(dir, if side == "R" then 1 else -1)
+				end
 				local poleRoot = yawC:VectorToWorldSpace(poleLocal)
 				local targetInChest = chestInRoot:PointToObjectSpace(target)
 				local poleInChest = chestInRoot:VectorToObjectSpace(poleRoot)

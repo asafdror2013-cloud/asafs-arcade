@@ -38,6 +38,9 @@ Config.Feel = {
 	ShakeParry = 0.42,
 	ShakeHurt = 0.5,
 	ShakeSlamWhiff = 0.3,
+	-- The enemy "glint" (flash + ping) appears this long before a strike lands. Reacting to it
+	-- (~0.2s human reaction) lands your parry inside the parry window.
+	GlintLead = 0.38,
 	-- Parry slow-motion (real seconds and time scale).
 	ParrySlowmoScale = 0.22,
 	ParrySlowmoDuration = 0.38,

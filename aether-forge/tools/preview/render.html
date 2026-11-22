@@ -101,7 +101,8 @@
     const cam = new THREE.PerspectiveCamera(isArena ? 50 : 40, w / h, 0.1, 2000);
     const v = views[isArena ? (q.get('view') === 'arenalow' ? 'arenalow' : 'arena') : view] || views.front;
     const target = isArena ? new THREE.Vector3(0, -8, 0) : new THREE.Vector3(0, sheet.title.startsWith('Brute') ? 3.6 : 3, 0);
-    cam.position.set(target.x + v[0], (isArena ? 0 : 0) + v[1], target.z + v[2]);
+    const k = sheet.title.startsWith('Brute') ? 1.5 : 1;
+    cam.position.set(target.x + v[0] * k, v[1] * k, target.z + v[2] * k);
     cam.lookAt(target);
     renderer.render(buildScene(frame), cam);
     const d = document.createElement('div');
