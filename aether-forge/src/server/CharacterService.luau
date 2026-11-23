@@ -1,8 +1,9 @@
 --!nonstrict
 -- CharacterService: builds the warrior-smith StarterCharacter, spawns players, owns player HP.
 --
--- Player attributes (replicated): HP, MaxHP, Ore, Dead
--- Server-only per-player combat state lives in CharacterService.state[player].
+-- Player attributes (replicated): HP, MaxHP, Ore, OreFire, OreStorm, OreFrost, Dead, Build, Weapon
+-- Server-only per-player combat state lives in CharacterService.state[player], including the run's
+-- build (forged upgrades), forge count and run statistics for the end-of-run summary.
 
 local Players = game:GetService("Players")
 local StarterPlayer = game:GetService("StarterPlayer")
@@ -13,6 +14,7 @@ local Rigs = require(Shared.Rigs)
 local RigBuilder = require(Shared.RigBuilder)
 local ArenaLayout = require(Shared.ArenaLayout)
 local Net = require(Shared.Net)
+local Upgrades = require(Shared.Upgrades)
 
 local CharacterService = {}
 CharacterService.state = {} -- [player] = { lastParryT, lastDashT, hurtUntil, riposteUntil, swing... }
@@ -72,17 +74,40 @@ local function setupCharacter(player, char)
 		end
 	end)
 	task.defer(function()
+		CharacterService.applyWeapon(player)
+	end)
+	task.defer(function()
 		if char.Parent then
 			char:PivotTo(CFrame.new(spawnPoint(player)))
 		end
 	end)
 end
 
+local function newRunStats()
+	return {
+		kills = 0,
+		damage = 0,
+		crystals = 0,
+		ore = { Aether = 0, Fire = 0, Storm = 0, Frost = 0 },
+		parries = 0,
+		forged = 0,
+		bestCombo = 0,
+		combo = 0,
+		comboAt = 0,
+		started = workspace:GetServerTimeNow(),
+	}
+end
+
 function CharacterService.resetPlayer(player)
-	player:SetAttribute("MaxHP", Config.Player.MaxHP)
-	player:SetAttribute("HP", Config.Player.MaxHP)
-	player:SetAttribute("Ore", 0)
+	local maxHp = Config.Player.MaxHP + (CharacterService.metaHpBonus and CharacterService.metaHpBonus(player) or 0)
+	player:SetAttribute("MaxHP", maxHp)
+	player:SetAttribute("HP", maxHp)
+	for _, attr in Upgrades.OreAttribute do
+		player:SetAttribute(attr, 0)
+	end
 	player:SetAttribute("Dead", false)
+	player:SetAttribute("Build", "")
+	player:SetAttribute("Weapon", "EmberBlade")
 	CharacterService.state[player] = {
 		lastParryT = -100,
 		lastDashT = -100,
@@ -92,7 +117,64 @@ function CharacterService.resetPlayer(player)
 		swingMove = nil,
 		swingHits = {},
 		lastSwingStart = { Light = -100, Heavy = -100 },
+		build = {},
+		stats = Upgrades.stats({}),
+		forgeCount = 0,
+		run = newRunStats(),
 	}
+	if CharacterService.onReset then
+		CharacterService.onReset(player)
+	end
+end
+
+function CharacterService.statsOf(player)
+	local st = CharacterService.state[player]
+	return if st then st.stats else Upgrades.stats({})
+end
+
+-- Put the build's weapon (and blade length) on the player's current character.
+function CharacterService.applyWeapon(player)
+	local st = CharacterService.state[player]
+	local char = player.Character
+	if not st or not char then
+		return
+	end
+	local id = Upgrades.weaponFor(st.build)
+	local def = Rigs.scaledWeapon(Rigs.Weapons[id], st.stats.reach)
+	RigBuilder.attachWeapon(char, Rigs.Player, def)
+	player:SetAttribute("Weapon", id)
+end
+
+-- Recompute stats after the build changed.
+function CharacterService.applyBuild(player)
+	local st = CharacterService.state[player]
+	if not st then
+		return
+	end
+	local oldWeapon = player:GetAttribute("Weapon")
+	local oldReach = st.stats.reach
+	st.stats = Upgrades.stats(st.build)
+	player:SetAttribute("Build", Upgrades.encode(st.build))
+	local maxHp = Config.Player.MaxHP + st.stats.maxHpBonus + (CharacterService.metaHpBonus and CharacterService.metaHpBonus(player) or 0)
+	player:SetAttribute("MaxHP", maxHp)
+	if Upgrades.weaponFor(st.build) ~= oldWeapon or st.stats.reach ~= oldReach then
+		CharacterService.applyWeapon(player)
+	end
+end
+
+function CharacterService.oreOf(player)
+	local ores = {}
+	for el, attr in Upgrades.OreAttribute do
+		ores[el] = player:GetAttribute(attr) or 0
+	end
+	return ores
+end
+
+function CharacterService.spendOre(player, cost)
+	for el, n in cost do
+		local attr = Upgrades.OreAttribute[el]
+		player:SetAttribute(attr, (player:GetAttribute(attr) or 0) - n)
+	end
 end
 
 function CharacterService.spawn(player)
@@ -162,8 +244,36 @@ function CharacterService.heal(player, amount)
 	player:SetAttribute("HP", math.min(max, (player:GetAttribute("HP") or 0) + amount))
 end
 
-function CharacterService.addOre(player, amount)
-	player:SetAttribute("Ore", (player:GetAttribute("Ore") or 0) + amount)
+function CharacterService.addOre(player, amount, element)
+	element = element or "Aether"
+	local attr = Upgrades.OreAttribute[element]
+	player:SetAttribute(attr, (player:GetAttribute(attr) or 0) + amount)
+	local st = CharacterService.state[player]
+	if st then
+		st.run.ore[element] += amount
+	end
+end
+
+-- Track a landed hit for the run summary (damage + best combo).
+function CharacterService.noteHit(player, damage)
+	local st = CharacterService.state[player]
+	if not st then
+		return
+	end
+	local run = st.run
+	local now = workspace:GetServerTimeNow()
+	run.damage += damage
+	if now - run.comboAt > 2.4 then
+		run.combo = 0
+	end
+	run.combo += 1
+	run.comboAt = now
+	run.bestCombo = math.max(run.bestCombo, run.combo)
+end
+
+function CharacterService.runStats(player)
+	local st = CharacterService.state[player]
+	return st and st.run
 end
 
 function CharacterService.init(context)

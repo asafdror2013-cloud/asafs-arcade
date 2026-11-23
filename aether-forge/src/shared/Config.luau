@@ -100,19 +100,21 @@ Config.Enemy = {
 	ParrySlowRadius = 36,
 }
 
+-- Crystal nodes. Common (Aether) crystals sit on the inner rings; elemental crystals grow at the
+-- risky arena edge and pay the ore that elemental upgrades need.
 Config.Crystal = {
-	Common = {
-		HP = 3, -- light hits chip 1, heavy shatters instantly
-		Ore = 3,
-		Color = Color3.fromRGB(80, 230, 255),
-		Respawn = 9,
-	},
-	Spots = 3, -- active nodes at once in the slice
+	Common = { element = "Aether", HP = 3, Ore = 3, Color = Color3.fromRGB(80, 230, 255), Respawn = 9 },
+	Fire = { element = "Fire", HP = 5, Ore = 3, Color = Color3.fromRGB(255, 96, 36), Respawn = 13 },
+	Storm = { element = "Storm", HP = 5, Ore = 3, Color = Color3.fromRGB(190, 120, 255), Respawn = 13 },
+	Frost = { element = "Frost", HP = 5, Ore = 3, Color = Color3.fromRGB(160, 225, 255), Respawn = 13 },
+	Spots = 3, -- common nodes alive at once
+	ElementalSpots = 1, -- elemental nodes alive at once (2 from wave 4)
+	ElementalSpotsLate = 2,
 }
 
 Config.Waves = {
 	FirstDelay = 3.5,
-	Breather = 6,
+	Breather = 12, -- time to mine and forge between waves
 	SpawnInterval = 1.1,
 	-- Enemies per wave = Base + (wave - 1) * Growth, capped.
 	Base = 1,

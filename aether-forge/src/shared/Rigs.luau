@@ -187,6 +187,121 @@ Rigs.Weapons.EmberBlade = {
 	},
 }
 
+local IRON = rgb(52, 44, 44)
+local MOLTEN_W = rgb(255, 96, 30)
+local EMBER_W = rgb(255, 160, 60)
+local STORM = rgb(190, 120, 255)
+local STORM_HOT = rgb(255, 240, 150)
+local ICE = rgb(185, 230, 255)
+local FROST = rgb(150, 220, 255)
+
+-- Reforged after 3+ upgrades without an element: longer, double-edged, winged guard.
+Rigs.Weapons.AetherReaver = {
+	displayName = "Aether Reaver",
+	glow = AETHER,
+	trailBase = V(0, 0, -1.0),
+	trailTip = V(0, 0, -5.4),
+	parts = {
+		part("Weapon", "Block", V(0.18, 0.18, 1.0), V(0, 0, 0.05), LEATHER, "Leather"),
+		part("Weapon", "Block", V(0.3, 0.3, 0.3), V(0, 0, 0.68), AETHER, "Neon", { 45, 0, 45 }),
+		part("Weapon", "Block", V(0.26, 1.45, 0.3), V(0, 0, -0.55), STEEL, "Metal"),
+		part("Weapon", "Wedge", V(0.24, 0.5, 0.55), V(0, 0.92, -0.42), STEEL_LIGHT, "Metal", { -90, 0, 0 }),
+		part("Weapon", "Wedge", V(0.24, 0.5, 0.55), V(0, -0.92, -0.42), STEEL_LIGHT, "Metal", { 90, 0, 0 }),
+		part("Weapon", "Block", V(0.3, 0.3, 0.3), V(0, 0, -0.55), AETHER, "Neon", { 0, 0, 45 }),
+		part("Weapon", "Block", V(0.14, 0.56, 4.0), V(0, 0, -2.7), STEEL_LIGHT, "Metal"),
+		part("Weapon", "Wedge", V(0.14, 0.56, 0.9), V(0, 0, -5.15), STEEL_LIGHT, "Metal"),
+		part("Weapon", "Block", V(0.16, 0.06, 3.9), V(0, -0.27, -2.7), AETHER, "Neon"),
+		part("Weapon", "Block", V(0.16, 0.06, 3.9), V(0, 0.27, -2.7), AETHER, "Neon"),
+		part("Weapon", "Block", V(0.16, 0.08, 3.0), V(0, 0, -2.4), rgb(40, 110, 255), "Neon"),
+	},
+}
+
+-- Fire: a broad, heavy greatsword with a molten channel and flames.
+Rigs.Weapons.FlameGreatsword = {
+	displayName = "Flame Greatsword",
+	glow = MOLTEN_W,
+	fx = "Fire",
+	trailBase = V(0, 0, -1.0),
+	trailTip = V(0, 0, -5.95),
+	parts = {
+		part("Weapon", "Block", V(0.2, 0.2, 1.2), V(0, 0, 0.15), IRON, "Leather"),
+		part("Weapon", "Block", V(0.36, 0.36, 0.36), V(0, 0, 0.86), MOLTEN_W, "Neon", { 45, 0, 45 }),
+		part("Weapon", "Block", V(0.32, 1.75, 0.36), V(0, 0, -0.6), IRON, "Metal"),
+		part("Weapon", "Wedge", V(0.3, 0.6, 0.5), V(0, 1.0, -0.45), MOLTEN_W, "Neon", { -90, 0, 0 }),
+		part("Weapon", "Wedge", V(0.3, 0.6, 0.5), V(0, -1.0, -0.45), MOLTEN_W, "Neon", { 90, 0, 0 }),
+		part("Weapon", "Block", V(0.18, 0.9, 4.4), V(0, 0, -2.98), rgb(72, 56, 52), "Metal"),
+		part("Weapon", "Wedge", V(0.18, 0.9, 1.0), V(0, 0, -5.68), rgb(72, 56, 52), "Metal"),
+		part("Weapon", "Block", V(0.2, 0.28, 4.0), V(0, 0.05, -2.85), MOLTEN_W, "Neon"),
+		part("Weapon", "Block", V(0.2, 0.08, 4.3), V(0, -0.44, -2.95), EMBER_W, "Neon"),
+	},
+}
+
+-- Storm: a jagged zig-zag cleaver crackling with violet lightning.
+Rigs.Weapons.StormCleaver = {
+	displayName = "Storm Cleaver",
+	glow = STORM,
+	fx = "Storm",
+	trailBase = V(0, 0, -1.0),
+	trailTip = V(0, 0, -5.4),
+	parts = {
+		part("Weapon", "Block", V(0.18, 0.18, 1.0), V(0, 0, 0.05), rgb(40, 36, 60), "Leather"),
+		part("Weapon", "Block", V(0.3, 0.3, 0.3), V(0, 0, 0.68), STORM, "Neon", { 45, 0, 45 }),
+		part("Weapon", "Block", V(0.26, 1.3, 0.28), V(0, 0, -0.52), STEEL, "Metal"),
+		part("Weapon", "Block", V(0.3, 0.3, 0.3), V(0, 0, -0.52), STORM_HOT, "Neon", { 0, 0, 45 }),
+		part("Weapon", "Block", V(0.13, 0.62, 1.55), V(0, 0.05, -1.4), rgb(110, 100, 140), "Metal", { 6, 0, 0 }),
+		part("Weapon", "Block", V(0.13, 0.62, 1.55), V(0, -0.08, -2.85), rgb(110, 100, 140), "Metal", { -6, 0, 0 }),
+		part("Weapon", "Block", V(0.13, 0.58, 1.45), V(0, 0.05, -4.25), rgb(110, 100, 140), "Metal", { 6, 0, 0 }),
+		part("Weapon", "Wedge", V(0.13, 0.58, 0.8), V(0, 0.08, -5.35), rgb(110, 100, 140), "Metal"),
+		part("Weapon", "Block", V(0.15, 0.07, 1.5), V(0, -0.28, -1.4), STORM, "Neon", { 18, 0, 0 }),
+		part("Weapon", "Block", V(0.15, 0.07, 1.5), V(0, -0.36, -2.85), STORM_HOT, "Neon", { -18, 0, 0 }),
+		part("Weapon", "Block", V(0.15, 0.07, 1.4), V(0, -0.26, -4.25), STORM, "Neon", { 18, 0, 0 }),
+	},
+}
+
+-- Frost: a translucent ice-crystal blade with a glowing core.
+Rigs.Weapons.FrostFang = {
+	displayName = "Frost Fang",
+	glow = FROST,
+	fx = "Frost",
+	trailBase = V(0, 0, -1.0),
+	trailTip = V(0, 0, -5.25),
+	parts = {
+		part("Weapon", "Block", V(0.18, 0.18, 1.0), V(0, 0, 0.05), rgb(200, 225, 240), "Leather"),
+		part("Weapon", "Block", V(0.32, 0.32, 0.32), V(0, 0, 0.68), FROST, "Neon", { 45, 0, 45 }),
+		part("Weapon", "Wedge", V(0.22, 0.7, 0.5), V(0, 0.45, -0.5), ICE, "Glass", { -100, 0, 0 }, { transparency = 0.2 }),
+		part("Weapon", "Wedge", V(0.22, 0.7, 0.5), V(0, -0.45, -0.5), ICE, "Glass", { 100, 0, 0 }, { transparency = 0.2 }),
+		part("Weapon", "Block", V(0.15, 0.62, 4.0), V(0, 0, -2.65), ICE, "Glass", nil, { transparency = 0.25 }),
+		part("Weapon", "Wedge", V(0.15, 0.62, 0.9), V(0, 0, -5.1), ICE, "Glass", nil, { transparency = 0.25 }),
+		part("Weapon", "Block", V(0.08, 0.22, 3.8), V(0, 0, -2.6), FROST, "Neon"),
+		part("Weapon", "Wedge", V(0.12, 0.5, 0.6), V(0, 0.42, -1.2), ICE, "Glass", { -30, 0, 0 }, { transparency = 0.2 }),
+		part("Weapon", "Wedge", V(0.12, 0.45, 0.5), V(0, -0.4, -2.1), ICE, "Glass", { 30, 0, 0 }, { transparency = 0.2 }),
+	},
+}
+
+-- Scale a weapon's blade (everything past the guard) along its length.
+function Rigs.scaledWeapon(def, scale)
+	if scale == 1 then
+		return def
+	end
+	local out = table.clone(def)
+	out.parts = {}
+	local GUARD = -0.5
+	local function sz(z)
+		return if z < GUARD then GUARD + (z - GUARD) * scale else z
+	end
+	for _, p in def.parts do
+		local pos = p.cf.Position
+		local np = table.clone(p)
+		if pos.Z < GUARD then
+			np.cf = CFrame.new(pos.X, pos.Y, sz(pos.Z)) * p.cf.Rotation
+			np.size = V(p.size.X, p.size.Y, p.size.Z * scale)
+		end
+		table.insert(out.parts, np)
+	end
+	out.trailTip = V(def.trailTip.X, def.trailTip.Y, sz(def.trailTip.Z))
+	return out
+end
+
 ------------------------------------------------------------------------------------------------
 -- Enemy: Shard Brute (hulking obsidian golem with molten crystals)
 ------------------------------------------------------------------------------------------------

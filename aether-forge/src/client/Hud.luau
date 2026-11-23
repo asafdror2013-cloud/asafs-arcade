@@ -9,6 +9,8 @@ local UserInputService = game:GetService("UserInputService")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("AetherForge")
 local Config = require(Shared.Config)
 local MathUtil = require(Shared.MathUtil)
+local Upgrades = require(Shared.Upgrades)
+local Rigs = require(Shared.Rigs)
 
 local Clock = require(script.Parent.Clock)
 
@@ -20,13 +22,16 @@ local P = Config.Palette
 local gui
 local hpFill, hpTrail, hpText, hpTrailFrac = nil, nil, nil, 1
 local riposte, riposteBar
-local dashFill
 local oreText, oreIcon, orePop = nil, nil, 0
 local waveText, waveSub
 local comboNum, comboLabel, comboPop, comboShown = nil, nil, 0, 0
 local banner, bannerSub, bannerT, bannerDur = nil, nil, 99, 2
 local hint
 local combat
+local elemOre = {}
+local buildList, weaponLabel, forgeHint
+local toastLabel, toastT = nil, 99
+local dashPips = {}
 
 local function label(parent, text, size, font, color, props)
 	local l = Instance.new("TextLabel")
@@ -105,16 +110,35 @@ local function build()
 	pad.Parent = hpText
 	stroke(hpText, 1.2)
 
-	-- dash meter
-	local dashBack = frame(hpBox, UDim2.fromOffset(120, 5), UDim2.fromOffset(0, 42), Color3.fromRGB(16, 14, 24), 0.2)
-	corner(dashBack, 2)
-	dashFill = frame(dashBack, UDim2.fromScale(1, 1), nil, Color3.fromRGB(220, 240, 255))
-	corner(dashFill, 2)
+	-- dash charges (one pip per charge)
+	for i = 1, 2 do
+		local back = frame(hpBox, UDim2.fromOffset(56, 5), UDim2.fromOffset((i - 1) * 62, 42), Color3.fromRGB(16, 14, 24), 0.2)
+		corner(back, 2)
+		local fill = frame(back, UDim2.fromScale(1, 1), nil, Color3.fromRGB(220, 240, 255))
+		corner(fill, 2)
+		dashPips[i] = { back = back, fill = fill }
+	end
 	label(hpBox, "DASH", 10, Enum.Font.GothamBlack, Color3.fromRGB(170, 180, 200), {
 		Size = UDim2.fromOffset(40, 10),
-		Position = UDim2.fromOffset(126, 39),
+		Position = UDim2.fromOffset(128, 39),
 		TextXAlignment = Enum.TextXAlignment.Left,
 	})
+
+	-- weapon + forged build (under the HP block)
+	weaponLabel = label(gui, "EMBER BLADE", 13, Enum.Font.GothamBlack, P.Aether, {
+		Size = UDim2.fromOffset(300, 16),
+		Position = UDim2.fromOffset(18, 102),
+		TextXAlignment = Enum.TextXAlignment.Left,
+	})
+	stroke(weaponLabel, 1.5)
+	buildList = label(gui, "", 12, Enum.Font.GothamBold, Color3.fromRGB(220, 225, 240), {
+		Size = UDim2.fromOffset(300, 180),
+		Position = UDim2.fromOffset(18, 120),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Top,
+		RichText = true,
+	})
+	stroke(buildList, 1.2)
 
 	-- riposte badge
 	riposte = frame(gui, UDim2.fromOffset(170, 26), UDim2.fromOffset(18, 70), P.Gold, 0.15)
@@ -141,6 +165,33 @@ local function build()
 		Position = UDim2.fromOffset(122, 26),
 		TextXAlignment = Enum.TextXAlignment.Left,
 	})
+	-- elemental ores
+	for i, el in { "Fire", "Storm", "Frost" } do
+		local icon = frame(oreBox, UDim2.fromOffset(12, 12), UDim2.fromOffset(18 + (i - 1) * 52, 54), Upgrades.ElementColors[el])
+		icon.Rotation = 45
+		stroke(icon, 1.5, Color3.fromRGB(10, 10, 20))
+		local t = label(oreBox, "0", 16, Enum.Font.GothamBlack, Color3.new(1, 1, 1), {
+			Size = UDim2.fromOffset(30, 18),
+			Position = UDim2.fromOffset(34 + (i - 1) * 52, 51),
+			TextXAlignment = Enum.TextXAlignment.Left,
+		})
+		stroke(t, 1.5)
+		elemOre[el] = { icon = icon, text = t }
+	end
+	forgeHint = label(gui, "", 12, Enum.Font.GothamBold, Color3.fromRGB(255, 214, 120), {
+		Size = UDim2.fromOffset(220, 16),
+		Position = UDim2.new(1, -238, 0, 86),
+		TextXAlignment = Enum.TextXAlignment.Right,
+	})
+	stroke(forgeHint, 1.2)
+
+	-- toast (short messages)
+	toastLabel = label(gui, "", 18, Enum.Font.GothamBlack, Color3.new(1, 1, 1), {
+		Size = UDim2.new(1, 0, 0, 24),
+		Position = UDim2.new(0, 0, 0.72, 0),
+		TextTransparency = 1,
+	})
+	stroke(toastLabel, 2, Color3.new(0, 0, 0), 1)
 
 	-- wave (top-center)
 	waveText = label(gui, "", 28, Enum.Font.GothamBlack, Color3.new(1, 1, 1), {
@@ -229,6 +280,29 @@ function Hud.orePulse()
 	orePop = 1
 end
 
+function Hud.toast(text, color)
+	toastLabel.Text = text
+	toastLabel.TextColor3 = color or Color3.new(1, 1, 1)
+	toastT = 0
+end
+
+local function refreshBuild()
+	local build = Upgrades.parse(player:GetAttribute("Build"))
+	local lines = {}
+	for _, u in Upgrades.list do
+		local l = build[u.id]
+		if l and l > 0 then
+			local c = Upgrades.ElementColors[u.element]
+			table.insert(lines, string.format('<font color="#%02x%02x%02x">◆</font> %s %s', math.floor(c.R * 255 + 0.5), math.floor(c.G * 255 + 0.5), math.floor(c.B * 255 + 0.5), u.name, Upgrades.roman[l]))
+		end
+	end
+	buildList.Text = table.concat(lines, "\n")
+	local w = Rigs.Weapons[player:GetAttribute("Weapon") or "EmberBlade"]
+	weaponLabel.Text = string.upper(w and w.displayName or "Ember Blade")
+	weaponLabel.TextColor3 = w and w.glow or P.Aether
+end
+Hud.refreshBuild = refreshBuild
+
 function Hud.update(dt)
 	if not gui then
 		return
@@ -260,13 +334,43 @@ function Hud.update(dt)
 		if left > 0 then
 			riposteBar.Size = UDim2.new(math.clamp(left / Config.Player.RiposteDuration, 0, 1), 0, 0, 3)
 		end
-		local d = combat.dashReady()
-		dashFill.Size = UDim2.fromScale(d, 1)
-		dashFill.BackgroundColor3 = if d >= 1 then Color3.fromRGB(220, 240, 255) else Color3.fromRGB(90, 100, 130)
+		local cur, max = combat.dashReady()
+		for i, pip in dashPips do
+			pip.back.Visible = i <= max
+			local f = math.clamp(cur - (i - 1), 0, 1)
+			pip.fill.Size = UDim2.fromScale(f, 1)
+			pip.fill.BackgroundColor3 = if f >= 1 then Color3.fromRGB(220, 240, 255) else Color3.fromRGB(90, 100, 130)
+		end
 	end
 
 	-- ore
 	oreText.Text = tostring(player:GetAttribute("Ore") or 0)
+	for el, ui in elemOre do
+		local n = player:GetAttribute(Upgrades.OreAttribute[el]) or 0
+		ui.text.Text = tostring(n)
+		local dimmed = if n > 0 then 0 else 0.6
+		ui.text.TextTransparency = dimmed
+		ui.icon.BackgroundTransparency = dimmed
+	end
+	if combat then
+		local forgeCount = 0
+		local b = Upgrades.parse(player:GetAttribute("Build"))
+		forgeCount = Upgrades.count(b)
+		local cost = Upgrades.cost(forgeCount, nil).Aether
+		local have = player:GetAttribute("Ore") or 0
+		local phase = workspace:GetAttribute("Phase")
+		if have >= cost then
+			forgeHint.Text = (if phase == "Breather" then "FORGE OPEN · " else "") .. "anvil ready (" .. cost .. " ore)"
+			forgeHint.TextColor3 = Color3.fromRGB(255, 214, 120)
+		else
+			forgeHint.Text = "next forge: " .. cost .. " ore"
+			forgeHint.TextColor3 = Color3.fromRGB(170, 180, 200)
+		end
+	end
+	toastT += dt
+	local ta = if toastT < 1.4 then 0 else math.clamp((toastT - 1.4) / 0.4, 0, 1)
+	toastLabel.TextTransparency = ta
+	toastLabel:FindFirstChildOfClass("UIStroke").Transparency = ta
 	orePop = math.max(0, orePop - dt * 4)
 	oreText.TextSize = 34 * (1 + 0.35 * orePop)
 	oreIcon.Rotation = 45 + orePop * 90
@@ -326,6 +430,9 @@ function Hud.init(combatModule)
 		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
 	end)
 	build()
+	player:GetAttributeChangedSignal("Build"):Connect(refreshBuild)
+	player:GetAttributeChangedSignal("Weapon"):Connect(refreshBuild)
+	refreshBuild()
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if not processed and input.KeyCode == Enum.KeyCode.H then
 			hint.Visible = not hint.Visible

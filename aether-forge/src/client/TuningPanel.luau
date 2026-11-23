@@ -94,6 +94,7 @@ local BUTTONS = {
 	{ label = "Spawn Brute", cmd = "SpawnBrute" },
 	{ label = "Kill all", cmd = "KillAll" },
 	{ label = "Heal", cmd = "Heal" },
+	{ label = "Give ore (all types)", cmd = "Ore" },
 	{ label = "Reset run", cmd = "ResetRun" },
 }
 

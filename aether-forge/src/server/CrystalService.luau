@@ -1,7 +1,9 @@
 --!nonstrict
 -- CrystalService: glowing crystal nodes you mine under pressure.
--- Light hits chip them, the Heavy Slam shatters them in one hit. Breaking one pays ore to the player
--- who broke it, and a new node grows at another spot a few seconds later.
+-- Light hits chip them, the Heavy Slam shatters common ones in one hit. Breaking one pays ore to the
+-- player who broke it, and a new node grows at another spot a few seconds later.
+-- Common (Aether) nodes grow on the inner rings; elemental (Fire / Storm / Frost) nodes grow at the
+-- risky arena edge between the portals.
 --
 -- Crystal model attributes: HP, MaxHP, Tier, Alive, Radius
 
@@ -18,7 +20,8 @@ CrystalService.list = {} -- [model] = crystal
 
 local ctx
 local folder
-local occupied = {} -- [spotIndex] = model
+local occupied = { common = {}, elemental = {} } -- [set][spotIndex] = model
+local ELEMENTS = { "Fire", "Storm", "Frost" }
 
 local ROCK = Color3.fromRGB(58, 52, 62)
 
@@ -79,10 +82,14 @@ local function buildNode(tierName, pos)
 	return model
 end
 
-local function freeSpot()
+local function spotsOf(set)
+	return if set == "elemental" then ArenaLayout.RiskySpots else ArenaLayout.CrystalSpots
+end
+
+local function freeSpot(set)
 	local options = {}
-	for i, spot in ArenaLayout.CrystalSpots do
-		if not occupied[i] then
+	for i, spot in spotsOf(set) do
+		if not occupied[set][i] then
 			local clear = true
 			for _, p in Players:GetPlayers() do
 				local root = p.Character and p.Character.PrimaryPart
@@ -101,32 +108,58 @@ local function freeSpot()
 	return options[math.random(1, #options)]
 end
 
-function CrystalService.spawnOne()
-	local idx = freeSpot()
+function CrystalService.spawnOne(set)
+	set = set or "common"
+	local idx = freeSpot(set)
 	if not idx then
 		return nil
 	end
-	local spot = ArenaLayout.CrystalSpots[idx]
-	local model = buildNode("Common", spot)
+	local spot = spotsOf(set)[idx]
+	local tierName = if set == "elemental" then ELEMENTS[math.random(1, #ELEMENTS)] else "Common"
+	local model = buildNode(tierName, spot)
+	model:SetAttribute("Element", Config.Crystal[tierName].element)
 	model.Parent = folder
-	occupied[idx] = model
-	local c = { model = model, spot = idx, tier = "Common", hp = Config.Crystal.Common.HP }
+	occupied[set][idx] = model
+	local c = { model = model, spot = idx, set = set, tier = tierName, hp = Config.Crystal[tierName].HP }
 	CrystalService.list[model] = c
 	return c
 end
 
-local function scheduleRespawn(delay)
-	task.delay(delay, function()
-		local active = 0
-		for _ in CrystalService.list do
-			active += 1
+local function wanted(set)
+	if set == "common" then
+		return Config.Crystal.Spots
+	end
+	local wave = workspace:GetAttribute("Wave") or 0
+	return if wave >= 4 then Config.Crystal.ElementalSpotsLate else Config.Crystal.ElementalSpots
+end
+
+local function activeIn(set)
+	local n = 0
+	for _, c in CrystalService.list do
+		if c.set == set then
+			n += 1
 		end
-		if active < Config.Crystal.Spots then
-			if not CrystalService.spawnOne() then
-				scheduleRespawn(1.5)
+	end
+	return n
+end
+
+local function scheduleRespawn(set, delay)
+	task.delay(delay, function()
+		if activeIn(set) < wanted(set) then
+			if not CrystalService.spawnOne(set) then
+				scheduleRespawn(set, 1.5)
+			elseif activeIn(set) < wanted(set) then
+				scheduleRespawn(set, 2)
 			end
 		end
 	end)
+end
+
+-- Called when a wave starts: late waves grow a second elemental node.
+function CrystalService.onWave()
+	if activeIn("elemental") < wanted("elemental") then
+		scheduleRespawn("elemental", 1)
+	end
 end
 
 function CrystalService.damage(model, amount, player)
@@ -142,21 +175,28 @@ function CrystalService.damage(model, amount, player)
 	-- shatter
 	local tier = Config.Crystal[c.tier]
 	CrystalService.list[model] = nil
-	occupied[c.spot] = nil
+	occupied[c.set][c.spot] = nil
 	model:SetAttribute("Alive", false)
+	local ore = tier.Ore
 	if player then
-		ctx.Characters.addOre(player, tier.Ore)
+		ore += ctx.Characters.statsOf(player).oreBonus
+		ctx.Characters.addOre(player, ore, tier.element)
+		local run = ctx.Characters.runStats(player)
+		if run then
+			run.crystals += 1
+		end
 	end
 	Net.Fx:FireAllClients("CrystalBreak", {
 		pos = model.PrimaryPart.Position,
 		color = tier.Color,
-		ore = tier.Ore,
+		ore = ore,
+		element = tier.element,
 		player = player,
 	})
 	task.delay(0.05, function()
 		model:Destroy()
 	end)
-	scheduleRespawn(tier.Respawn)
+	scheduleRespawn(c.set, tier.Respawn)
 	return true
 end
 
@@ -165,9 +205,13 @@ function CrystalService.reset()
 		model:Destroy()
 	end
 	table.clear(CrystalService.list)
-	table.clear(occupied)
+	table.clear(occupied.common)
+	table.clear(occupied.elemental)
 	for _ = 1, Config.Crystal.Spots do
-		CrystalService.spawnOne()
+		CrystalService.spawnOne("common")
+	end
+	for _ = 1, Config.Crystal.ElementalSpots do
+		CrystalService.spawnOne("elemental")
 	end
 end
 

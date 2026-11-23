@@ -167,6 +167,19 @@ if wanted("Ready") then
 	})
 end
 
+if wanted("Weapons") then
+	local frames = {}
+	for _, id in { "EmberBlade", "AetherReaver", "FlameGreatsword", "StormCleaver", "FrostFang" } do
+		table.insert(frames, frameJson(id, function()
+			rigFrame(Rigs.Player, pj, prest, pleg, Clips.Player.Ready, pRoot, Rigs.Weapons[id])
+		end))
+	end
+	table.insert(frames, frameJson("FlameGreatsword reach III", function()
+		rigFrame(Rigs.Player, pj, prest, pleg, Clips.Player.Ready, pRoot, Rigs.scaledWeapon(Rigs.Weapons.FlameGreatsword, 1.36))
+	end))
+	sheet("Weapons", frames)
+end
+
 playerSheet("Light1", { 0, 0.06, 0.09, 0.12, 0.16, 0.2, 0.27, 0.34 })
 playerSheet("Light2", { 0, 0.06, 0.09, 0.12, 0.16, 0.2, 0.27, 0.34 })
 playerSheet("Light3", { 0, 0.12, 0.15, 0.17, 0.19, 0.21, 0.23, 0.25, 0.29, 0.4, 0.56 })

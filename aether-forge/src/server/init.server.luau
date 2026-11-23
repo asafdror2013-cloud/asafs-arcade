@@ -8,6 +8,8 @@ local EnemyService = require(script.EnemyService)
 local CrystalService = require(script.CrystalService)
 local WaveService = require(script.WaveService)
 local CombatService = require(script.CombatService)
+local ForgeService = require(script.ForgeService)
+local Procs = require(script.Procs)
 
 ArenaBuilder.setupCollisionGroups()
 ArenaBuilder.setupLighting()
@@ -19,12 +21,16 @@ local ctx = {
 	Crystals = CrystalService,
 	Waves = WaveService,
 	Combat = CombatService,
+	Forge = ForgeService,
+	Procs = Procs,
 }
 
 CharacterService.init(ctx)
 EnemyService.init(ctx)
 CrystalService.init(ctx)
 CombatService.init(ctx)
+ForgeService.init(ctx)
+Procs.init(ctx)
 WaveService.init(ctx)
 
 print("[Aether Forge] server ready")

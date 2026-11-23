@@ -48,6 +48,9 @@ local function onAction(player, kind, t)
 		st.lastParryT = t
 	elseif kind == "Dash" then
 		st.lastDashT = t
+		ctx.Procs.emberTrail(player)
+	elseif kind == "Light3" then
+		ctx.Procs.shockwave(player)
 	end
 	local char = player.Character
 	if char then
@@ -56,12 +59,14 @@ local function onAction(player, kind, t)
 	end
 end
 
-local function reachOf(move, targetRadius)
+local function reachOf(move, targetRadius, stats)
 	local h = move.hit
+	local reach = stats.reach
 	if h.shape == "arc" then
-		return h.range + targetRadius
+		return h.range * reach + targetRadius
 	end
-	return (h.offset or 0) + h.radius + targetRadius
+	local radius = h.radius * reach * (if move.kind == "Heavy" then stats.slamRadius else 1)
+	return (h.offset or 0) * reach + radius + targetRadius
 end
 
 local function onHit(player, moveName, swingId, targets)
@@ -90,14 +95,17 @@ local function onHit(player, moveName, swingId, targets)
 		return
 	end
 
+	local stats = st.stats
 	local riposte = n < st.riposteUntil
-	local dmgMult = if riposte then Config.Player.RiposteDamageMult else 1
+	local dmgMult = if riposte then Config.Player.RiposteDamageMult + stats.riposteBonus else 1
+	dmgMult *= if move.kind == "Heavy" then stats.heavyMult else stats.lightMult
 	local origin = root.Position
 	local facing = root.CFrame.LookVector
 	local center = origin
 	if move.hit.shape == "circle" then
-		center = origin + MathUtil.flatUnit(facing) * (move.hit.offset or 0)
+		center = origin + MathUtil.flatUnit(facing) * (move.hit.offset or 0) * stats.reach
 	end
+	local hitEnemies = 0
 
 	local count = 0
 	for _, target in targets do
@@ -114,8 +122,9 @@ local function onHit(player, moveName, swingId, targets)
 			if e and e.state ~= "Dead" then
 				local tpos = e.root.Position
 				local flat = Vector3.new(tpos.X - origin.X, 0, tpos.Z - origin.Z)
-				if flat.Magnitude <= reachOf(move, e.cfg.Radius) + Moves.ServerRangeTolerance then
+				if flat.Magnitude <= reachOf(move, e.cfg.Radius, stats) + Moves.ServerRangeTolerance then
 					st.swingHits[target] = true
+					hitEnemies += 1
 					local knockDir = MathUtil.flatUnit(tpos - center, MathUtil.flatUnit(facing))
 					ctx.Enemies.damage(e, move.damage * dmgMult, player, {
 						knockDir = knockDir,
@@ -125,6 +134,19 @@ local function onHit(player, moveName, swingId, targets)
 						breaksWindup = move.breaksWindup,
 						hitstop = Config.Feel[move.hitstop] or 0,
 					})
+					-- forged on-hit effects
+					if e.state ~= "Dead" then
+						if stats.ignite > 0 then
+							ctx.Enemies.applyStatus(e, "burn", player, { tick = 4 * (1 + 0.5 * (stats.ignite - 1)), duration = 2 })
+						end
+						if stats.frostEdge > 0 then
+							ctx.Enemies.applyStatus(e, "chill", player, { duration = 2 })
+						end
+						if move.kind == "Heavy" and stats.frostSlam > 0 then
+							ctx.Enemies.applyStatus(e, "freeze", player, { duration = 1.5 + 0.75 * (stats.frostSlam - 1) })
+						end
+						ctx.Procs.onHit(player, e, stats)
+					end
 				end
 			end
 		elseif parent == workspace.Crystals then
@@ -132,12 +154,15 @@ local function onHit(player, moveName, swingId, targets)
 			if c and target.PrimaryPart then
 				local tpos = target.PrimaryPart.Position
 				local flat = Vector3.new(tpos.X - origin.X, 0, tpos.Z - origin.Z)
-				if flat.Magnitude <= reachOf(move, 2) + Moves.ServerRangeTolerance then
+				if flat.Magnitude <= reachOf(move, 2, stats) + Moves.ServerRangeTolerance then
 					st.swingHits[target] = true
 					ctx.Crystals.damage(target, move.crystalDamage or 1, player)
 				end
 			end
 		end
+	end
+	if hitEnemies > 0 and stats.leech > 0 then
+		ctx.Characters.heal(player, hitEnemies * stats.leech)
 	end
 end
 
@@ -173,6 +198,10 @@ local function onDebug(player, cmd, arg)
 		ctx.Enemies.killAll()
 	elseif cmd == "Heal" then
 		ctx.Characters.heal(player, 1000)
+	elseif cmd == "Ore" then
+		for _, el in { "Aether", "Fire", "Storm", "Frost" } do
+			ctx.Characters.addOre(player, if el == "Aether" then 20 else 6, el)
+		end
 	elseif cmd == "ResetRun" then
 		ctx.Waves.resetRun(true)
 	elseif cmd == "God" then

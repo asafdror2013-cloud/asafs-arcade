@@ -9,6 +9,7 @@
 --   StrikeT    server time the current windup's strike lands (Windup only)
 --   StrikeId   increments every windup; clients report how each strike resolved for them
 --   HP / MaxHP, Kind
+--   Burning / Chilled / Frozen   server time each status effect lasts until (for client visuals)
 --
 -- Strike resolution: the client of the targeted player decides parry / dodge / hurt at StrikeT (that
 -- is what feels fair at any ping), reports it, and the server checks the claim against the actions it
@@ -129,6 +130,12 @@ function EnemyService.spawn(kind, position, wave)
 		stunUntil = 0,
 		target = nil,
 		earlyReports = {},
+		burnUntil = 0,
+		burnNext = 0,
+		burnDmg = 0,
+		burnBy = nil,
+		chillUntil = 0,
+		frozenUntil = 0,
 	}
 	EnemyService.list[model] = e
 	setState(e, "Spawn")
@@ -145,6 +152,7 @@ local function die(e, killer, reason)
 	Net.Fx:FireAllClients("EnemyDied", { pos = e.root.Position, reason = reason, kind = e.kind })
 	if killer and ctx.Characters.state[killer] then
 		ctx.Characters.addOre(killer, 1)
+		ctx.Characters.state[killer].run.kills += 1
 	end
 	task.delay(0.8, function()
 		EnemyService.list[e.model] = nil
@@ -161,7 +169,67 @@ function EnemyService.killAll()
 	end
 end
 
--- Player damage. `opts` = { knockDir, knockback, launch, stagger, breaksWindup, hitstop }
+-- Enemies within `radius` of `pos` (closest first), optionally excluding one and capped at `max`.
+function EnemyService.nearby(pos, radius, exclude, max)
+	local list = {}
+	for _, e in EnemyService.list do
+		if e ~= exclude and e.state ~= "Dead" then
+			local d = (e.root.Position - pos).Magnitude
+			if d <= radius then
+				table.insert(list, { e = e, d = d })
+			end
+		end
+	end
+	table.sort(list, function(a, b)
+		return a.d < b.d
+	end)
+	local out = {}
+	for i, it in list do
+		if max and i > max then
+			break
+		end
+		table.insert(out, it.e)
+	end
+	return out
+end
+
+-- Status effects from forged upgrades.
+--   "burn"   { dps, duration }   damage over time, refreshes
+--   "chill"  { duration }        slower movement and windups
+--   "freeze" { duration }        can't move or attack, takes +25% damage
+function EnemyService.applyStatus(e, kind, player, opts)
+	if e.state == "Dead" then
+		return
+	end
+	local t = now()
+	if kind == "burn" then
+		e.burnUntil = t + opts.duration
+		e.burnDmg = math.max(e.burnDmg, opts.tick)
+		e.burnBy = player
+		if e.burnNext < t then
+			e.burnNext = t + 0.5
+		end
+		e.model:SetAttribute("Burning", e.burnUntil)
+	elseif kind == "chill" then
+		e.chillUntil = math.max(e.chillUntil, t + opts.duration)
+		e.model:SetAttribute("Chilled", e.chillUntil)
+	elseif kind == "freeze" then
+		if e.cfg.Boss then
+			-- bosses only get chilled
+			EnemyService.applyStatus(e, "chill", player, { duration = opts.duration })
+			return
+		end
+		local wasFrozen = t < e.frozenUntil
+		e.frozenUntil = math.max(e.frozenUntil, t + opts.duration)
+		e.model:SetAttribute("Frozen", e.frozenUntil)
+		if not wasFrozen and (e.state == "Windup" or e.state == "Strike") then
+			-- freezing cancels an attack in progress
+			setState(e, "Chase")
+		end
+	end
+end
+
+-- Player damage. `opts` = { knockDir, knockback, launch, stagger, breaksWindup, hitstop, dot, proc }
 function EnemyService.damage(e, amount, player, opts)
 	if e.state == "Dead" or e.state == "Spawn" then
 		return false
@@ -169,9 +237,22 @@ function EnemyService.damage(e, amount, player, opts)
 	if e.state == "Stunned" then
 		amount *= 1.25
 	end
+	if now() < e.frozenUntil then
+		amount *= 1.25
+	end
 	amount = math.floor(amount + 0.5)
 	e.hp -= amount
 	e.model:SetAttribute("HP", math.max(0, e.hp))
+	if player then
+		if opts.dot or opts.proc then
+			local run = ctx.Characters.runStats(player)
+			if run then
+				run.damage += amount
+			end
+		else
+			ctx.Characters.noteHit(player, amount)
+		end
+	end
 	if e.hp <= 0 then
 		die(e, player, "Killed")
 		-- dead bodies still get launched a bit so the shatter flies the right way
@@ -194,6 +275,9 @@ function EnemyService.damage(e, amount, player, opts)
 	end)
 
 	local stagger = opts.stagger or 0
+	if opts.dot or now() < e.frozenUntil then
+		return true
+	end
 	if e.state == "Windup" and not opts.breaksWindup then
 		-- super armor: light hits do not interrupt a windup (parry or slam it instead)
 		return true
@@ -237,6 +321,12 @@ local function applyParry(e, player)
 	end
 	slowNearby(e.root.Position, t + Config.Feel.ParrySlowmoDuration)
 	Net.Fx:FireAllClients("Parried", { player = player, enemy = e.model })
+	if st then
+		st.run.parries += 1
+	end
+	if ctx.Procs then
+		ctx.Procs.onParry(player, e)
+	end
 end
 
 local function inStrikeArc(origin, facing, pos, range, arc, slack)
@@ -268,7 +358,7 @@ local function resolve(pending, player, outcome)
 
 	if outcome == "parry" then
 		local d = strikeT - st.lastParryT
-		if d >= -0.08 and d <= Moves.Parry.active[2] + 0.15 then
+		if d >= -0.08 and d <= Moves.Parry.active[2] + st.stats.parryBonus + 0.15 then
 			applyParry(e, player)
 			return
 		end
@@ -422,6 +512,28 @@ local function update(e, dt)
 		die(e, nil, "RingOut")
 		return
 	end
+
+	-- damage over time
+	if t < e.burnUntil and t >= e.burnNext then
+		e.burnNext = t + 0.5
+		EnemyService.damage(e, e.burnDmg, e.burnBy, { dot = true, stagger = 0 })
+		if e.state == "Dead" then
+			return
+		end
+	end
+	-- frozen solid: no movement, and every timer pauses
+	if t < e.frozenUntil then
+		e.stateT += dt
+		e.cooldownUntil += dt
+		e.stunUntil += dt
+		e.flinchUntil += dt
+		e.knock *= math.exp(-10 * dt)
+		e.lv.PlaneVelocity = Vector2.new(e.knock.X, e.knock.Z)
+		return
+	end
+	local chill = if t < e.chillUntil then 0.65 else 1
+	timeScale *= chill
+	sdt = dt * timeScale
 
 	local state = e.state
 	if state == "Spawn" then

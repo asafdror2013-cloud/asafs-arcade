@@ -159,9 +159,15 @@ local function botStep()
 			end
 		end
 	end
-	-- a bot that forges whenever a prompt is up
+	-- scenario hooks can take over movement (e.g. walking to the anvil to forge)
 	if Emu.onBotStep then
-		Emu.onBotStep(player, char, stats)
+		local override = Emu.onBotStep(player, char, stats)
+		if override then
+			Emu.internalWrite = true
+			hum.MoveDirection = override
+			Emu.internalWrite = false
+			return
+		end
 	end
 	local move = Vector3.new(0, 0, 0)
 	if target then

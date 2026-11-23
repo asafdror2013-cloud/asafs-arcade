@@ -103,6 +103,12 @@ for _, deg in { 22.5, 112.5, 202.5, 292.5 } do
 	table.insert(ArenaLayout.CrystalSpots, polar(38, deg))
 end
 
+-- Elemental crystals grow at the edge, between the portals: risky to mine.
+ArenaLayout.RiskySpots = {}
+for _, deg in { 0, 90, 180, 270 } do
+	table.insert(ArenaLayout.RiskySpots, polar(51, deg))
+end
+
 -- Geometry -----------------------------------------------------------------------------------
 function ArenaLayout.build()
 	local list = {}

@@ -195,6 +195,10 @@ local function shatter(view)
 	view.dead = true
 	hideTelegraph(view.telegraph)
 	removeStars(view)
+	if view.ice then
+		view.ice:Destroy()
+		view.ice = nil
+	end
 	view.hp.gui.Enabled = false
 	local pos = view.root.Position
 	for _, p in view.parts do
@@ -261,8 +265,54 @@ local function updateView(view, dt, simDt, onStrike)
 		view.lastState = state
 	end
 
+	-- status effects from forged upgrades
+	local frozen = (model:GetAttribute("Frozen") or 0) > now
+	local burning = (model:GetAttribute("Burning") or 0) > now
+	local chilled = (model:GetAttribute("Chilled") or 0) > now
+	if burning ~= (view.fire ~= nil) then
+		if burning then
+			local att = Instance.new("Attachment")
+			att.Position = Vector3.new(0, 1, 0)
+			att.Parent = view.root
+			local pe = Instance.new("ParticleEmitter")
+			pe.Texture = "rbxasset://textures/particles/fire_main.dds"
+			pe.Color = ColorSequence.new(Color3.fromRGB(255, 220, 120), Color3.fromRGB(255, 70, 20))
+			pe.Size = NumberSequence.new(2, 0.3)
+			pe.Transparency = NumberSequence.new(0.2, 1)
+			pe.Speed = NumberRange.new(3, 6)
+			pe.Lifetime = NumberRange.new(0.3, 0.6)
+			pe.Rate = 40
+			pe.LightEmission = 1
+			pe.LightInfluence = 0
+			pe.SpreadAngle = Vector2.new(30, 30)
+			pe.Shape = Enum.ParticleEmitterShape.Box
+			pe.Parent = att
+			view.fire = att
+		else
+			view.fire:Destroy()
+			view.fire = nil
+		end
+	end
+	if frozen and not view.ice then
+		local ice = Effects.newPart("Block", Vector3.new(view.cfg.Radius * 2.6, 7.4, view.cfg.Radius * 2.6), Color3.fromRGB(185, 230, 255), Enum.Material.Glass)
+		ice.Transparency = 0.35
+		ice.CastShadow = true
+		view.ice = ice
+		view.anim:freeze(true, 0)
+		Effects.sparks(view.root.Position, Vector3.yAxis, Color3.fromRGB(200, 240, 255), 20, 0.8)
+	elseif not frozen and view.ice then
+		local p = view.root.Position
+		view.ice:Destroy()
+		view.ice = nil
+		view.anim:freeze(false)
+		Effects.debris(p + Vector3.new(0, 2, 0), { Color3.fromRGB(185, 230, 255), Color3.fromRGB(230, 248, 255) }, 10, 0.8, 26, Enum.Material.Glass)
+	end
+	if view.ice then
+		view.ice.CFrame = CFrame.new(view.root.Position + Vector3.new(0, 0.9, 0)) * view.root.CFrame.Rotation
+	end
+
 	-- hitstop freeze
-	if view.freezeUntil > Clock.real then
+	if view.freezeUntil > Clock.real or frozen then
 		view.anim:update(0)
 	else
 		if view.anim.frozen then
@@ -347,6 +397,11 @@ local function updateView(view, dt, simDt, onStrike)
 		h.OutlineColor = Config.Palette.Gold
 		h.FillTransparency = 0.75 + 0.15 * math.sin(Clock.real * 12)
 		h.OutlineTransparency = 0.3
+	elseif chilled or frozen then
+		h.FillColor = Color3.fromRGB(150, 220, 255)
+		h.OutlineColor = Color3.fromRGB(220, 245, 255)
+		h.FillTransparency = 0.65
+		h.OutlineTransparency = 0.4
 	else
 		h.FillTransparency = 1
 		h.OutlineTransparency = 1
@@ -373,6 +428,9 @@ function EnemyViews.update(dt, simDt, onStrike)
 			destroyTelegraph(view.telegraph)
 			removeStars(view)
 			view.hp.gui:Destroy()
+			if view.ice then
+				view.ice:Destroy()
+			end
 			EnemyViews.views[model] = nil
 		end
 	end

@@ -19,6 +19,9 @@ local Combat = require(script.Combat)
 local OtherPlayers = require(script.OtherPlayers)
 local Hud = require(script.Hud)
 local TuningPanel = require(script.TuningPanel)
+local ForgeUI = require(script.ForgeUI)
+local RunSummary = require(script.RunSummary)
+local Upgrades = require(Shared.Upgrades)
 
 local player = Players.LocalPlayer
 local P = Config.Palette
@@ -30,6 +33,8 @@ EnemyViews.init()
 Combat.init()
 OtherPlayers.init()
 Hud.init(Combat)
+ForgeUI.init(Hud)
+RunSummary.init()
 TuningPanel.init(Combat)
 
 Combat.hooks.onHits = function(_, total)
@@ -166,6 +171,30 @@ Net.Fx.OnClientEvent:Connect(function(kind, data)
 				Sfx.play("Parry", 0.5)
 			end
 		end
+	elseif kind == "Lightning" then
+		for _, to in data.to do
+			Effects.lightning(data.from, to, Upgrades.ElementColors.Storm, 0.24)
+		end
+		CameraRig.shake(0.18)
+		Sfx.play("Parry", 0.35)
+	elseif kind == "Shockwave" then
+		local color = P.Aether
+		local r = charRoot(data.player)
+		if r and r.Parent and r.Parent:GetAttribute("WeaponGlow") then
+			color = r.Parent:GetAttribute("WeaponGlow")
+		end
+		Effects.wave(data.origin, data.dir, data.speed, data.range, color)
+		Sfx.play("SwingBig", 0.6)
+	elseif kind == "Ember" then
+		Effects.ember(data.points, data.duration)
+	elseif kind == "Forged" then
+		local anvil = Vector3.new(0, 4, 0)
+		Effects.forgeBurst(anvil, Upgrades.ElementColors[data.element] or P.Aether)
+		if data.player == player then
+			CameraRig.shake(0.3)
+			CameraRig.punch(-5)
+		end
+		Sfx.play("CrystalBreak")
 	elseif kind == "PlayerHurt" then
 		local r = charRoot(data.player)
 		if r then
@@ -184,7 +213,7 @@ Net.Run.OnClientEvent:Connect(function(kind, data)
 		Hud.banner("WAVE " .. data.wave, data.count .. (if data.count == 1 then " Shard Brute" else " Shard Brutes"), Color3.new(1, 1, 1), 2)
 		Sfx.play("Wave")
 	elseif kind == "WaveCleared" then
-		Hud.banner("WAVE CLEARED", "+15 HP  ·  next wave in " .. data.breather, P.Aether, 2.4)
+		Hud.banner("WAVE CLEARED", "+15 HP  ·  the anvil is open (" .. data.breather .. "s)", P.Aether, 2.6)
 	elseif kind == "Defeat" then
 		Hud.banner("DEFEATED", "You reached wave " .. data.wave, P.Danger, 4.5)
 	end
@@ -199,6 +228,8 @@ RunService.PreSimulation:Connect(function(realDt)
 	Effects.update(realDt)
 	updateAmbience()
 	Hud.update(realDt)
+	ForgeUI.update(realDt)
+	RunSummary.update()
 end)
 
 print("[Aether Forge] client ready")

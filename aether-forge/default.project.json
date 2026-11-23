@@ -15,7 +15,8 @@
         "StrikeReport": { "$className": "RemoteEvent" },
         "Debug": { "$className": "RemoteEvent" },
         "Fx": { "$className": "RemoteEvent" },
-        "Run": { "$className": "RemoteEvent" }
+        "Run": { "$className": "RemoteEvent" },
+        "Forge": { "$className": "RemoteEvent" }
       }
     },
 

@@ -15,6 +15,7 @@ local Rigs = require(Shared.Rigs)
 local Clips = require(Shared.Clips)
 local MathUtil = require(Shared.MathUtil)
 local Net = require(Shared.Net)
+local Upgrades = require(Shared.Upgrades)
 
 local RigAnimator = require(script.Parent.RigAnimator)
 local Effects = require(script.Parent.Effects)
@@ -35,6 +36,10 @@ local UP = Vector3.yAxis
 
 -- character refs
 local char, root, humanoid, anim, drive, face, trail
+
+-- forged build (from the player's Build attribute)
+local stats = Upgrades.stats({})
+local dashCharge = 1
 
 -- state
 local state = "Free"
@@ -61,6 +66,11 @@ local debugParts = {}
 
 local function flat(v)
 	return Vector3.new(v.X, 0, v.Z)
+end
+
+local function glowColor()
+	local g = char and char:GetAttribute("WeaponGlow")
+	return if typeof(g) == "Color3" then g else AETHER
 end
 
 local function facingDir()
@@ -140,7 +150,7 @@ local function inHitbox(m, pos, radius)
 	if h.shape == "arc" then
 		local d = flat(pos - rp)
 		local dist = d.Magnitude
-		if dist - radius > h.range then
+		if dist - radius > h.range * stats.reach then
 			return false
 		end
 		if dist < radius + 1 then
@@ -150,8 +160,9 @@ local function inHitbox(m, pos, radius)
 		local widen = math.deg(math.asin(math.clamp(radius / dist, 0, 1)))
 		return ang <= h.arc / 2 + widen
 	else
-		local c = rp + f * (h.offset or 0)
-		return flat(pos - c).Magnitude - radius <= h.radius
+		local c = rp + f * (h.offset or 0) * stats.reach
+		local r = h.radius * stats.reach * (if m.kind == "Heavy" then stats.slamRadius else 1)
+		return flat(pos - c).Magnitude - radius <= r
 	end
 end
 
@@ -207,10 +218,16 @@ local function detectHits()
 		for _, view in newEnemies do
 			local epos = view.root.Position
 			local dir = MathUtil.flatUnit(epos - root.Position, f)
-			local dmg = m.damage * (if riposte then Config.Player.RiposteDamageMult else 1) * (if stunned(view.model) then 1.25 else 1)
+			local mult = if m.kind == "Heavy" then stats.heavyMult else stats.lightMult
+			local frozen = (view.model:GetAttribute("Frozen") or 0) > Clock.server()
+			local dmg = m.damage
+				* mult
+				* (if riposte then Config.Player.RiposteDamageMult + stats.riposteBonus else 1)
+				* (if stunned(view.model) then 1.25 else 1)
+				* (if frozen then 1.25 else 1)
 			EnemyViews.onLocalHit(view.model, hs, dir, dmg, isBig or riposte)
 			local impact = epos + UP * 1.2 - dir * 1.4
-			local color = if riposte then GOLD else AETHER
+			local color = if riposte then GOLD else glowColor()
 			Effects.sparks(impact, (-dir + UP * 0.4).Unit, color, if isBig then 28 else 16, if isBig then 1.4 else 1)
 			Effects.flash(impact, Color3.new(1, 1, 1), if isBig then 7 else 3.6, 0.1)
 			Effects.cutLine(impact, cutAcross(m, f), color, if isBig then 10 else 7, 0.16)
@@ -257,10 +274,11 @@ local function drawDebugHitbox()
 		local pos
 		if h.shape == "arc" then
 			local a = attackYaw - math.rad(h.arc / 2) + (i - 1) / (n - 1) * math.rad(h.arc)
-			pos = rp + MathUtil.dirFromYaw(a) * h.range
+			pos = rp + MathUtil.dirFromYaw(a) * h.range * stats.reach
 		else
 			local a = (i - 1) / n * math.pi * 2
-			pos = rp + f * (h.offset or 0) + Vector3.new(math.sin(a), 0, math.cos(a)) * h.radius
+			local r = h.radius * stats.reach * (if move.kind == "Heavy" then stats.slamRadius else 1)
+			pos = rp + f * (h.offset or 0) * stats.reach + Vector3.new(math.sin(a), 0, math.cos(a)) * r
 		end
 		p.CFrame = CFrame.new(pos)
 		p.Color = if active then Color3.fromRGB(255, 60, 60) else Color3.fromRGB(255, 200, 60)
@@ -275,7 +293,7 @@ local function setTrail(on, gold)
 		return
 	end
 	if on and not trail.Enabled then
-		local c = if gold then GOLD else AETHER
+		local c = if gold then GOLD else glowColor()
 		trail.Color = ColorSequence.new(Color3.new(1, 1, 1), c)
 	end
 	trail.Enabled = on
@@ -291,10 +309,10 @@ local function startAttack(name)
 	local aim = aimFor(true)
 	attackYaw = MathUtil.yawFromDir(aim)
 	facingYaw = attackYaw
-	anim:play(move.clip, { fadeIn = 0.035 })
+	anim:play(move.clip, { fadeIn = 0.035, speed = stats.attackSpeed })
 	Net.Action:FireServer(name, Clock.server())
 	comboNext = move.next
-	comboExpire = Clock.sim + move.length + (move.comboGrace or 0)
+	comboExpire = Clock.sim + move.length / stats.attackSpeed + (move.comboGrace or 0)
 end
 
 local function startDash()
@@ -309,13 +327,14 @@ local function startDash()
 	moveT = 0
 	facingYaw = MathUtil.yawFromDir(dashDir)
 	lastDashReal = Clock.real
+	dashCharge -= 1
 	dashServerT = Clock.server()
 	Net.Action:FireServer("Dash", dashServerT)
 	anim:play("Dash", { fadeIn = 0.02 })
 	setTrail(false)
 	Sfx.play("Dash")
 	CameraRig.punch(3)
-	Effects.afterimage(char, AETHER, 0.3)
+	Effects.afterimage(char, glowColor(), 0.3)
 	Effects.dust(Vector3.new(root.Position.X, 0.3, root.Position.Z), 6)
 	lastAfterimage = Clock.real
 end
@@ -365,7 +384,8 @@ local function tryAction(action)
 		return false
 	end
 	if action == "Dash" then
-		if Clock.real - lastDashReal < Moves.Dash.cooldown or not canDashCancel() then
+		-- dash charges recharge one at a time; a short lockout keeps double-taps from chaining instantly
+		if dashCharge < 1 or Clock.real - lastDashReal < 0.12 or not canDashCancel() then
 			return false
 		end
 		startDash()
@@ -508,7 +528,7 @@ function Combat.onStrike(view, strikeId)
 	local sinceParry = strikeT - parryServerT
 	local sinceDash = strikeT - dashServerT
 	-- a press up to 50ms after impact still counts (latency + frame timing grace)
-	if sinceParry >= -0.05 and sinceParry <= Moves.Parry.active[2] + 0.02 then
+	if sinceParry >= -0.05 and sinceParry <= Moves.Parry.active[2] + stats.parryBonus + 0.02 then
 		parrySuccess(view)
 		Net.StrikeReport:FireServer(model, strikeId, "parry")
 	elseif sinceDash >= -0.03 and sinceDash <= Moves.Dash.iframes[2] + 0.02 then
@@ -526,7 +546,10 @@ end
 ------------------------------------------------------------------------ per-frame
 
 local function stepState(simDt)
-	moveT += simDt
+	moveT += simDt * (if state == "Attack" then stats.attackSpeed else 1)
+	if dashCharge < stats.dashCharges then
+		dashCharge = math.min(stats.dashCharges, dashCharge + Clock.realDt / (Moves.Dash.cooldown * stats.dashCooldownMult))
+	end
 	if state == "Attack" then
 		local m = move
 		if not swingSoundDone and moveT >= m.active[1] - 0.03 then
@@ -556,7 +579,7 @@ local function stepState(simDt)
 	elseif state == "Dash" then
 		if Clock.real - lastAfterimage > 0.045 and moveT < Moves.Dash.length * 0.85 then
 			lastAfterimage = Clock.real
-			Effects.afterimage(char, AETHER, 0.25)
+			Effects.afterimage(char, glowColor(), 0.25)
 		end
 		if moveT >= Moves.Dash.length then
 			state = "Free"
@@ -601,7 +624,7 @@ local function controlBody(simDt)
 			local speed = l.speed
 			if lockTarget and lockTarget.part and lockTarget.part.Parent then
 				local gap = flat(lockTarget.part.Position - root.Position).Magnitude - lockTarget.radius - 2.4
-				local left = math.max(l.to - moveT, 0.02)
+				local left = math.max((l.to - moveT) / stats.attackSpeed, 0.02)
 				if gap > Config.Feel.LungeMagnet then
 					speed = l.speed
 				else
@@ -784,11 +807,22 @@ function Combat.riposteUntil()
 	return riposteUntil
 end
 
+-- dash charges: (current, max) where current is fractional while recharging
 function Combat.dashReady()
-	return math.clamp((Clock.real - lastDashReal) / Moves.Dash.cooldown, 0, 1)
+	return dashCharge, stats.dashCharges
+end
+
+function Combat.stats()
+	return stats
 end
 
 function Combat.init()
+	local function readBuild()
+		stats = Upgrades.stats(Upgrades.parse(player:GetAttribute("Build")))
+		dashCharge = math.min(dashCharge, stats.dashCharges)
+	end
+	player:GetAttributeChangedSignal("Build"):Connect(readBuild)
+	readBuild()
 	local lastHp = player:GetAttribute("HP") or 100
 	player:GetAttributeChangedSignal("HP"):Connect(function()
 		local hp = player:GetAttribute("HP") or 0

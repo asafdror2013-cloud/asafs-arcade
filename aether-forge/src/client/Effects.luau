@@ -445,6 +445,133 @@ function Effects.oreFly(from, getTarget, color, count, onArrive)
 	end
 end
 
+local FIRE_TEX = "rbxasset://textures/particles/fire_main.dds"
+
+-- Jagged lightning bolt between two points.
+function Effects.lightning(from, to, color, duration)
+	local segs = 9
+	local pts = { from }
+	local dir = to - from
+	local len = dir.Magnitude
+	local side = dir:Cross(Vector3.yAxis)
+	if side.Magnitude < 1e-3 then
+		side = Vector3.xAxis
+	end
+	side = side.Unit
+	local up = side:Cross(dir.Unit)
+	for i = 1, segs - 1 do
+		local t = i / segs
+		local jitter = (1 - math.abs(t - 0.5) * 2) * len * 0.12
+		table.insert(pts, from + dir * t + side * (math.random() - 0.5) * 2 * jitter + up * (math.random() - 0.5) * jitter)
+	end
+	table.insert(pts, to)
+	local parts = {}
+	for i = 1, #pts - 1 do
+		local a, b = pts[i], pts[i + 1]
+		local p = newPart("Block", Vector3.new(0.35, 0.35, (b - a).Magnitude + 0.1), color)
+		p.CFrame = CFrame.lookAt((a + b) / 2, b)
+		table.insert(parts, p)
+		local core = newPart("Block", Vector3.new(0.14, 0.14, (b - a).Magnitude + 0.1), Color3.new(1, 1, 1))
+		core.CFrame = p.CFrame
+		table.insert(parts, core)
+	end
+	Effects.flash(to, color, 4.5, 0.15)
+	Effects.sparks(to, Vector3.yAxis, color, 12, 1)
+	local t, T = 0, duration or 0.22
+	add(function(dt)
+		t += dt
+		local k = math.clamp(t / T, 0, 1)
+		for _, p in parts do
+			p.Transparency = k
+		end
+		if k >= 1 then
+			for _, p in parts do
+				p:Destroy()
+			end
+			return false
+		end
+		return true
+	end)
+end
+
+-- Travelling crescent for the Shockwave Finisher.
+function Effects.wave(origin, dir, speed, range, color)
+	local n = 9
+	local segs = {}
+	for i = 1, n do
+		segs[i] = newPart("Block", Vector3.new(1.2, 1.4, 0.35), color)
+	end
+	local yaw = math.atan2(-dir.X, -dir.Z)
+	local dist = 0
+	add(function(dt)
+		dist += speed * dt
+		local k = math.clamp(dist / range, 0, 1)
+		local center = origin + dir * dist
+		for i, sgm in segs do
+			local a = (i - (n + 1) / 2) / n * math.rad(110)
+			local r = 4
+			local local_ = Vector3.new(math.sin(a) * r, 0, -math.cos(a) * r + r)
+			local pos = center + CFrame.Angles(0, yaw, 0):VectorToWorldSpace(local_)
+			sgm.CFrame = CFrame.new(pos) * CFrame.Angles(0, yaw - a, 0)
+			sgm.Size = Vector3.new(1.3, 1.6 * (1 - k * 0.6), 0.3)
+			sgm.Transparency = 0.1 + 0.9 * k ^ 2
+		end
+		if k >= 1 then
+			for _, sgm in segs do
+				sgm:Destroy()
+			end
+			return false
+		end
+		return true
+	end)
+end
+
+-- Burning patches on the floor (Ember Trail).
+function Effects.ember(points, duration)
+	for _, pt in points do
+		local disc = newPart("Cylinder", Vector3.new(0.12, 4.4, 4.4), Color3.fromRGB(255, 110, 30))
+		disc.CFrame = CFrame.new(pt.X, 0.25, pt.Z) * CFrame.Angles(0, 0, math.pi / 2)
+		disc.Transparency = 0.45
+		local att = Instance.new("Attachment")
+		att.Parent = disc
+		local pe = Instance.new("ParticleEmitter")
+		pe.Texture = FIRE_TEX
+		pe.Color = ColorSequence.new(Color3.fromRGB(255, 220, 120), Color3.fromRGB(255, 70, 20))
+		pe.Size = ns(1.4, 0.2)
+		pe.Transparency = ns(0.2, 1)
+		pe.Speed = NumberRange.new(2, 5)
+		pe.Lifetime = NumberRange.new(0.3, 0.6)
+		pe.Rate = 30
+		pe.EmissionDirection = Enum.NormalId.Right
+		pe.LightEmission = 1
+		pe.LightInfluence = 0
+		pe.SpreadAngle = Vector2.new(25, 25)
+		pe.Parent = att
+		local t = 0
+		add(function(dt)
+			t += dt
+			local k = math.clamp((t - duration + 0.5) / 0.5, 0, 1)
+			disc.Transparency = 0.45 + 0.55 * k
+			if t > duration - 0.5 then
+				pe.Enabled = false
+			end
+			if t >= duration + 0.4 then
+				disc:Destroy()
+				return false
+			end
+			return true
+		end)
+	end
+end
+
+-- Sparks fountain + ring at the anvil when something is forged.
+function Effects.forgeBurst(pos, color)
+	Effects.flash(pos, Color3.new(1, 1, 1), 8, 0.18)
+	Effects.sparks(pos, Vector3.yAxis, color, 50, 1.5)
+	Effects.sparks(pos, Vector3.yAxis, Config.Palette.Gold, 30, 1.1)
+	Effects.shockwave(Vector3.new(pos.X, 0.2, pos.Z), 12, color, 0.5)
+end
+
 -- Two wedges that form any triangle (used for the ground telegraphs).
 function Effects.triangle(a, b, c, w1, w2, thickness)
 	local ab, ac, bc = b - a, c - a, c - b

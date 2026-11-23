@@ -69,11 +69,40 @@ local function waitWhile(cond, myRun)
 	return runId == myRun
 end
 
+-- End-of-run summary for one player.
+local function summaryFor(player, wave)
+	local run = ctx.Characters.runStats(player) or {}
+	local data = {
+		wave = wave,
+		kills = run.kills or 0,
+		damage = math.floor(run.damage or 0),
+		bestCombo = run.bestCombo or 0,
+		crystals = run.crystals or 0,
+		ore = run.ore or {},
+		parries = run.parries or 0,
+		forged = run.forged or 0,
+		build = player:GetAttribute("Build") or "",
+		weapon = player:GetAttribute("Weapon") or "EmberBlade",
+		time = math.floor(now() - (run.started or now())),
+	}
+	if ctx.Meta then
+		local ok, err = pcall(function()
+			data.meta = ctx.Meta.onRunEnd(player, data)
+		end)
+		if not ok then
+			warn("[Aether Forge] meta save failed: ", err)
+		end
+	end
+	return data
+end
+
 function WaveService.resetRun(respawnPlayers)
 	runId += 1
 	toSpawn = 0
 	ctx.Enemies.killAll()
 	ctx.Crystals.reset()
+	ctx.Forge.reset()
+	ctx.Procs.reset()
 	workspace:SetAttribute("Wave", 0)
 	updateLeft()
 	if respawnPlayers then
@@ -113,6 +142,7 @@ function WaveService.loop(myRun)
 		toSpawn = count
 		updateLeft()
 		Net.Run:FireAllClients("Wave", { wave = wave, count = count })
+		ctx.Crystals.onWave()
 
 		for _ = 1, count do
 			if runId ~= myRun or not anyAlive() then
@@ -133,9 +163,12 @@ function WaveService.loop(myRun)
 		end
 
 		if not anyAlive() then
-			setPhase("Defeat", 5)
+			setPhase("Defeat", 9)
 			Net.Run:FireAllClients("Defeat", { wave = wave })
-			task.wait(5)
+			for _, p in Players:GetPlayers() do
+				Net.Run:FireClient(p, "Summary", summaryFor(p, wave))
+			end
+			task.wait(9)
 			if runId == myRun then
 				WaveService.resetRun(true)
 			end

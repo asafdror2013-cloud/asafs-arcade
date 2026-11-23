@@ -9,7 +9,9 @@
 --   Debug(command, arg)                         Studio-only test commands (tuning panel)
 -- Server -> Client
 --   Fx(kind, data)                              effects other clients should see
---   Run(kind, data)                             wave / run flow (Wave, WaveCleared, Defeat, Reset)
+--   Run(kind, data)                             wave / run flow (Wave, WaveCleared, Defeat, Reset, Summary)
+-- Both ways
+--   Forge(kind, data)                           anvil: Offer / Denied / Forged (server), Pick / Close (client)
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -22,4 +24,5 @@ return {
 	Debug = folder:WaitForChild("Debug") :: RemoteEvent,
 	Fx = folder:WaitForChild("Fx") :: RemoteEvent,
 	Run = folder:WaitForChild("Run") :: RemoteEvent,
+	Forge = folder:WaitForChild("Forge") :: RemoteEvent,
 }
