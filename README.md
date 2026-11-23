@@ -1,6 +1,8 @@
 # Pocket Arcade
 
-Free browser games by Asaf. Open the site link to play.
+Free browser games. Open the site link to play.
 
-© 2026 Asaf. All rights reserved. The games are free to play and to share by link,
+All rights reserved. The games are free to play and to share by link,
 but may not be copied, edited, re-uploaded, sold, or presented as anyone else's work.
+
+<!-- © 2026 Asaf. All rights reserved. -->

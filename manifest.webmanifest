@@ -1,7 +1,7 @@
 {
  "name": "Pocket Arcade",
  "short_name": "Arcade",
- "description": "Pocket Arcade: free browser games by Asaf.",
+ "description": "Pocket Arcade: free games to play in the browser.",
  "start_url": "./",
  "scope": "./",
  "display": "standalone",

@@ -7,7 +7,6 @@
   "Monster Ball" is free to play. You may not copy, edit, re-upload, sell, or present this game,
   or any part of it, as your own without Asaf's permission.
 -->
-<meta name="author" content="Asaf">
 <meta name="copyright" content="© 2026 Asaf. All rights reserved.">
 <script>
 /*! © 2026 Asaf. All rights reserved. Free to play; not to be copied or claimed as your own. */
@@ -16,13 +15,14 @@
   var CFG = {"id": "monster-ball", "owner": "Asaf", "year": 2026, "mark": "bl", "dx": 0, "dy": 0, "mount": null, "hubCss": null};
   var NOTICE = '© ' + CFG.year + ' ' + CFG.owner;
 
-  // Inside Asaf's Arcade the game runs in a frame of the arcade page: borrow its cloud saves, let it show the notice.
+  // Inside the arcade the game runs in a frame of the arcade page: borrow its cloud saves.
   var hub = null;
   try {
     var P = window.parent;
     if (P && P !== window && P.__ASAF_ARCADE__ && P.__ASAF_ARCADE__.v === 1) hub = P.__ASAF_ARCADE__;
   } catch (e) { hub = null; }
   window.__ASAF_HUB__ = !!hub;
+  var CRMARK = 'asaf-cr-style';
   if (hub) {
     window.__asafClaude = makeClaude(hub, CFG.id);
     if (CFG.hubCss) {
@@ -30,77 +30,23 @@
       hs.textContent = CFG.hubCss;
       (document.head || document.documentElement).appendChild(hs);
     }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', note); else note();
     return;
   }
 
-  // ---- played on its own: a small permanent tag plus a short notice when the game opens
-  var css = '' +
-    '#asaf-cr{all:initial;position:fixed;z-index:2147483646;display:block;box-sizing:border-box;pointer-events:none;user-select:none;-webkit-user-select:none;' +
-    'font:600 10px/1 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;letter-spacing:.04em;color:rgba(255,255,255,.88);' +
-    'background:rgba(6,6,16,.52);padding:4px 8px;border-radius:999px;white-space:nowrap;opacity:.82;transition:opacity .7s ease}' +
-    '#asaf-cr.asaf-busy{opacity:.14}' +
-    '#asaf-cr-toast{all:initial;position:fixed;z-index:2147483647;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));display:block;box-sizing:border-box;' +
-    'transform:translateX(-50%);pointer-events:none;user-select:none;-webkit-user-select:none;width:max-content;max-width:min(90vw,430px);' +
-    'font:500 12.5px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#fff;text-align:center;' +
-    'background:rgba(8,8,20,.9);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:9px 15px;box-shadow:0 10px 30px rgba(0,0,0,.5);' +
-    'opacity:0;animation:asafCrIn .45s ease .6s forwards,asafCrOut .6s ease 5.2s forwards}' +
-    '#asaf-cr-toast b{all:unset;font-weight:800}' +
-    '#asaf-cr-toast i{all:unset;display:block;margin-top:2px;font-size:11.5px;opacity:.78}' +
-    '@keyframes asafCrIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}' +
-    '@keyframes asafCrOut{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,0)}}';
-  var st = document.createElement('style');
-  st.id = 'asaf-cr-style';
-  st.textContent = css;
-  (document.head || document.documentElement).appendChild(st);
-
-  var dx = 6 + (CFG.dx || 0), dy = 6 + (CFG.dy || 0);
-  var T = 'top:calc(' + dy + 'px + env(safe-area-inset-top,0px));';
-  var B = 'bottom:calc(' + dy + 'px + env(safe-area-inset-bottom,0px));';
-  var L = 'left:calc(' + dx + 'px + env(safe-area-inset-left,0px));';
-  var R = 'right:calc(' + dx + 'px + env(safe-area-inset-right,0px));';
-  var C = 'left:50%;transform:translateX(-50%);';
-  var POS = { tl: T + L, tr: T + R, bl: B + L, br: B + R, tc: T + C, bc: B + C };
-
-  var tag = document.createElement('div');
-  tag.id = 'asaf-cr';
-  tag.setAttribute('role', 'note');
-  tag.setAttribute('aria-label', NOTICE + '. All rights reserved.');
-  tag.textContent = NOTICE;
-  tag.style.cssText = POS[CFG.mark] || POS.br;
-
-  var toast = document.createElement('div');
-  toast.id = 'asaf-cr-toast';
-  toast.setAttribute('aria-hidden', 'true');
-  var b = document.createElement('b'); b.textContent = NOTICE + ' · All rights reserved';
-  var i = document.createElement('i'); i.textContent = 'Free to play. Please don’t copy it or claim it as your own.';
-  toast.appendChild(b); toast.appendChild(i);
-  setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 6200);
-
-  function home() {
-    if (CFG.mount) { var m = document.querySelector(CFG.mount); if (m) return m; }
-    return document.documentElement;
+  // ---- the copyright stays in the page but out of sight: a hidden note at the side edge
+  function note() {
+    if (document.getElementById('asaf-cr')) return;
+    var n = document.createElement('div');
+    n.id = 'asaf-cr';
+    n.setAttribute('aria-hidden', 'true');
+    n.setAttribute('data-copyright', NOTICE + '. All rights reserved.');
+    n.style.cssText = 'position:fixed;right:0;top:50%;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;opacity:0;pointer-events:none;user-select:none';
+    n.textContent = NOTICE + '. All rights reserved.';
+    (document.body || document.documentElement).appendChild(n);
   }
-  function mount() {
-    var h = home();
-    if (tag.parentNode !== h) h.appendChild(tag);
-  }
-  function start() {
-    mount();
-    home().appendChild(toast);
-    setInterval(mount, 2500);
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
-
-  // fade the tag while someone is actively playing, bring it back when they pause
-  var idle = 0;
-  function busy() {
-    tag.classList.add('asaf-busy');
-    clearTimeout(idle);
-    idle = setTimeout(function () { tag.classList.remove('asaf-busy'); }, 2600);
-  }
-  ['pointerdown', 'keydown', 'touchstart', 'wheel'].forEach(function (ev) {
-    window.addEventListener(ev, busy, { capture: true, passive: true });
-  });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', note); else note();
+  return;
 
   // ---- cloud saves through the arcade page (strings only cross between the two pages)
   function makeClaude(H, gid) {

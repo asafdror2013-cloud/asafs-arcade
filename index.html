@@ -3,14 +3,13 @@
 <head>
 <meta charset="utf-8">
 <!--
-  Pocket Arcade, by Asaf. © 2026 Asaf. All rights reserved.
-  Every game on this page belongs to Asaf. They are free to play and to share by link,
+  Pocket Arcade. © 2026 Asaf. All rights reserved.
+  The games on this page are free to play and to share by link,
   but may not be copied, edited, re-uploaded, sold, or presented as anyone else's work.
 -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="author" content="Asaf">
 <meta name="copyright" content="© 2026 Asaf. All rights reserved.">
-<meta name="description" content="22 games by Asaf, free to play in the browser.">
+<meta name="description" content="22 free games to play in the browser.">
 <meta name="theme-color" content="#100d17">
 <title>Pocket Arcade</title>
 <meta name="pa-web" content="1">
@@ -387,6 +386,7 @@ body.flying .flynote, body.offline .flynote { display: block; }
   font: 400 15px/1 var(--display); letter-spacing: .16em; color: var(--red);
   writing-mode: vertical-rl; transform: rotate(180deg);
 }
+.crx { position: fixed; right: 0; top: 50%; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; opacity: 0; pointer-events: none; user-select: none; }
 .terms { padding: 16px 18px 16px 18px; display: flex; flex-direction: column; gap: 6px; }
 .terms h2 { margin: 0; font: 400 15px/1.2 var(--display); }
 .terms p { margin: 0; font-size: 13px; line-height: 1.5; color: #4b3a33; max-width: 60ch; }
@@ -439,18 +439,18 @@ body.flying .flynote, body.offline .flynote { display: block; }
 </style>
 </head>
 <body>
+<div class="crx" aria-hidden="true">© 2026 Asaf. All rights reserved.</div>
 <div class="page" id="home">
   <header class="top">
     <div class="toprow">
       <div class="credit" aria-hidden="true">FREE PLAY</div>
-      <div class="owner" title="This arcade belongs to Asaf"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.6 7.6 7.4 11.4 12 4.2l4.6 7.2 4.8-3.8-1.9 10.6H4.5Z" fill="currentColor"/><rect x="4.4" y="19.4" width="15.2" height="2.4" rx="1.1" fill="currentColor"/></svg><span>by Asaf</span></div>
     </div>
     <div class="marquee">
       <span class="bulbs t" aria-hidden="true"></span><span class="bulbs b" aria-hidden="true"></span>
       <span class="bulbs l" aria-hidden="true"></span><span class="bulbs r" aria-hidden="true"></span>
       <h1 class="sign"><span class="pre">POCKET</span><span class="word">ARCADE</span></h1>
     </div>
-    <p class="lede"><span><b>22 games</b>, all free to play. Pick one and press start.</span><span class="mark">© 2026 Asaf</span></p>
+    <p class="lede"><span><b>22 games</b>, all free to play. Pick one and press start.</span></p>
     <div class="netbar"><span class="netstate" id="netState"><i></i><span>Online</span></span><span id="acctSlot"></span><button class="pill" id="flyBtn" type="button" aria-pressed="false">✈ Flight mode</button></div>
     <p class="flynote" id="flyNote"></p>
   </header>
@@ -564,8 +564,8 @@ body.flying .flynote, body.offline .flynote { display: block; }
   <footer class="ticket">
     <div class="stub" aria-hidden="true">ADMIT ONE</div>
     <div class="terms">
-      <h2>© 2026 Asaf. All rights reserved.</h2>
-      <p>Every game in this arcade belongs to Asaf. You're welcome to play them and to share this link with friends. Please don't copy, edit, re-upload or sell them, and don't present any of them as your own.</p>
+      <h2>All rights reserved.</h2>
+      <p>You're welcome to play these games and to share this link with friends. Please don't copy, edit, re-upload or sell them, and don't present any of them as your own.</p>
     </div>
   </footer>
 </div>
@@ -586,7 +586,6 @@ body.flying .flynote, body.offline .flynote { display: block; }
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10.5 2.5 5 8l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Arcade</span>
     </button>
     <h2 class="ptitle" id="ptitle"></h2>
-    <span class="pcr">© 2026 Asaf</span>
     <button class="pbtn icon" id="pfriends" type="button" data-acct aria-label="Friends and chat">👥</button>
     <button class="pbtn icon" id="pfs" type="button" aria-label="Full screen" hidden>
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -611,7 +610,7 @@ body.flying .flynote, body.offline .flynote { display: block; }
 
 </script>
 <script>
-/*! Pocket Arcade, by Asaf. © 2026 Asaf. All rights reserved. */
+/*! Pocket Arcade. © 2026 Asaf. All rights reserved. */
 (function () {
   'use strict';
   var GAMES = [{"id": "gem-strike", "title": "Gem Strike", "color": "#39e1ff", "scores": false, "thumb": "thumbs/gem-strike.webp", "heavy": false, "online": ""}, {"id": "bug-blockade", "title": "Bug Blockade", "color": "#ff6b5f", "scores": false, "thumb": "thumbs/bug-blockade.webp", "heavy": false, "online": ""}, {"id": "sideways-rally", "title": "Sideways Rally", "color": "#ff8a1f", "scores": false, "thumb": "thumbs/sideways-rally.webp", "heavy": false, "online": ""}, {"id": "skyline-sprint", "title": "Skyline Sprint", "color": "#29d3ff", "scores": false, "thumb": "thumbs/skyline-sprint.webp", "heavy": false, "online": ""}, {"id": "jelly-rumble", "title": "Jelly Rumble", "color": "#4a82ee", "scores": false, "thumb": "thumbs/jelly-rumble.webp", "heavy": false, "online": "Online play with friends needs internet. Local play works offline."}, {"id": "nightmare-sleepover", "title": "Nightmare Sleepover", "color": "#8bff3d", "scores": false, "thumb": "thumbs/nightmare-sleepover.webp", "heavy": false, "online": ""}, {"id": "mic-clash", "title": "Mic Clash", "color": "#ff4fa3", "scores": true, "thumb": "thumbs/mic-clash.webp", "heavy": false, "online": ""}, {"id": "arcane-gambit", "title": "Arcane Gambit", "color": "#e8c25a", "scores": false, "thumb": "thumbs/arcane-gambit.webp", "heavy": false, "online": ""}, {"id": "rod-rivals", "title": "Rod Rivals", "color": "#4ade80", "scores": false, "thumb": "thumbs/rod-rivals.webp", "heavy": false, "online": ""}, {"id": "fold-and-fly", "title": "Fold & Fly", "color": "#ff8a5c", "scores": false, "thumb": "thumbs/fold-and-fly.webp", "heavy": false, "online": ""}, {"id": "loaded-dice", "title": "Loaded Dice", "color": "#f2c14e", "scores": false, "thumb": "thumbs/loaded-dice.webp", "heavy": false, "online": ""}, {"id": "lanternfall", "title": "Lanternfall", "color": "#ff5a4f", "scores": false, "thumb": "thumbs/lanternfall.webp", "heavy": false, "online": ""}, {"id": "orrery", "title": "Orrery", "color": "#f5b544", "scores": false, "thumb": "thumbs/orrery.webp", "heavy": false, "online": ""}, {"id": "afterimage", "title": "Afterimage", "color": "#ff4fd8", "scores": false, "thumb": "thumbs/afterimage.webp", "heavy": false, "online": ""}, {"id": "dodge-rush", "title": "Dodge Rush", "color": "#ffd34d", "scores": false, "thumb": "thumbs/dodge-rush.webp", "heavy": true, "online": ""}, {"id": "dodge-fight", "title": "DodgeFight", "color": "#22e6ff", "scores": false, "thumb": "thumbs/dodge-fight.webp", "heavy": true, "online": ""}, {"id": "dodge-duel", "title": "DodgeDuel", "color": "#ff2bd6", "scores": false, "thumb": "thumbs/dodge-duel.webp", "heavy": true, "online": ""}, {"id": "rift-breaker", "title": "Rift Breaker: Supernova", "color": "#7c5cff", "scores": false, "thumb": "thumbs/rift-breaker.webp", "heavy": true, "online": ""}, {"id": "court-crew", "title": "Court Crew Shootaround", "color": "#ff7a1a", "scores": false, "thumb": "thumbs/court-crew.webp", "heavy": false, "online": ""}, {"id": "pocket-holdem", "title": "Pocket Hold’em", "color": "#2fd17f", "scores": false, "thumb": "thumbs/pocket-holdem.webp", "heavy": false, "online": "Online tables with friends need internet. Playing the animals works offline."}, {"id": "monster-ball", "title": "Monster Ball", "color": "#ffcc00", "scores": false, "thumb": "thumbs/monster-ball.webp", "heavy": false, "online": ""}, {"id": "dopamine-overload", "title": "DOPAMINE OVERLOAD", "color": "#f72585", "scores": false, "thumb": "thumbs/dopamine-overload.webp", "heavy": false, "online": ""}];
@@ -1117,7 +1116,7 @@ body.flying .flynote, body.offline .flynote { display: block; }
       h += outs.map(function (f) { return '<div class="afr out">' + avatar(f.av) + '<div class="aft"><b>' + fmt(f.code) + '</b><small>Request sent · they need to open the arcade and accept</small></div><button class="sbtn ghost sm" data-a="cancel" data-c="' + f.code + '">Cancel</button></div>'; }).join('');
       h += '</div><label class="alb" for="aAdd">Add a friend</label><div class="arow"><input id="aAdd" maxlength="9" placeholder="ABC-123" autocomplete="off" spellcheck="false" value="' + esc(draft.aAdd || '') + '" data-enter="add"><button class="sbtn" data-a="add">Add</button></div>';
       if (err) h += '<p class="aerr">' + esc(err) + '</p>';
-      if (state === 'error' && (why === 'blocked' || (why === 'network' && !onSite()))) h += '<p class="small">Friends and chat need the internet and only connect on the <b>website version</b> of Pocket Arcade (asafdror2013-cloud.github.io/asafs-arcade).</p>';
+      if (state === 'error' && (why === 'blocked' || (why === 'network' && !onSite()))) h += '<p class="small">Friends and chat need the internet and only connect on the <b>website version</b> of Pocket Arcade.</p>';
       return h;
     }
     function pageChat(code) {
