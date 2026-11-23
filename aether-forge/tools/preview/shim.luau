@@ -20,7 +20,11 @@ V3.__index = function(v, k)
 		local m = math.sqrt(v[1] * v[1] + v[2] * v[2] + v[3] * v[3])
 		return V3.new(v[1] / m, v[2] / m, v[3] / m)
 	end
-	return V3[k]
+	local f = V3[k]
+	if f == nil then
+		error(tostring(k) .. " is not a valid member of Vector3", 2)
+	end
+	return f
 end
 function V3.new(x, y, z)
 	return setmetatable({ x or 0, y or 0, z or 0 }, V3)
@@ -66,6 +70,19 @@ function V3.Cross(a, b)
 end
 function V3.Lerp(a, b, t)
 	return vnew(a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, a[3] + (b[3] - a[3]) * t)
+end
+function V3.Abs(a)
+	return vnew(math.abs(a[1]), math.abs(a[2]), math.abs(a[3]))
+end
+function V3.Max(a, b)
+	return vnew(math.max(a[1], b[1]), math.max(a[2], b[2]), math.max(a[3], b[3]))
+end
+function V3.Min(a, b)
+	return vnew(math.min(a[1], b[1]), math.min(a[2], b[2]), math.min(a[3], b[3]))
+end
+function V3.Angle(a, b)
+	local d = (a[1] * b[1] + a[2] * b[2] + a[3] * b[3]) / (math.sqrt(a[1] * a[1] + a[2] * a[2] + a[3] * a[3]) * math.sqrt(b[1] * b[1] + b[2] * b[2] + b[3] * b[3]))
+	return math.acos(math.clamp(d, -1, 1))
 end
 function V3.FuzzyEq(a, b, eps)
 	eps = eps or 1e-5
@@ -116,7 +133,11 @@ CF.__index = function(c, k)
 	elseif k == "Rotation" then
 		return cfraw(0, 0, 0, r)
 	end
-	return CF[k]
+	local f = CF[k]
+	if f == nil then
+		error(tostring(k) .. " is not a valid member of CFrame", 2)
+	end
+	return f
 end
 
 local function matmul(a, b)
@@ -325,13 +346,57 @@ Shim.CFrame = CFrame
 
 ------------------------------------------------------------------------ Color3
 local C3 = {}
-C3.__index = C3
+C3.__index = function(c, k)
+	local f = rawget(C3, k)
+	if f == nil then
+		error(tostring(k) .. " is not a valid member of Color3", 2)
+	end
+	return f
+end
+C3.__eq = function(a, b)
+	return a.R == b.R and a.G == b.G and a.B == b.B
+end
 local Color3 = {}
 function Color3.new(r, g, b)
 	return setmetatable({ R = r or 0, G = g or 0, B = b or 0 }, C3)
 end
 function Color3.fromRGB(r, g, b)
 	return Color3.new((r or 0) / 255, (g or 0) / 255, (b or 0) / 255)
+end
+function Color3.fromHSV(h, s, v)
+	local i = math.floor(h * 6)
+	local f = h * 6 - i
+	local p, q, t = v * (1 - s), v * (1 - f * s), v * (1 - (1 - f) * s)
+	i = i % 6
+	if i == 0 then
+		return Color3.new(v, t, p)
+	elseif i == 1 then
+		return Color3.new(q, v, p)
+	elseif i == 2 then
+		return Color3.new(p, v, t)
+	elseif i == 3 then
+		return Color3.new(p, q, v)
+	elseif i == 4 then
+		return Color3.new(t, p, v)
+	end
+	return Color3.new(v, p, q)
+end
+function C3.ToHSV(c)
+	local r, g, b = c.R, c.G, c.B
+	local mx, mn = math.max(r, g, b), math.min(r, g, b)
+	local d = mx - mn
+	local h = 0
+	if d > 0 then
+		if mx == r then
+			h = ((g - b) / d) % 6
+		elseif mx == g then
+			h = (b - r) / d + 2
+		else
+			h = (r - g) / d + 4
+		end
+		h /= 6
+	end
+	return h, if mx > 0 then d / mx else 0, mx
 end
 function C3.Lerp(a, b, t)
 	return Color3.new(a.R + (b.R - a.R) * t, a.G + (b.G - a.G) * t, a.B + (b.B - a.B) * t)
@@ -366,6 +431,13 @@ makeProxy = function(path)
 			return makeProxy(path .. "/" .. k)
 		end,
 	})
+end
+
+-- typeof() support for the emulator
+function Shim.tag()
+	rawset(V3, "__type", "Vector3")
+	rawset(CF, "__type", "CFrame")
+	rawset(C3, "__type", "Color3")
 end
 
 function Shim.install(env)

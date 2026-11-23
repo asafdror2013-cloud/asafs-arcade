@@ -87,7 +87,9 @@ Config.Enemy = {
 		Recover = 0.75,
 		Cooldown = 1.1,
 		Damage = 18,
-		StaggerResist = 0.0, -- 0 = light hits flinch it (outside windups)
+		-- Hits with less stagger than this don't interrupt it (light slashes only make it shudder),
+		-- so you can't stun-lock a Brute: use the finisher, the Heavy Slam or a parry.
+		StaggerThreshold = 0.5,
 		ParryStun = 1.7,
 		SpawnTime = 1.0,
 		XP = 10,

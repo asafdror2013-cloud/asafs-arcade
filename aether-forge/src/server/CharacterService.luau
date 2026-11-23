@@ -97,7 +97,13 @@ end
 
 function CharacterService.spawn(player)
 	CharacterService.resetPlayer(player)
-	player:LoadCharacter()
+	-- LoadCharacterAsync is the current API; fall back for older engines
+	local ok = pcall(function()
+		player:LoadCharacterAsync()
+	end)
+	if not ok then
+		player:LoadCharacter()
+	end
 end
 
 function CharacterService.isAlive(player)

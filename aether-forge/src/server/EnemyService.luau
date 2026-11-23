@@ -201,7 +201,7 @@ function EnemyService.damage(e, amount, player, opts)
 	if e.state == "Stunned" then
 		return true
 	end
-	if stagger > 0 then
+	if stagger > 0 and stagger >= (e.cfg.StaggerThreshold or 0) then
 		e.flinchUntil = now() + stagger + delay
 		if e.state ~= "Flinch" then
 			setState(e, "Flinch")
